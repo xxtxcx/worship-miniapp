@@ -6,13 +6,14 @@ const TG = () => `https://api.telegram.org/bot${process.env.BOT_TOKEN}`;
 // Аватарка людини за її Telegram ID. Файл Telegram містить токен бота в URL, тому віддаємо його через проксі.
 async function fetchAvatar(chatId) {
   const r = await (await fetch(`${TG()}/getUserProfilePhotos?user_id=${encodeURIComponent(chatId)}&limit=1`)).json();
-  const sizes = r.ok && r.result.photos && r.result.photos[0];
-  if (!sizes || !sizes.length) return null;
+  if (!r.ok) throw new Error(`getUserProfilePhotos: ${r.description}`); // помилка Telegram не кешується
+  const sizes = r.result.photos && r.result.photos[0];
+  if (!sizes || !sizes.length) return null; // фото немає або приховане налаштуваннями приватності
   const pick = sizes.find((s) => s.width >= 160) || sizes[sizes.length - 1];
   const f = await (await fetch(`${TG()}/getFile?file_id=${encodeURIComponent(pick.file_id)}`)).json();
-  if (!f.ok) return null;
+  if (!f.ok) throw new Error(`getFile: ${f.description}`);
   const img = await fetch(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${f.result.file_path}`);
-  if (!img.ok) return null;
+  if (!img.ok) throw new Error(`file download ${img.status}`);
   return Buffer.from(await img.arrayBuffer());
 }
 
@@ -23,7 +24,7 @@ module.exports = async (req, res) => {
     const id = L.nid(String(req.query.id || ''));
     const person = ctx.people.get(id);
     if (!person || !/^\d+$/.test(person.chatId)) return res.status(404).json({ error: 'no_avatar' });
-    const buf = await L.cached(`ava:${id}`, 6 * 3600e3, () => fetchAvatar(person.chatId));
+    const buf = await L.cached(`ava:${id}`, 3600e3, () => fetchAvatar(person.chatId));
     if (!buf) return res.status(404).json({ error: 'no_avatar' });
     res.setHeader('Content-Type', 'image/jpeg');
     res.setHeader('Cache-Control', 'private, max-age=86400');
