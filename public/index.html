@@ -56,8 +56,14 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .lineup dt{color:var(--ink2)}
 .lineup dd{margin:0;display:flex;flex-wrap:wrap;gap:4px 8px}
 .who{font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.ava-wrap{flex:none;display:grid;place-items:center;width:48px}
+.ava.s{width:18px;height:18px;font-size:8px}
+.ava.l{width:40px;height:40px;font-size:13px}
+.ava.ring{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent);margin:4px}
+.ava.none{background:transparent;border:1.5px dashed var(--line);color:var(--ink2)}
+.vline{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--ink)}
 .ava{width:24px;height:24px;border-radius:50%;object-fit:cover;flex:none;background:var(--accent-soft);color:var(--accent);display:inline-grid;place-items:center;font-size:10px;font-weight:700;letter-spacing:0}
-.who.lead{color:var(--lead)}
+.who.lead{color:var(--accent)}
 .row{display:flex;align-items:center;gap:12px;padding:12px 16px;border:0;border-top:1px solid var(--line);background:transparent;width:100%;text-align:left}
 .card h2 + .list .row:first-child,.card > .list > .row:first-child{border-top:0}
 button.row:active{background:var(--surface2)}
@@ -187,11 +193,15 @@ function linkify(s){return esc(s).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" 
 function fmt(d){var p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}
 function wds(d){return['нд','пн','вт','ср','чт','пт','сб'][new Date(d+'T12:00:00').getDay()]}
 function wd(d){return new Date(d+'T12:00:00').toLocaleDateString('uk-UA',{weekday:'long'})}
-function avatar(id,name){
+function avatar(id,name,cls){
   var u=id&&S.ava[id];
-  if(u)return '<img class="ava" src="'+u+'" alt="">';
+  if(u)return '<img class="ava'+(cls?' '+cls:'')+'" src="'+u+'" alt="">';
   var ini=String(name||'?').trim().split(/\s+/).slice(0,2).map(function(w){return w.charAt(0).toUpperCase()}).join('');
-  return '<span class="ava"'+(id?' data-ava="'+id+'"':'')+' aria-hidden="true">'+esc(ini)+'</span>'}
+  return '<span class="ava'+(cls?' '+cls:'')+'"'+(id?' data-ava="'+id+'"':'')+' aria-hidden="true">'+esc(ini)+'</span>'}
+function personId(svc,name){
+  var id='';(svc.lineup||[]).forEach(function(r){var i=r.names.indexOf(name);if(!id&&i>-1&&r.ids)id=r.ids[i]||''});
+  if(!id&&svc.lead){var j=svc.lead.indexOf(name);if(j>-1&&svc.leadIds)id=svc.leadIds[j]||''}
+  return id}
 function loadAvatars(){
   var els=document.querySelectorAll('[data-ava]'),ids={};
   Array.prototype.forEach.call(els,function(e){var id=e.dataset.ava;if(S.ava[id]===undefined)ids[id]=1});
@@ -245,12 +255,12 @@ function setlistCard(items,svc){
    if(it.t==='mom')return '<div class="row moment"><span class="num"><i class="dotc"></i></span><span class="rowmain"><span class="rowtitle">'+esc(it.x)+'</span></span></div>';
    if(it.t==='note')return '<div class="noterow">'+esc(it.x)+'</div>';
    var s=song(it.id),k=it.k||s.our;n++;
-   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+(it.v?' <span class="voc">('+esc(it.v)+')</span>':'')+'</span><br><span class="rowsub">'+esc(s.type)+(k&&s.orig&&k!==s.orig?' · оригінал '+esc(s.orig):'')+(s.dur?' · <span class="dur">'+fmtD(s.dur)+'</span>':'')+'</span></span><span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
+   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+(it.v?'<span class="vline">'+avatar(personId(svc,it.v),it.v,'s')+esc(it.v)+'</span> · ':'')+esc(s.type)+(k&&s.orig&&k!==s.orig?' · оригінал '+esc(s.orig):'')+(s.dur?' · <span class="dur">'+fmtD(s.dur)+'</span>':'')+'</span></span><span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
 
 function serviceBody(svc){
   var items=svc.canEdit?(svc.draft||[]):(svc.published||[]);
   var status=svc.canEdit?(svc.hasChanges?'<span class="pill warn"><span class="dot"></span>Є неопубліковані зміни</span>':(svc.published&&svc.published.length?'<span class="pill"><span class="dot"></span>Опубліковано для команди</span>':'<span class="pill warn"><span class="dot"></span>Ще не опубліковано</span>')):(svc.published&&svc.published.length?'<span class="pill"><span class="dot"></span>Сет-лист від ліда</span>':'<span class="pill warn"><span class="dot"></span>Сет-лист ще не опубліковано</span>');
-  var lu=(svc.lineup||[]).map(function(r){return '<dt>'+esc(r.role)+'</dt><dd>'+r.names.map(function(n,ni){return '<span class="who'+(r.lead&&r.lead.indexOf(n)>-1?' lead':'')+'">'+avatar(r.ids&&r.ids[ni],n)+esc(n)+(r.lead&&r.lead.indexOf(n)>-1?' <small>лід</small>':'')+'</span>'}).join('')+'</dd>'}).join('');
+  var lu=(svc.lineup||[]).map(function(r){return '<dt>'+esc(r.role)+'</dt><dd>'+r.names.map(function(n,ni){return '<span class="who'+(r.lead&&r.lead.indexOf(n)>-1?' lead':'')+'">'+avatar(r.ids&&r.ids[ni],n,r.lead&&r.lead.indexOf(n)>-1?'ring':'')+esc(n)+'</span>'}).join('')+'</dd>'}).join('');
   return '<div class="hero"><span class="eyebrow">'+esc(svc.type||'Служіння')+'</span><div class="date">'+fmt(svc.date)+'</div><div class="meta">'+wd(svc.date)+(svc.lead.length?' · лід: '+esc(svc.lead.join(', ')):' · лід не призначений')+'</div><div>'+status+'</div></div>'
    +(lu?'<div class="card"><h2>Склад</h2><dl class="lineup">'+lu+'</dl></div>':'')
    +setlistCard(items,svc)
@@ -268,7 +278,8 @@ function viewCal(){
   var head=mine?'<span class="pill"><span class="dot"></span>Ви служите: '+mine+' з '+S.services.length+'</span>':'<span class="pill warn"><span class="dot"></span>Тебе немає в графіку на цей місяць</span>';
   return '<div class="pad"><div>'+head+'</div>'+(S.services.length?'<div class="card"><h2>Найближчі 30 днів</h2><div class="list">'+S.services.map(function(u){var vis=u.mine||S.me.isAdmin;
    var tag=u.isLead?'<span class="pill lead">ви лід</span>':u.mine?'<span class="pill">ви служите</span>':'<span class="rowsub">не в складі</span>';
-   var inner='<span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
+   var la=u.leadIds&&u.leadIds[0]?avatar(u.leadIds[0],u.lead[0],'l ring'):'<span class="ava l none" aria-hidden="true">?</span>';
+   var inner='<span class="ava-wrap">'+la+'</span><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
    return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>У Notion на найближчі 30 днів нічого не створено.</div></div>')
    +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div></div>'}
 

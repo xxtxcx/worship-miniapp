@@ -28,7 +28,7 @@ const songData = {
 };
 const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 const svc = (id, n, leadName, mine) => ({
-  id, date: day(n), name: 'Молодіжка', type: 'Молодіжка', lead: leadName ? [leadName] : [], mine, isLead: false, canEdit: false,
+  id, date: day(n), name: 'Молодіжка', type: 'Молодіжка', lead: leadName ? [leadName] : [], leadIds: leadName ? ['p2'] : [], mine, isLead: false, canEdit: false,
   lineup: [{ role: 'Вокал', names: ['Аня', 'Наталя', 'Артур'], ids: ['p1', 'p2', 'p3'], lead: leadName ? [leadName] : [] }, { role: 'Барабани', names: ['Єгор'], lead: [] }, { role: 'Бас', names: ['Андрій'], lead: [] }, { role: 'Клавіші', names: ['Настя'], lead: [] }],
   vocalists: ['Наталя', 'Аня', 'Анна', 'Артур'],
   published: [{ t: 'mom', x: 'Біг інтро' }, { t: 'song', id: 'a1', k: 'D', v: 'Аня' }, { t: 'note', x: '(None like you під час привітання)' }, { t: 'song', id: 'a2', k: 'C', v: 'Наталя' }, { t: 'mom', x: 'Молитва' }, { t: 'note', x: '(продовжуємо трішки попередню пісню..)' }, { t: 'song', id: 'a4', k: 'D', v: 'Анна' }],

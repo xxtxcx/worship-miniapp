@@ -252,7 +252,7 @@ function toClient(svc, ctx, rowsByService) {
   const names = (ids) => ids.map((i) => (people.get(i) || {}).name).filter(Boolean);
   const out = {
     id: svc.id, date: svc.date, name: svc.name, type: svc.type,
-    lead: names(svc.leadIds), mine, isLead, canEdit,
+    lead: names(svc.leadIds), leadIds: svc.leadIds.filter((i) => people.get(i) && people.get(i).name), mine, isLead, canEdit,
   };
   if (!mine && !isAdmin) return out;
   const known = (ids) => ids.filter((i) => people.get(i) && people.get(i).name);
