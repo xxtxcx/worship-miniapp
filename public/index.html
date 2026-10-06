@@ -141,6 +141,13 @@ button.row:active{background:var(--surface2)}
 .sumline .iconbtn{width:30px;height:30px;margin-right:auto}
 .sumline .tot{font-family:var(--font-mono);font-size:12.5px;color:var(--ink2);text-align:right}
 .txt{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit}
+.pbar{display:flex;gap:8px;padding:8px 16px;background:var(--surface)}
+.pbar input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:9px 12px;font:inherit}
+.psort{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:0 8px;font:inherit;font-weight:600}
+.pchips{padding:2px 16px 8px;border-bottom:0}
+.picked{padding:6px 16px;font-size:12px;line-height:1.35;color:var(--ink2);background:var(--surface);border-bottom:1px solid var(--line);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.picked b{color:var(--ink)}
+.fab{position:absolute;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom,0px));box-shadow:0 6px 20px rgba(0,0,0,.28);z-index:3}
 .sel.v{font-family:inherit;font-weight:500;flex:0 0 calc(100% - 38px);margin-left:38px;padding:8px 10px}
 .addrow{display:flex;gap:8px;flex-wrap:wrap}
 .addrow .btn{flex:1;min-width:100px;padding:11px 10px;font-size:14px}
@@ -310,21 +317,27 @@ function builderLayer(){
   +'<div class="lfoot"><button class="btn ghost" data-act="saveDraft"'+(S.busy?' disabled':'')+'>Зберегти чернетку</button><button class="btn" data-act="publish"'+(st.n&&!S.busy?'':' disabled')+'>'+(S.busy?'Зберігаю…':'Опублікувати')+'</button></div></div>'}
 
 function pickerLayer(){
-  var list=filtered(),inn={};S.edit.items.forEach(function(x){if(x.t==='song')inn[x.id]=1});
-  return '<div class="layer sheet"><div class="lhead"><button class="iconbtn" data-back aria-label="Закрити">✕</button><div class="t">Додати пісню</div></div>'+filterBars()
-  +'<div class="screen"><div class="pad"><div class="card"><div class="list">'+list.map(function(s){
-    return '<div class="row"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×'+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Вже в списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+'</div></div></div></div></div>'}
+  var list=filtered(),inn={},names=[],n=0;
+  S.edit.items.forEach(function(x){if(x.t==='song'){inn[x.id]=1;n++;names.push(song(x.id).title)}});
+  var sorts=[['az','А–Я'],['za','Я–А'],['most','Часті'],['least','Рідкі']];
+  return '<div class="layer sheet" data-layer="pick"><div class="lhead"><button class="iconbtn" data-back aria-label="Закрити">✕</button><div class="t">Додати пісню</div></div>'
+  +'<div class="pbar"><input id="pq" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"><select class="psort" data-psort aria-label="Сортування">'+sorts.map(function(x){return '<option value="'+x[0]+'"'+(S.sort===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></div>'
+  +'<div class="chips pchips">'+['Усі','Прославлення','Поклоніння','Вчимо'].map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'
+  +(n?'<div class="picked"><b>У списку:</b> '+names.map(esc).join(', ')+'</div>':'')
+  +'<div class="screen" id="pscreen"><div class="pad" style="padding-bottom:88px"><div class="card"><div class="list">'+list.map(function(s){
+    return '<div class="row"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×'+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Прибрати зі списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+(list.length?'':'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div></div>'
+  +(n?'<button class="btn fab" data-act="pickdone">Готово · '+n+'</button>':'')+'</div>'}
 
 function render(){
   var app=$('#app');
   if(S.err){app.innerHTML=S.err;return}
   if(!S.me){return}
-  var keep=0,sc=$('#screen');if(sc)keep=sc.scrollTop;
+  var keep=0,sc=$('#screen');if(sc)keep=sc.scrollTop;var pk=$('#pscreen'),pkeep=pk?pk.scrollTop:0;
   var layers=S.stack.map(function(l){return l.type==='song'?songLayer(l):l.type==='service'?serviceLayer(l):l.type==='build'?builderLayer():pickerLayer()}).join('');
   var nav='<nav class="nav" id="nav">'+[['sunday','<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>','Неділя'],['rep','<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>','Репертуар'],['cal','<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>','Графік']].map(function(x){return '<button data-tab="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+x[2]+'</button>'}).join('')+'</nav>';
   app.innerHTML='<div class="screen" id="screen">'+(S.tab==='sunday'?viewSunday():S.tab==='rep'?viewRep():viewCal())+'</div>'+nav+layers+(S.toast?'<div class="toast" role="status">'+esc(S.toast)+'</div>':'');
-  var ns=$('#screen');if(ns)ns.scrollTop=keep;
-  var q=$('#q');if(q&&S.focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}
+  var ns=$('#screen');if(ns)ns.scrollTop=keep;var np=$('#pscreen');if(np)np.scrollTop=pkeep;
+  var q=$(S.stack.length&&S.stack[S.stack.length-1].type==='pick'?'#pq':'#q');if(q&&S.focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}
   if(tg&&tg.BackButton){if(S.stack.length)tg.BackButton.show();else tg.BackButton.hide()}
 }
 
@@ -360,11 +373,13 @@ document.addEventListener('click',function(e){
   if(d.copy){copyItems(d.copy==='edit'?S.edit.items:(function(){var v=svcById(d.copy);return v.canEdit?(v.draft||[]):(v.published||[])})());return}
   if('addmom' in d){S.edit.items.push({t:'mom',x:'Молитва'});render();return}
   if('addnote' in d){S.edit.items.push({t:'note',x:'(коментар)'});render();return}
-  if(d.add){if(!S.edit.items.some(function(x){return x.t==='song'&&x.id===d.add}))S.edit.items.push({t:'song',id:d.add,k:song(d.add).our,v:defVoc(svcById(S.edit.id))});render();return}
+  if(d.act==='pickdone'){goBack();return}
+  if(d.add){var at=S.edit.items.findIndex(function(x){return x.t==='song'&&x.id===d.add});if(at>-1)S.edit.items.splice(at,1);else S.edit.items.push({t:'song',id:d.add,k:song(d.add).our,v:defVoc(svcById(S.edit.id))});render();return}
   if(d.rm!==undefined){S.edit.items.splice(+d.rm,1);render();return}
 });
 document.addEventListener('change',function(e){var t=e.target;if(t.tagName!=='SELECT')return;
   if(t.dataset.key!==undefined){S.edit.items[+t.dataset.key].k=t.value;render()}
+  else if(t.dataset.psort!==undefined){S.sort=t.value;render()}
   else if(t.dataset.voc!==undefined){S.edit.items[+t.dataset.voc].v=t.value;render()}});
 (function(){var drag=null;
   function rows(){return Array.prototype.slice.call(document.querySelectorAll('.layer[data-layer="build"] .row[data-i]'))}
@@ -375,7 +390,7 @@ document.addEventListener('change',function(e){var t=e.target;if(t.tagName!=='SE
   function end(){if(!drag)return;var d=drag;drag=null;clear();rows().forEach(function(r){r.classList.remove('dragging')});if(!d.to)return;var to=d.to.i+(d.to.after?1:0),a=S.edit.items,it=a.splice(d.i,1)[0];if(to>d.i)to--;a.splice(to,0,it);render()}
   document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end)})();
 document.addEventListener('input',function(e){if(e.target.dataset&&e.target.dataset.txt!==undefined){S.edit.items[+e.target.dataset.txt].x=e.target.value;return}
-  if(e.target.id==='q'){S.q=e.target.value;S.focusQ=true;render();S.focusQ=false}});
+  if(e.target.id==='q'||e.target.id==='pq'){S.q=e.target.value;S.focusQ=true;render();S.focusQ=false}});
 if(tg&&tg.BackButton)tg.BackButton.onClick(goBack);
 
 /* ---------- Старт ---------- */
