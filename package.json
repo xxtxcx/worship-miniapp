@@ -1,0 +1,11 @@
+{
+  "name": "worship-miniapp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Telegram Mini App для worship-команди: сет-листи, репертуар, тексти й акорди (дані з Notion)",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node dev/mock-server.js",
+    "test": "node dev/test.js"
+  }
+}

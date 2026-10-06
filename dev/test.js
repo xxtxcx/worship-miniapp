@@ -1,0 +1,37 @@
+'use strict';
+const assert = require('assert'), crypto = require('crypto');
+process.env.BOT_TOKEN = '123:TEST';
+const L = require('../api/_lib');
+
+// initData: правильний підпис проходить, підроблений ні, застарілий ні
+function sign(fields) {
+  const check = Object.entries(fields).sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, v]) => `${k}=${v}`).join('\n');
+  const secret = crypto.createHmac('sha256', 'WebAppData').update(process.env.BOT_TOKEN).digest();
+  const hash = crypto.createHmac('sha256', secret).update(check).digest('hex');
+  return new URLSearchParams({ ...fields, hash }).toString();
+}
+const user = JSON.stringify({ id: 244629540, first_name: 'Тест' });
+const fresh = sign({ auth_date: String(Math.floor(Date.now() / 1000)), query_id: 'q', user });
+assert.strictEqual(L.verifyInitData(fresh).id, 244629540, 'valid initData');
+assert.strictEqual(L.verifyInitData(fresh.replace('hash=', 'hash=0')), null, 'tampered hash');
+assert.strictEqual(L.verifyInitData(fresh.replace('q', 'z')), null, 'tampered payload');
+assert.strictEqual(L.verifyInitData(sign({ auth_date: '1000', user })), null, 'expired');
+assert.strictEqual(L.verifyInitData(''), null, 'empty');
+
+// Розбір тональностей з реальних значень бази
+const cases = { 'C (original)': 'C', 'С': 'C', 'Аb': 'Ab', 'Hm': 'Bm', 'Am (not original)': 'Am', 'F-Ліда': 'F', 'D - Наталя': 'D', 'Eb ': 'Eb', 'E - Ілона, Аня/Gb - Ліда': 'E', '': '', 'none': '' };
+for (const [i, o] of Object.entries(cases)) assert.strictEqual(L.noteKey(i), o, `noteKey(${i})`);
+
+// toClient: приватність і права
+const people = new Map([['p1', { id: 'p1', name: 'Наталя' }], ['p2', { id: 'p2', name: 'Аня' }], ['p3', { id: 'p3', name: 'Софія' }]]);
+const svc = { id: 's', name: 'Молодіжка', date: '2026-10-11', type: 'Молодіжка', leadIds: ['p1'], roles: [{ role: 'Вокал', ids: ['p1', 'p2'] }], draft: [{ id: 'x', k: 'D' }], published: [{ id: 'y', k: 'C' }] };
+const rows = new Map();
+const lead = L.toClient(svc, { me: people.get('p1'), people, isAdmin: false }, rows);
+assert(lead.canEdit && lead.isLead && lead.mine && lead.hasChanges && lead.draft[0].id === 'x');
+const member = L.toClient(svc, { me: people.get('p2'), people, isAdmin: false }, rows);
+assert(member.mine && !member.canEdit && !member.draft && member.published[0].id === 'y', 'member sees only published');
+const outsider = L.toClient(svc, { me: people.get('p3'), people, isAdmin: false }, rows);
+assert(!outsider.mine && !outsider.lineup && !outsider.published && !outsider.draft, 'outsider sees no details');
+const admin = L.toClient(svc, { me: people.get('p3'), people, isAdmin: true }, rows);
+assert(admin.canEdit && admin.draft, 'admin can edit');
+console.log('all tests passed');

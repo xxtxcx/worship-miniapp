@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>D.Youth Worship</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Тема береться з Telegram: JS ставить data-theme="light|dark" за Telegram.WebApp.colorScheme.
+   Поза Telegram працює prefers-color-scheme. */
+:root{
+  --bg:#E9EDF2; --surface:#FFFFFF; --surface2:#F2F5F9; --ink:#14202E; --ink2:#5A6878; --line:#DCE3EB;
+  --accent:#0E7C70; --accent-ink:#FFFFFF; --accent-soft:#D6EFEB;
+  --lead:#B9650A; --lead-soft:#FBE8CF; --ok:#1F8A4C; --warn:#B9650A; --warn-soft:#FBE8CF; --danger:#C2362B;
+  --font-display:'Unbounded','Onest',system-ui,sans-serif;
+  --font-body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0B1118; --surface:#131C26; --surface2:#1A2531; --ink:#E8EEF5; --ink2:#93A1B2; --line:#26323F;
+  --accent:#3CC6B4; --accent-ink:#06211D; --accent-soft:#12332F;
+  --lead:#F0A650; --lead-soft:#3A2A12; --ok:#4CC584; --warn:#F0A650; --warn-soft:#3A2A12; --danger:#FF7B6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1118; --surface:#131C26; --surface2:#1A2531; --ink:#E8EEF5; --ink2:#93A1B2; --line:#26323F;
+  --accent:#3CC6B4; --accent-ink:#06211D; --accent-soft:#12332F;
+  --lead:#F0A650; --lead-soft:#3A2A12; --ok:#4CC584; --warn:#F0A650; --warn-soft:#3A2A12; --danger:#FF7B6E; color-scheme:dark}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.4;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{position:relative;height:100%;display:flex;flex-direction:column;overflow:hidden}
+.screen{flex:1;min-height:0;overflow-y:auto;background:var(--bg);-webkit-overflow-scrolling:touch}
+.pad{padding:16px;display:flex;flex-direction:column;gap:14px}
+.nav{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--surface);padding-bottom:max(6px,env(safe-area-inset-bottom,0px))}
+.nav button{border:0;background:transparent;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--ink2)}
+.nav button[aria-current="page"]{color:var(--accent)}
+.nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+h1,h2,h3{margin:0;text-wrap:balance}
+.eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+.hero{background:var(--surface);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;border:1px solid var(--line)}
+.hero .date{font-family:var(--font-display);font-weight:700;font-size:26px;letter-spacing:-.01em}
+.hero .t2{font-family:var(--font-display);font-weight:700;font-size:19px;line-height:1.2}
+.hero .meta{color:var(--ink2);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.lead{background:var(--lead-soft);color:var(--lead)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.card h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);padding:14px 16px 4px}
+.lineup{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;padding:8px 16px 14px;font-size:14px;margin:0}
+.lineup dt{color:var(--ink2)}
+.lineup dd{margin:0;display:flex;flex-wrap:wrap;gap:4px 8px}
+.who{font-weight:600}
+.who.lead{color:var(--lead)}
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px;border:0;border-top:1px solid var(--line);background:transparent;width:100%;text-align:left}
+.card h2 + .list .row:first-child,.card > .list > .row:first-child{border-top:0}
+button.row:active{background:var(--surface2)}
+.num{font-family:var(--font-mono);font-weight:700;color:var(--ink2);width:18px;text-align:right;font-size:13px}
+.rowmain{flex:1;min-width:0}
+.rowtitle{font-weight:600;overflow-wrap:anywhere}
+.rowsub{font-size:12.5px;color:var(--ink2)}
+.key{font-family:var(--font-mono);font-weight:700;font-size:13px;min-width:38px;text-align:center;padding:5px 8px;border-radius:8px;background:var(--surface2);border:1px solid var(--line)}
+.key.hi{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chev{color:var(--ink2)}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.soft{background:var(--accent-soft);color:var(--accent)}
+.btn.wide{width:100%}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btnrow{display:flex;gap:10px}
+.btnrow .btn{flex:1}
+.note{font-size:12.5px;color:var(--ink2)}
+.empty{padding:22px 16px;text-align:center;color:var(--ink2)}
+.empty b{display:block;color:var(--ink);margin-bottom:4px}
+.center{height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:var(--ink2)}
+.center h1{font-family:var(--font-display);font-size:20px;color:var(--ink);margin-bottom:8px}
+.spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:sp .8s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.layer{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:5;animation:slide .18s ease-out}
+@keyframes slide{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.layer,.spin{animation:none}}
+.layer.sheet{z-index:8;animation:none}
+.lhead{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
+.lhead .t{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
+.iconbtn{border:0;background:var(--surface2);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;font-weight:700;flex:none}
+.lfoot{padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
+.tabs{display:flex;gap:6px;padding:10px 16px 0;background:var(--surface);border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:transparent;padding:9px 12px;font-weight:600;color:var(--ink2);border-bottom:2px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.songhead{background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:10px}
+.songhead .title{font-family:var(--font-display);font-weight:700;font-size:21px;line-height:1.15;overflow-wrap:anywhere}
+.keys{display:flex;flex-wrap:wrap;gap:8px}
+.kbox{display:flex;flex-direction:column;gap:2px;padding:8px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
+.kbox span{font-size:11px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+.kbox b{font-family:var(--font-mono);font-size:18px}
+.kbox.hi{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.kbox.hi span{color:var(--accent-ink);opacity:.8}
+.lyr{display:flex;flex-direction:column;gap:18px}
+.sec h3{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.sec p{margin:0;white-space:pre-line;font-size:16.5px;line-height:1.55}
+.chordblock{font-family:var(--font-mono);font-size:13.5px;line-height:1.35;white-space:pre;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.chordblock .c{color:var(--accent);font-weight:700}
+.tr{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.tr .stepper{display:flex;align-items:center;gap:8px}
+.tr .stepper b{font-family:var(--font-mono);min-width:44px;text-align:center}
+.links{display:flex;flex-direction:column}
+.link{display:flex;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.link:first-child{border-top:0}
+.link .ico{width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.link.off{opacity:.45;pointer-events:none}
+.link small{display:block;color:var(--ink2);font-size:12px;overflow-wrap:anywhere}
+.plain{padding:12px 16px;border-top:1px solid var(--line);font-size:14px;white-space:pre-line;overflow-wrap:anywhere}
+.plain a{color:var(--accent)}
+.search{display:flex;gap:8px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.search input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit}
+.chips{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--line)}
+.chips button{flex:none;border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--ink2)}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chips.sort{border-top:0}
+.add{border:0;background:var(--accent-soft);color:var(--accent);width:34px;height:34px;border-radius:10px;font-weight:700;font-size:18px}
+.add.done{background:var(--surface2);color:var(--ok)}
+.sel{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;padding:6px;font-family:var(--font-mono);font-weight:700}
+.mv{display:flex;flex-direction:column;gap:3px}
+.mv button{border:1px solid var(--line);background:var(--surface2);border-radius:6px;width:28px;height:22px;line-height:1;font-size:11px;padding:0}
+.rm{border:0;background:transparent;color:var(--ink2);font-size:18px;width:30px;height:30px}
+.toast{position:absolute;left:16px;right:16px;bottom:78px;background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:12px;font-weight:600;z-index:20;font-size:14px}
+</style>
+</head>
+<body>
+<div class="app" id="app"><div class="center"><div><div class="spin"></div>Завантаження…</div></div></div>
+
+<script>
+'use strict';
+/* ---------- Telegram і тема ---------- */
+var tg=window.Telegram&&window.Telegram.WebApp;
+function applyTheme(){
+  var scheme=tg&&tg.initData?tg.colorScheme:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',scheme);
+  var bg=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+  try{if(tg){tg.setHeaderColor(bg);tg.setBackgroundColor(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());tg.setBottomBarColor&&tg.setBottomBarColor(bg)}}catch(e){}
+}
+if(tg){tg.ready();tg.expand();tg.onEvent('themeChanged',applyTheme)}
+applyTheme();
+if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!(tg&&tg.initData))applyTheme()});
+
+/* ---------- API ---------- */
+function api(path,opts){
+  opts=opts||{};
+  return fetch(path,{method:opts.method||'GET',headers:Object.assign({'X-Init-Data':(tg&&tg.initData)||'','Content-Type':'application/json'},opts.headers||{}),body:opts.body?JSON.stringify(opts.body):undefined})
+   .then(function(r){return r.json().then(function(j){if(!r.ok){var e=new Error(j.error||'error');e.status=r.status;e.data=j;throw e}return j})});
+}
+
+/* ---------- Допоміжне ---------- */
+var $=function(s){return document.querySelector(s)};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function linkify(s){return esc(s).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')}
+function fmt(d){var p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}
+function wd(d){return new Date(d+'T12:00:00').toLocaleDateString('uk-UA',{weekday:'long'})}
+function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
+var SHARP=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FLAT=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+var ROOTS=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+function idx(k){var m=/^([A-G])([#b]?)/.exec(k||'');if(!m)return 0;var i=SHARP.indexOf(m[1]);if(m[2]==='#')i++;if(m[2]==='b')i--;return(i+12)%12}
+function flatKey(k){return /^(F(?!#)|[A-G]b)/.test(k||'')}
+function tChord(c,n,flat){var m=/^([A-G][#b]?)(.*)$/.exec(c);if(!m)return c;var i=(idx(m[1])+n+120)%12;return(flat?FLAT:SHARP)[i]+m[2]}
+function minor(k){return /m$/.test(k||'')}
+
+/* ---------- Акорди (ChordPro) ---------- */
+function parseChords(txt){
+  var secs=[],cur={h:'',lines:[]};
+  String(txt||'').split('\n').forEach(function(l){
+    if(/^\s*#/.test(l)){if(cur.lines.length||cur.h)secs.push(cur);cur={h:l.replace(/^\s*#+\s*/,''),lines:[]};return}
+    if(!l.trim())return;
+    var chs=[],t='',last=0,re=/\[([^\]]+)\]/g,m;
+    while((m=re.exec(l))){t+=l.slice(last,m.index);chs.push([m[1],t.length]);last=m.index+m[0].length}
+    t+=l.slice(last);cur.lines.push({chs:chs,t:t});
+  });
+  if(cur.lines.length||cur.h)secs.push(cur);
+  return secs;
+}
+function chordLine(chs,n,flat){var out='',len=0;chs.forEach(function(p){var c=tChord(p[0],n,flat),pad=Math.max(p[1]-len,len?1:0);out+=' '.repeat(pad)+'<span class="c">'+esc(c)+'</span>';len+=pad+c.length});return out}
+
+/* ---------- Стан ---------- */
+var S={me:null,songs:[],services:[],tab:'sunday',stack:[],sort:'az',f:'Усі',q:'',toast:'',cache:{},edit:null,busy:false,err:null};
+var byId={};
+function song(id){return byId[id]||{id:id,title:'Невідома пісня',type:'',orig:'',our:'',n:0}}
+function toast(m){S.toast=m;render();clearTimeout(toast.t);toast.t=setTimeout(function(){S.toast='';render()},2400)}
+function svcById(id){return S.services.filter(function(s){return s.id===id})[0]}
+function mySunday(){var m=S.services.filter(function(s){return s.mine});if(m.length)return m[0];return S.me&&S.me.isAdmin?S.services[0]:null}
+
+/* ---------- Екрани ---------- */
+function setlistCard(items,svc){
+  if(!items.length)return '<div class="card"><h2>Сет-лист</h2><div class="empty"><b>Сет-лист порожній</b>'+(svc.canEdit?'Натисніть «Редагувати», щоб додати пісні.':'Лід ще не опублікував список на це служіння.')+'</div></div>';
+  return '<div class="card"><h2>Сет-лист</h2><div class="list">'+items.map(function(it,i){var s=song(it.id),k=it.k||s.our;
+   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+(i+1)+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type)+(k&&s.orig&&k!==s.orig?' · оригінал '+esc(s.orig):'')+'</span></span><span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
+
+function serviceBody(svc){
+  var items=svc.canEdit?(svc.draft||[]):(svc.published||[]);
+  var status=svc.canEdit?(svc.hasChanges?'<span class="pill warn"><span class="dot"></span>Є неопубліковані зміни</span>':(svc.published&&svc.published.length?'<span class="pill"><span class="dot"></span>Опубліковано для команди</span>':'<span class="pill warn"><span class="dot"></span>Ще не опубліковано</span>')):(svc.published&&svc.published.length?'<span class="pill"><span class="dot"></span>Сет-лист від ліда</span>':'<span class="pill warn"><span class="dot"></span>Сет-лист ще не опубліковано</span>');
+  var lu=(svc.lineup||[]).map(function(r){return '<dt>'+esc(r.role)+'</dt><dd>'+r.names.map(function(n){return '<span class="who'+(r.lead&&r.lead.indexOf(n)>-1?' lead':'')+'">'+esc(n)+(r.lead&&r.lead.indexOf(n)>-1?' <small>лід</small>':'')+'</span>'}).join('')+'</dd>'}).join('');
+  return '<div class="hero"><span class="eyebrow">'+esc(svc.type||'Служіння')+'</span><div class="date">'+fmt(svc.date)+'</div><div class="meta">'+wd(svc.date)+(svc.lead.length?' · лід: '+esc(svc.lead.join(', ')):' · лід не призначений')+'</div><div>'+status+'</div></div>'
+   +(lu?'<div class="card"><h2>Склад</h2><dl class="lineup">'+lu+'</dl></div>':'')
+   +setlistCard(items,svc)
+   +(svc.canEdit?'<button class="btn wide" data-edit="'+svc.id+'">Редагувати сет-лист</button>':'<div class="note">Сет-лист складає лід. Ви бачите його лише для перегляду.</div>')}
+
+function viewSunday(){
+  var svc=mySunday();
+  if(!svc){
+    if(!S.services.length)return '<div class="pad"><div class="hero"><span class="eyebrow">Найближчий місяць</span><div class="t2">Служінь на найближчі 30 днів ще немає</div><div class="meta">Коли їх додадуть у Notion, вони з\'являться тут.</div></div></div>';
+    return '<div class="pad"><div class="hero"><span class="eyebrow">Найближчий місяць</span><div class="t2">Тебе немає в графіку на цей місяць</div><div class="meta">Познач свої неділі в Notion, і тут з\'явиться склад та сет-лист. Репертуар лишається доступним.</div><div><span class="pill warn"><span class="dot"></span>0 служінь у найближчі 30 днів</span></div></div><button class="btn soft" data-tab="rep">Відкрити репертуар</button></div>'}
+  return '<div class="pad">'+serviceBody(svc)+'</div>'}
+
+function viewCal(){
+  var mine=S.services.filter(function(s){return s.mine}).length;
+  var head=mine?'<span class="pill"><span class="dot"></span>Ви служите: '+mine+' з '+S.services.length+'</span>':'<span class="pill warn"><span class="dot"></span>Тебе немає в графіку на цей місяць</span>';
+  return '<div class="pad"><div>'+head+'</div>'+(S.services.length?'<div class="card"><h2>Найближчі 30 днів</h2><div class="list">'+S.services.map(function(u){var vis=u.mine||S.me.isAdmin;
+   var tag=u.isLead?'<span class="pill lead">ви лід</span>':u.mine?'<span class="pill">ви служите</span>':'<span class="rowsub">не в складі</span>';
+   var inner='<span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wd(u.date).slice(0,2)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
+   return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>У Notion на найближчі 30 днів нічого не створено.</div></div>')
+   +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div></div>'}
+
+function sortBar(){return '<div class="chips sort" role="group" aria-label="Сортування">'+[['az','А–Я'],['za','Я–А'],['most','Найчастіше'],['least','Найрідше']].map(function(x){return '<button data-sort="'+x[0]+'" aria-pressed="'+(S.sort===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'}
+function filtered(){
+  var q=S.q.toLowerCase(),f=S.f;
+  var l=S.songs.filter(function(s){return(f==='Усі'||s.type===f||s.status===f)&&s.title.toLowerCase().indexOf(q)>-1});
+  var cmp={az:function(a,b){return a.title.localeCompare(b.title,'en')},za:function(a,b){return b.title.localeCompare(a.title,'en')},most:function(a,b){return b.n-a.n||a.title.localeCompare(b.title,'en')},least:function(a,b){return a.n-b.n||a.title.localeCompare(b.title,'en')}}[S.sort];
+  return l.sort(cmp)}
+function filterBars(){return '<div class="search"><input id="q" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"></div><div class="chips">'+['Усі','Прославлення','Поклоніння','Вчимо'].map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
+function viewRep(){
+  var list=filtered();
+  return filterBars()+'<div class="pad"><div class="card"><div class="list">'+(list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+s.n+'× у сет-листах'+(s.status==='Вчимо'?' · вчимо':'')+(s.hasChords?' · є акорди':'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div>'}
+
+function songLayer(L){
+  var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
+  var kb='<div class="kbox hi"><span>У сеті</span><b>'+esc(k||'–')+'</b></div>'+(s.orig?'<div class="kbox"><span>Оригінал</span><b>'+esc(s.orig)+'</b></div>':'')+(s.keysBy?'<div class="kbox"><span>По вокалістках</span><b style="font-size:13px">'+esc(s.keysBy)+'</b></div>':'');
+  var body;
+  if(!d&&!L.err)body='<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
+  else if(L.err)body='<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(L.err)+'</div></div></div>';
+  else if(t==='text'){
+    var secs=d.lyrics;
+    if(!secs.length&&d.chords){secs=parseChords(d.chords).map(function(x){return{h:x.h,t:x.lines.map(function(l){return l.t}).join('\n')}})}
+    body=secs.length?'<div class="pad lyr">'+secs.map(function(x){return '<div class="sec">'+(x.h?'<h3>'+esc(x.h)+'</h3>':'')+'<p>'+esc(x.t)+'</p></div>'}).join('')+'</div>':'<div class="pad"><div class="card"><div class="empty"><b>Тексту ще немає</b>Додайте його на сторінці пісні в Notion, і він з\'явиться тут.</div></div></div>'}
+  else if(t==='chords'){
+    if(d.chords){
+      var n=idx(k)-idx(s.our)+(L.off||0),tk=ROOTS[(idx(s.our)+n+120)%12]+(minor(s.our)?'m':''),flat=flatKey(tk);
+      if(L.off===undefined)L.off=0;
+      var shown=(flat?FLAT:SHARP)[(idx(s.our)+n+120)%12]+(minor(s.our)?'m':'');
+      body='<div class="pad"><div class="tr"><span>Тональність акордів</span><span class="stepper"><button class="iconbtn" data-off="-1" aria-label="Нижче на півтону">−</button><b>'+esc(shown)+'</b><button class="iconbtn" data-off="1" aria-label="Вище на півтону">+</button></span></div>'
+       +parseChords(d.chords).map(function(sec){return '<div class="sec">'+(sec.h?'<h3>'+esc(sec.h)+'</h3>':'')+'<div class="chordblock">'+sec.lines.map(function(l){return(l.chs.length?chordLine(l.chs,n,flat)+'\n':'')+esc(l.t)}).join('\n')+'</div></div>'}).join('')+'</div>'}
+    else body='<div class="pad"><div class="card"><div class="empty"><b>Акордів ще немає</b>Додайте їх у поле «Акорди» пісні в Notion (формат: [G]В надії ми кожен [D]день).</div></div></div>'}
+  else{
+    var A=function(ico,name,url){return url?'<a class="link" href="'+esc(url)+'" target="_blank" rel="noopener"><span class="ico">'+ico+'</span><span><b>'+name+'</b><small>'+esc(url.replace(/^https?:\/\//,''))+'</small></span></a>':'<div class="link off"><span class="ico">'+ico+'</span><span><b>'+name+'</b><small>немає посилання</small></span></div>'};
+    body='<div class="pad"><div class="card"><div class="links">'+A('YT','YouTube',s.yt)+A('MT','Multitracks',s.mt)+A('RM','Rehearsal mix',s.reh)+'</div>'
+      +(s.gtr?'<div class="plain"><b>Гітарні партії</b><br>'+linkify(s.gtr)+'</div>':'')+(s.vit?'<div class="plain"><b>Партії Віталіка</b><br>'+linkify(s.vit)+'</div>':'')+(s.related?'<div class="plain"><b>Зв\'язки з іншими піснями</b><br>'+linkify(s.related)+'</div>':'')+(s.links?'<div class="plain"><b>Інші лінки</b><br>'+linkify(s.links)+'</div>':'')+(s.notes?'<div class="plain"><b>Нотатки</b><br>'+linkify(s.notes)+'</div>':'')+'</div>'
+      +'<div class="card"><h2>Грали раніше</h2><div class="list">'+(d.history.length?d.history.map(function(h){return '<div class="row"><span class="rowmain"><span class="rowtitle">'+fmt(h.date)+'</span><br><span class="rowsub">лід: '+esc(h.lead||'—')+'</span></span><span class="key">'+esc(h.key||'–')+'</span></div>'}).join(''):'<div class="empty">Ще не було в сет-листах.</div>')+'</div></div></div>'}
+  return '<div class="layer" data-layer="song"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">'+esc(s.title)+'</div></div>'
+   +'<div class="songhead"><div class="title">'+esc(s.title)+'</div><div class="keys">'+kb+'</div></div>'
+   +'<div class="tabs" role="tablist">'+[['text','Текст'],['chords','Акорди'],['mat','Матеріали']].map(function(x){return '<button role="tab" data-tab2="'+x[0]+'" aria-selected="'+(t===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'
+   +'<div class="screen">'+body+'</div></div>'}
+
+function serviceLayer(L){var svc=svcById(L.id);if(!svc)return '';
+  return '<div class="layer"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">'+fmt(svc.date)+' · '+esc(svc.type||'Служіння')+'</div></div><div class="screen"><div class="pad">'+serviceBody(svc)+'</div></div></div>'}
+
+function builderLayer(){
+  var e=S.edit,svc=svcById(e.id),d=e.items,keyOpts=function(s,cur){var m=minor(s.our||s.orig),all=ROOTS.map(function(r){return r+(m?'m':'')});if(cur&&all.indexOf(cur)<0)all.unshift(cur);return all.map(function(k){return '<option'+(k===cur?' selected':'')+'>'+k+'</option>'}).join('')};
+  return '<div class="layer"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">Сет-лист · '+fmt(svc.date)+'</div></div><div class="screen"><div class="pad">'
+  +(d.length?'<div class="card"><div class="list">'+d.map(function(it,i){var s=song(it.id);
+    return '<div class="row"><div class="mv"><button data-mv="'+i+'" data-d="-1" aria-label="Вище">▲</button><button data-mv="'+i+'" data-d="1" aria-label="Нижче">▼</button></div><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">оригінал '+esc(s.orig||'–')+'</span></span><select class="sel" data-key="'+i+'" aria-label="Тональність">'+keyOpts(s,it.k)+'</select><button class="rm" data-rm="'+i+'" aria-label="Прибрати">✕</button></div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Поки порожньо</b>Додайте першу пісню.</div></div>')
+  +'<button class="btn soft wide" data-act="pick">+ Додати пісню</button><div class="note">Тональність можна змінити лише для цього служіння. Оригінал пісні не міняється.</div></div></div>'
+  +'<div class="lfoot"><button class="btn ghost" data-act="saveDraft"'+(S.busy?' disabled':'')+'>Зберегти чернетку</button><button class="btn" data-act="publish"'+(d.length&&!S.busy?'':' disabled')+'>'+(S.busy?'Зберігаю…':'Опублікувати')+'</button></div></div>'}
+
+function pickerLayer(){
+  var list=filtered(),inn={};S.edit.items.forEach(function(x){inn[x.id]=1});
+  return '<div class="layer sheet"><div class="lhead"><button class="iconbtn" data-back aria-label="Закрити">✕</button><div class="t">Додати пісню</div></div>'+filterBars()
+  +'<div class="screen"><div class="pad"><div class="card"><div class="list">'+list.map(function(s){
+    return '<div class="row"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Вже в списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+'</div></div></div></div></div>'}
+
+function render(){
+  var app=$('#app');
+  if(S.err){app.innerHTML=S.err;return}
+  if(!S.me){return}
+  var keep=0,sc=$('#screen');if(sc)keep=sc.scrollTop;
+  var layers=S.stack.map(function(l){return l.type==='song'?songLayer(l):l.type==='service'?serviceLayer(l):l.type==='build'?builderLayer():pickerLayer()}).join('');
+  var nav='<nav class="nav" id="nav">'+[['sunday','<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>','Неділя'],['rep','<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>','Репертуар'],['cal','<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>','Графік']].map(function(x){return '<button data-tab="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+x[2]+'</button>'}).join('')+'</nav>';
+  app.innerHTML='<div class="screen" id="screen">'+(S.tab==='sunday'?viewSunday():S.tab==='rep'?viewRep():viewCal())+'</div>'+nav+layers+(S.toast?'<div class="toast" role="status">'+esc(S.toast)+'</div>':'');
+  var ns=$('#screen');if(ns)ns.scrollTop=keep;
+  var q=$('#q');if(q&&S.focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}
+  if(tg&&tg.BackButton){if(S.stack.length)tg.BackButton.show();else tg.BackButton.hide()}
+}
+
+function loadSong(id,layer){
+  if(S.cache[id])return;
+  api('/api/song?id='+id).then(function(d){S.cache[id]=d;render()}).catch(function(e){layer.err=(e.data&&e.data.message)||'Спробуйте ще раз';render()});
+}
+function goBack(){var t=S.stack.pop();if(t&&t.type==='pick'){S.q='';S.f='Усі'}if(t&&t.type==='build'){S.edit=null}render()}
+function saveSetlist(publish){
+  var e=S.edit;S.busy=true;render();
+  api('/api/setlist',{method:'POST',body:{serviceId:e.id,items:e.items,publish:publish}}).then(function(r){
+    var i=S.services.findIndex(function(s){return s.id===e.id});if(i>-1)S.services[i]=r.service;
+    S.busy=false;S.stack=S.stack.filter(function(l){return l.type!=='build'&&l.type!=='pick'});S.edit=null;
+    toast(publish?'Сет-лист опубліковано':'Чернетку збережено. Бачите лише ви.');
+  }).catch(function(err){S.busy=false;render();toast('Не вдалося зберегти: '+((err.data&&err.data.message)||err.message))});
+}
+
+document.addEventListener('click',function(e){
+  var t=e.target.closest('button');if(!t)return;
+  var top=S.stack[S.stack.length-1],d=t.dataset;
+  if(d.tab){S.tab=d.tab;S.stack=[];S.q='';S.f='Усі';render();return}
+  if(d.song){var L={type:'song',id:d.song,key:d.key,tab:'text',off:0};S.stack.push(L);render();loadSong(d.song,L);return}
+  if(d.svc){S.stack.push({type:'service',id:d.svc});render();return}
+  if('back' in d){goBack();return}
+  if(d.tab2){top.tab=d.tab2;render();return}
+  if(d.off){top.off=(top.off||0)+(+d.off);render();return}
+  if(d.f){S.f=d.f;render();return}
+  if(d.sort){S.sort=d.sort;render();return}
+  if(d.edit){var sv=svcById(d.edit);S.edit={id:sv.id,items:JSON.parse(JSON.stringify(sv.draft||[]))};S.stack.push({type:'build'});render();return}
+  if(d.act==='pick'){S.q='';S.f='Усі';S.stack.push({type:'pick'});render();return}
+  if(d.act==='saveDraft'){saveSetlist(false);return}
+  if(d.act==='publish'){saveSetlist(true);return}
+  if(d.add){if(!S.edit.items.some(function(x){return x.id===d.add}))S.edit.items.push({id:d.add,k:song(d.add).our});render();return}
+  if(d.rm!==undefined){S.edit.items.splice(+d.rm,1);render();return}
+  if(d.mv!==undefined){var i=+d.mv,j=i+(+d.d),a=S.edit.items;if(j>=0&&j<a.length){var x=a[i];a[i]=a[j];a[j]=x}render();return}
+});
+document.addEventListener('change',function(e){var t=e.target;if(t.tagName==='SELECT'&&t.dataset.key!==undefined){S.edit.items[+t.dataset.key].k=t.value;render()}});
+document.addEventListener('input',function(e){if(e.target.id==='q'){S.q=e.target.value;S.focusQ=true;render();S.focusQ=false}});
+if(tg&&tg.BackButton)tg.BackButton.onClick(goBack);
+
+/* ---------- Старт ---------- */
+function fail(title,msg){S.err='<div class="center"><div><h1>'+esc(title)+'</h1>'+msg+'</div></div>';render()}
+api('/api/bootstrap').then(function(r){
+  S.me=r.me;S.songs=r.songs;S.services=r.services;byId={};S.songs.forEach(function(s){byId[s.id]=s});render();
+}).catch(function(e){
+  if(e.status===401)fail('Відкрийте через Telegram','Цей застосунок працює лише всередині Telegram, через кнопку бота.');
+  else if(e.status===403)fail('Вас немає в базі','Telegram ID '+esc(e.data&&e.data.chatId)+' не знайдено в базі «Люди». Попросіть адміна додати вас.');
+  else fail('Не вдалося завантажити',esc((e.data&&e.data.message)||e.message));
+});
+</script>
+</body>
+</html>
