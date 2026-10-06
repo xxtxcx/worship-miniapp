@@ -29,7 +29,7 @@ const songData = {
 const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 const svc = (id, n, leadName, mine) => ({
   id, date: day(n), name: 'Молодіжка', type: 'Молодіжка', lead: leadName ? [leadName] : [], mine, isLead: false, canEdit: false,
-  lineup: [{ role: 'Вокал', names: ['Аня', 'Наталя', 'Артур'], lead: leadName ? [leadName] : [] }, { role: 'Барабани', names: ['Єгор'], lead: [] }, { role: 'Бас', names: ['Андрій'], lead: [] }, { role: 'Клавіші', names: ['Настя'], lead: [] }],
+  lineup: [{ role: 'Вокал', names: ['Аня', 'Наталя', 'Артур'], ids: ['p1', 'p2', 'p3'], lead: leadName ? [leadName] : [] }, { role: 'Барабани', names: ['Єгор'], lead: [] }, { role: 'Бас', names: ['Андрій'], lead: [] }, { role: 'Клавіші', names: ['Настя'], lead: [] }],
   vocalists: ['Наталя', 'Аня', 'Анна', 'Артур'],
   published: [{ t: 'mom', x: 'Біг інтро' }, { t: 'song', id: 'a1', k: 'D', v: 'Аня' }, { t: 'note', x: '(None like you під час привітання)' }, { t: 'song', id: 'a2', k: 'C', v: 'Наталя' }, { t: 'mom', x: 'Молитва' }, { t: 'note', x: '(продовжуємо трішки попередню пісню..)' }, { t: 'song', id: 'a4', k: 'D', v: 'Анна' }],
 });
@@ -48,6 +48,7 @@ http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x'), role = url.searchParams.get('role') || globalThis.role || 'lead';
   if (url.searchParams.get('role')) globalThis.role = url.searchParams.get('role');
   if (url.pathname === '/api/bootstrap') return send(res, 200, { me: { id: 'me', name: 'Тест', isAdmin: false }, songs, services: forRole(globalThis.role || 'lead') });
+  if (url.pathname === '/api/avatar') { if (url.searchParams.get('id') === 'p3') { res.writeHead(404); return res.end('{}'); } res.writeHead(200, { 'Content-Type': 'image/svg+xml' }); return res.end('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#c26"/><circle cx="48" cy="38" r="18" fill="#fff"/></svg>'); }
   if (url.pathname === '/api/song') return setTimeout(() => send(res, 200, songData[url.searchParams.get('id')] || { chords: '', lyrics: [], history: [{ date: '2026-03-01', lead: 'Аня', key: 'D' }] }), 250);
   if (url.pathname === '/api/setlist' && req.method === 'POST') {
     let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => {

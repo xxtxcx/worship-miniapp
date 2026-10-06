@@ -255,7 +255,8 @@ function toClient(svc, ctx, rowsByService) {
     lead: names(svc.leadIds), mine, isLead, canEdit,
   };
   if (!mine && !isAdmin) return out;
-  out.lineup = svc.roles.map((r) => ({ role: r.role, names: names(r.ids), lead: r.role === 'Вокал' ? names(r.ids.filter((i) => svc.leadIds.includes(i))) : [] }))
+  const known = (ids) => ids.filter((i) => people.get(i) && people.get(i).name);
+  out.lineup = svc.roles.map((r) => ({ role: r.role, names: names(r.ids), ids: known(r.ids), lead: r.role === 'Вокал' ? names(r.ids.filter((i) => svc.leadIds.includes(i))) : [] }))
     .filter((r) => r.names.length);
   let published = svc.published;
   if (!published) {
