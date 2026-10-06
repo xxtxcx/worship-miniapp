@@ -160,6 +160,7 @@ var $=function(s){return document.querySelector(s)};
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function linkify(s){return esc(s).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')}
 function fmt(d){var p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}
+function wds(d){return['нд','пн','вт','ср','чт','пт','сб'][new Date(d+'T12:00:00').getDay()]}
 function wd(d){return new Date(d+'T12:00:00').toLocaleDateString('uk-UA',{weekday:'long'})}
 function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 var SHARP=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FLAT=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
@@ -211,7 +212,7 @@ function viewSunday(){
   var svc=mySunday();
   if(!svc){
     if(!S.services.length)return '<div class="pad"><div class="hero"><span class="eyebrow">Найближчий місяць</span><div class="t2">Служінь на найближчі 30 днів ще немає</div><div class="meta">Коли їх додадуть у Notion, вони з\'являться тут.</div></div></div>';
-    return '<div class="pad"><div class="hero"><span class="eyebrow">Найближчий місяць</span><div class="t2">Тебе немає в графіку на цей місяць</div><div class="meta">Познач свої неділі в Notion, і тут з\'явиться склад та сет-лист. Репертуар лишається доступним.</div><div><span class="pill warn"><span class="dot"></span>0 служінь у найближчі 30 днів</span></div></div><button class="btn soft" data-tab="rep">Відкрити репертуар</button></div>'}
+    return '<div class="pad"><div class="hero"><span class="eyebrow">Найближчий місяць</span><div class="t2">Тебе немає в графіку на цей місяць</div><div class="meta">Вчасно проголосуй за свої побажання щодо служіння, і тут з\'явиться склад та сет-лист. Репертуар лишається доступним.</div><div><span class="pill warn"><span class="dot"></span>0 служінь у найближчі 30 днів</span></div></div><button class="btn soft" data-tab="rep">Відкрити репертуар</button></div>'}
   return '<div class="pad">'+serviceBody(svc)+'</div>'}
 
 function viewCal(){
@@ -219,7 +220,7 @@ function viewCal(){
   var head=mine?'<span class="pill"><span class="dot"></span>Ви служите: '+mine+' з '+S.services.length+'</span>':'<span class="pill warn"><span class="dot"></span>Тебе немає в графіку на цей місяць</span>';
   return '<div class="pad"><div>'+head+'</div>'+(S.services.length?'<div class="card"><h2>Найближчі 30 днів</h2><div class="list">'+S.services.map(function(u){var vis=u.mine||S.me.isAdmin;
    var tag=u.isLead?'<span class="pill lead">ви лід</span>':u.mine?'<span class="pill">ви служите</span>':'<span class="rowsub">не в складі</span>';
-   var inner='<span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wd(u.date).slice(0,2)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
+   var inner='<span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
    return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>У Notion на найближчі 30 днів нічого не створено.</div></div>')
    +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div></div>'}
 
