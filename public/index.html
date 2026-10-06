@@ -57,10 +57,11 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .lineup dd{margin:0;display:flex;flex-wrap:wrap;gap:4px 8px}
 .who{font-weight:600;display:inline-flex;align-items:center;gap:6px}
 .ava-wrap{flex:none;display:grid;place-items:center;width:48px}
-.ava.s{width:18px;height:18px;font-size:8px}
+.ava.s{width:22px;height:22px;font-size:9px}
 .ava.l{width:40px;height:40px;font-size:13px}
 .ava.ring{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent);margin:4px}
 .ava.none{background:transparent;border:1.5px dashed var(--line);color:var(--ink2)}
+.rs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px}
 .vline{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--ink)}
 .ava{width:24px;height:24px;border-radius:50%;object-fit:cover;flex:none;background:var(--accent-soft);color:var(--accent);display:inline-grid;place-items:center;font-size:10px;font-weight:700;letter-spacing:0}
 .who.lead{color:var(--accent)}
@@ -255,7 +256,7 @@ function setlistCard(items,svc){
    if(it.t==='mom')return '<div class="row moment"><span class="num"><i class="dotc"></i></span><span class="rowmain"><span class="rowtitle">'+esc(it.x)+'</span></span></div>';
    if(it.t==='note')return '<div class="noterow">'+esc(it.x)+'</div>';
    var s=song(it.id),k=it.k||s.our;n++;
-   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+(it.v?'<span class="vline">'+avatar(personId(svc,it.v),it.v,'s')+esc(it.v)+'</span> · ':'')+esc(s.type)+(k&&s.orig&&k!==s.orig?' · оригінал '+esc(s.orig):'')+(s.dur?' · <span class="dur">'+fmtD(s.dur)+'</span>':'')+'</span></span><span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
+   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub rs">'+(it.v?'<span class="vline" title="'+esc(it.v)+'">'+avatar(personId(svc,it.v),it.v,'s')+'</span>':'')+'<span>'+esc(s.type)+(s.dur?' · <span class="dur">'+fmtD(s.dur)+'</span>':'')+'</span></span></span><span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
 
 function serviceBody(svc){
   var items=svc.canEdit?(svc.draft||[]):(svc.published||[]);
