@@ -256,7 +256,7 @@ function setlistCard(items,svc){
    if(it.t==='mom')return '<div class="row moment"><span class="num"><i class="dotc"></i></span><span class="rowmain"><span class="rowtitle">'+esc(it.x)+'</span></span></div>';
    if(it.t==='note')return '<div class="noterow">'+esc(it.x)+'</div>';
    var s=song(it.id),k=it.k||s.our;n++;
-   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub rs">'+(it.v?'<span class="vline" title="'+esc(it.v)+'">'+avatar(personId(svc,it.v),it.v,'s')+'</span>':'')+'<span>'+esc(s.type)+(s.dur?' · <span class="dur">'+fmtD(s.dur)+'</span>':'')+'</span></span></span><span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
+   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span></span>'+(it.v?'<span class="vline" title="'+esc(it.v)+'">'+avatar(personId(svc,it.v),it.v)+'</span>':'')+'<span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
 
 function serviceBody(svc){
   var items=svc.canEdit?(svc.draft||[]):(svc.published||[]);
