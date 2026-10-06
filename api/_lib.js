@@ -170,6 +170,8 @@ function loadSongs() {
         related: text(p["Зв'язки"]),
         notes: text(p['Нотатки']),
         dur: parseDur(text(p['Тривалість'])),
+        bpm: (p.BPM && p.BPM.number) || 0,
+        meter: text(p['Розмір']).trim(),
         hasChords: text(p['Акорди']).trim().length > 0,
       };
     });

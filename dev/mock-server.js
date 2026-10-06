@@ -3,8 +3,9 @@
    ?role=lead|member|none змінює, ким ви себе вважаєте. Дані вигадані на основі репертуару. */
 const http = require('http'), fs = require('fs'), path = require('path');
 const PORT = process.env.PORT || 3000;
+const META = { a1: [147, '4/4'], a2: [72, '4/4'], a5: [131, '4/4'] };
 const DUR = { a1: 280, a2: 290, a3: 310, a4: 360, a5: 260, a6: 285 };
-const mk = (id, title, type, orig, our, n, extra = {}) => ({ dur: DUR[id] || 0, id, title, type, status: 'Активна', orig, our, n, keysBy: '', mt: '', yt: '', reh: '', gtr: '', vit: '', links: '', related: '', notes: '', hasChords: false, ...extra });
+const mk = (id, title, type, orig, our, n, extra = {}) => ({ dur: DUR[id] || 0, bpm: (META[id] || [0])[0], meter: (META[id] || [0, ''])[1], id, title, type, status: 'Активна', orig, our, n, keysBy: '', mt: '', yt: '', reh: '', gtr: '', vit: '', links: '', related: '', notes: '', hasChords: false, ...extra });
 const songs = [
   mk('a1', 'Just Want You', 'Прославлення', 'D', 'D', 18, { mt: 'https://www.multitracks.com/songs/Equippers-Revolution/Truth/Just-Want-You/' }),
   mk('a2', 'None Like You', 'Прославлення', 'C', 'C', 11),

@@ -302,7 +302,7 @@ function viewRep(){
 
 function songLayer(L){
   var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
-  var kb='<div class="kbox hi"><span>У сеті</span><b>'+esc(k||'–')+'</b></div>'+(s.orig?'<div class="kbox"><span>Оригінал</span><b>'+esc(s.orig)+'</b></div>':'')+(s.dur?'<div class="kbox"><span>Тривалість</span><b>'+fmtD(s.dur)+'</b></div>':'')+(s.keysBy?'<div class="kbox"><span>По вокалістках</span><b style="font-size:13px">'+esc(s.keysBy)+'</b></div>':'');
+  var kb='<div class="kbox hi"><span>У сеті</span><b>'+esc(k||'–')+'</b></div>'+(s.orig?'<div class="kbox"><span>Оригінал</span><b>'+esc(s.orig)+'</b></div>':'')+((s.bpm||s.meter)?'<div class="kbox"><span>'+(s.bpm&&s.meter?'Темп · розмір':s.bpm?'Темп':'Розмір')+'</span><b>'+(s.bpm?s.bpm+' BPM':'')+(s.bpm&&s.meter?' · ':'')+esc(s.meter)+'</b></div>':'')+(s.dur?'<div class="kbox"><span>Тривалість</span><b>'+fmtD(s.dur)+'</b></div>':'')+(s.keysBy?'<div class="kbox"><span>По вокалістках</span><b style="font-size:13px">'+esc(s.keysBy)+'</b></div>':'');
   var body;
   if(!d&&!L.err)body='<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
   else if(L.err)body='<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(L.err)+'</div></div></div>';
