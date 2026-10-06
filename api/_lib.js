@@ -118,6 +118,33 @@ function noteKey(s) {
   return m ? m[1] + m[2] + m[3] : '';
 }
 
+// «4:35» або «1:02:10» → секунди; порожнє чи незрозуміле → 0
+function parseDur(str) {
+  const m = /^\s*(?:(\d+):)?(\d{1,2}):(\d{2})\s*$/.exec(str || '');
+  return m ? (Number(m[1] || 0) * 3600 + Number(m[2]) * 60 + Number(m[3])) : 0;
+}
+
+// Елементи сет-листа: пісня {t:'song',id,k,v}, пункт {t:'mom',x}, коментар {t:'note',x}.
+// Старий формат {id,k} читається як пісня. З known (Set id пісень) невідомі пісні відкидаються.
+function cleanItems(items, known) {
+  const out = [];
+  for (const x of Array.isArray(items) ? items : []) {
+    if (!x || typeof x !== 'object') continue;
+    if (x.t === 'mom' || x.t === 'note') {
+      const t = String(x.x || '').trim().slice(0, 200);
+      if (t) out.push({ t: x.t, x: t });
+      continue;
+    }
+    const id = nid(String(x.id || ''));
+    if (known ? !known.has(id) : !id) continue;
+    const it = { t: 'song', id, k: String(x.k || '').slice(0, 4) };
+    const v = String(x.v || '').trim().slice(0, 60);
+    if (v) it.v = v;
+    out.push(it);
+  }
+  return out;
+}
+
 function loadSongs() {
   return cached('songs', 2 * 60e3, async () => {
     const pages = await queryAll(DB.songs);
@@ -142,6 +169,7 @@ function loadSongs() {
         links: text(p['Інші лінки']),
         related: text(p["Зв'язки"]),
         notes: text(p['Нотатки']),
+        dur: parseDur(text(p['Тривалість'])),
         hasChords: text(p['Акорди']).trim().length > 0,
       };
     });
@@ -232,11 +260,12 @@ function toClient(svc, ctx, rowsByService) {
   let published = svc.published;
   if (!published) {
     const rows = (rowsByService.get(svc.id) || []).slice().sort((a, b) => a.created.localeCompare(b.created));
-    published = rows.length ? rows.map((r) => ({ id: r.song, k: r.key })) : null;
+    published = rows.length ? rows.map((r) => ({ t: 'song', id: r.song, k: r.key, v: names(r.leads)[0] || '' })) : null;
   }
-  out.published = published || [];
+  out.vocalists = [...new Set([...names(svc.leadIds), ...names((svc.roles.find((r) => r.role === 'Вокал') || { ids: [] }).ids)])];
+  out.published = cleanItems(published);
   if (canEdit) {
-    out.draft = svc.draft || out.published;
+    out.draft = svc.draft ? cleanItems(svc.draft) : out.published;
     out.hasChanges = JSON.stringify(out.draft) !== JSON.stringify(out.published);
   }
   return out;
@@ -251,5 +280,5 @@ const groupBy = (arr, f) => {
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
   verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadWindow, loadServicesLite,
-  currentPerson, toClient, groupBy, noteKey,
+  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems,
 };

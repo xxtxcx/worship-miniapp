@@ -125,8 +125,25 @@ button.row:active{background:var(--surface2)}
 .add{border:0;background:var(--accent-soft);color:var(--accent);width:34px;height:34px;border-radius:10px;font-weight:700;font-size:18px}
 .add.done{background:var(--surface2);color:var(--ok)}
 .sel{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;padding:6px;font-family:var(--font-mono);font-weight:700}
-.mv{display:flex;flex-direction:column;gap:3px}
-.mv button{border:1px solid var(--line);background:var(--surface2);border-radius:6px;width:28px;height:22px;line-height:1;font-size:11px;padding:0}
+.grip{flex:none;width:26px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--ink2);cursor:grab;touch-action:none;user-select:none;font-size:18px;letter-spacing:-2px}
+.row.dragging{opacity:.45}
+.row.dropb{box-shadow:inset 0 2px 0 var(--accent)}
+.row.dropa{box-shadow:inset 0 -2px 0 var(--accent)}
+.layer[data-layer=build] .row{flex-wrap:wrap}
+.layer[data-layer=build] .row .rowmain{flex:1 1 90px}
+.row.moment .rowtitle{font-weight:500}
+.dotc{display:inline-block;width:9px;height:9px;border:2px solid var(--ink2);border-radius:50%}
+.noterow{padding:6px 16px 8px 46px;font-size:13.5px;color:var(--ink2);font-style:italic;overflow-wrap:anywhere}
+.voc{font-weight:500;color:var(--ink2)}
+.dur{font-family:var(--font-mono);font-size:12px}
+.sumline{display:flex;align-items:center;gap:8px;padding:14px 16px 4px}
+.sumline h2{padding:0}
+.sumline .iconbtn{width:30px;height:30px;margin-right:auto}
+.sumline .tot{font-family:var(--font-mono);font-size:12.5px;color:var(--ink2);text-align:right}
+.txt{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit}
+.sel.v{font-family:inherit;font-weight:500;flex:0 0 calc(100% - 38px);margin-left:38px;padding:8px 10px}
+.addrow{display:flex;gap:8px;flex-wrap:wrap}
+.addrow .btn{flex:1;min-width:100px;padding:11px 10px;font-size:14px}
 .rm{border:0;background:transparent;color:var(--ink2);font-size:18px;width:30px;height:30px}
 .toast{position:absolute;left:16px;right:16px;bottom:78px;background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:12px;font-weight:600;z-index:20;font-size:14px}
 </style>
@@ -162,6 +179,14 @@ function linkify(s){return esc(s).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" 
 function fmt(d){var p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}
 function wds(d){return['нд','пн','вт','ср','чт','пт','сб'][new Date(d+'T12:00:00').getDay()]}
 function wd(d){return new Date(d+'T12:00:00').toLocaleDateString('uk-UA',{weekday:'long'})}
+function fmtD(n){return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2)}
+var ICON_COPY='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
+function stats(items){var n=0,sum=0,unk=0;items.forEach(function(x){if(x.t!=='song')return;n++;var d=song(x.id).dur;if(d)sum+=d;else unk++});return{n:n,sum:sum,unk:unk}}
+function totText(st){return st.n+' '+(st.n===1?'пісня':st.n<5?'пісні':'пісень')+(st.sum?' · ≈'+Math.round(st.sum/60)+' хв':'')}
+function listText(items){var n=0;return items.map(function(it){if(it.t!=='song')return it.x;n++;var s=song(it.id),k=it.k||s.our;return n+'. '+s.title+(k?' '+k:'')+(it.v?' - '+it.v:'')}).join('\n')}
+function copyItems(items){var txt=listText(items);function fb(){var a=document.createElement('textarea');a.value=txt;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();toast('Сет-лист скопійовано')}
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){toast('Сет-лист скопійовано')},fb);else fb()}
+function defVoc(svc){var l=(svc.lead||[])[0];return l&&(svc.vocalists||[]).indexOf(l)>-1?l:''}
 function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 var SHARP=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FLAT=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 var ROOTS=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
@@ -196,8 +221,12 @@ function mySunday(){var m=S.services.filter(function(s){return s.mine});if(m.len
 /* ---------- Екрани ---------- */
 function setlistCard(items,svc){
   if(!items.length)return '<div class="card"><h2>Сет-лист</h2><div class="empty"><b>Сет-лист порожній</b>'+(svc.canEdit?'Натисніть «Редагувати», щоб додати пісні.':'Лід ще не опублікував список на це служіння.')+'</div></div>';
-  return '<div class="card"><h2>Сет-лист</h2><div class="list">'+items.map(function(it,i){var s=song(it.id),k=it.k||s.our;
-   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+(i+1)+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type)+(k&&s.orig&&k!==s.orig?' · оригінал '+esc(s.orig):'')+'</span></span><span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
+  var st=stats(items),n=0;
+  return '<div class="card"><div class="sumline"><h2>Сет-лист</h2><button class="iconbtn" data-copy="'+svc.id+'" aria-label="Скопіювати текстом" title="Скопіювати текстом">'+ICON_COPY+'</button><span class="tot">'+totText(st)+(st.unk&&st.sum?'<br>без тривалості: '+st.unk:'')+'</span></div><div class="list">'+items.map(function(it){
+   if(it.t==='mom')return '<div class="row moment"><span class="num"><i class="dotc"></i></span><span class="rowmain"><span class="rowtitle">'+esc(it.x)+'</span></span></div>';
+   if(it.t==='note')return '<div class="noterow">'+esc(it.x)+'</div>';
+   var s=song(it.id),k=it.k||s.our;n++;
+   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+(it.v?' <span class="voc">('+esc(it.v)+')</span>':'')+'</span><br><span class="rowsub">'+esc(s.type)+(k&&s.orig&&k!==s.orig?' · оригінал '+esc(s.orig):'')+(s.dur?' · <span class="dur">'+fmtD(s.dur)+'</span>':'')+'</span></span><span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
 
 function serviceBody(svc){
   var items=svc.canEdit?(svc.draft||[]):(svc.published||[]);
@@ -233,11 +262,11 @@ function filtered(){
 function filterBars(){return '<div class="search"><input id="q" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"></div><div class="chips">'+['Усі','Прославлення','Поклоніння','Вчимо'].map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
 function viewRep(){
   var list=filtered();
-  return filterBars()+'<div class="pad"><div class="card"><div class="list">'+(list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+s.n+'× у сет-листах'+(s.status==='Вчимо'?' · вчимо':'')+(s.hasChords?' · є акорди':'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div>'}
+  return filterBars()+'<div class="pad"><div class="card"><div class="list">'+(list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+s.n+'× у сет-листах'+(s.status==='Вчимо'?' · вчимо':'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div>'}
 
 function songLayer(L){
   var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
-  var kb='<div class="kbox hi"><span>У сеті</span><b>'+esc(k||'–')+'</b></div>'+(s.orig?'<div class="kbox"><span>Оригінал</span><b>'+esc(s.orig)+'</b></div>':'')+(s.keysBy?'<div class="kbox"><span>По вокалістках</span><b style="font-size:13px">'+esc(s.keysBy)+'</b></div>':'');
+  var kb='<div class="kbox hi"><span>У сеті</span><b>'+esc(k||'–')+'</b></div>'+(s.orig?'<div class="kbox"><span>Оригінал</span><b>'+esc(s.orig)+'</b></div>':'')+(s.dur?'<div class="kbox"><span>Тривалість</span><b>'+fmtD(s.dur)+'</b></div>':'')+(s.keysBy?'<div class="kbox"><span>По вокалістках</span><b style="font-size:13px">'+esc(s.keysBy)+'</b></div>':'');
   var body;
   if(!d&&!L.err)body='<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
   else if(L.err)body='<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(L.err)+'</div></div></div>';
@@ -267,18 +296,24 @@ function serviceLayer(L){var svc=svcById(L.id);if(!svc)return '';
   return '<div class="layer"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">'+fmt(svc.date)+' · '+esc(svc.type||'Служіння')+'</div></div><div class="screen"><div class="pad">'+serviceBody(svc)+'</div></div></div>'}
 
 function builderLayer(){
-  var e=S.edit,svc=svcById(e.id),d=e.items,keyOpts=function(s,cur){var m=minor(s.our||s.orig),all=ROOTS.map(function(r){return r+(m?'m':'')});if(cur&&all.indexOf(cur)<0)all.unshift(cur);return all.map(function(k){return '<option'+(k===cur?' selected':'')+'>'+k+'</option>'}).join('')};
-  return '<div class="layer"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">Сет-лист · '+fmt(svc.date)+'</div></div><div class="screen"><div class="pad">'
-  +(d.length?'<div class="card"><div class="list">'+d.map(function(it,i){var s=song(it.id);
-    return '<div class="row"><div class="mv"><button data-mv="'+i+'" data-d="-1" aria-label="Вище">▲</button><button data-mv="'+i+'" data-d="1" aria-label="Нижче">▼</button></div><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">оригінал '+esc(s.orig||'–')+'</span></span><select class="sel" data-key="'+i+'" aria-label="Тональність">'+keyOpts(s,it.k)+'</select><button class="rm" data-rm="'+i+'" aria-label="Прибрати">✕</button></div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Поки порожньо</b>Додайте першу пісню.</div></div>')
-  +'<button class="btn soft wide" data-act="pick">+ Додати пісню</button><div class="note">Тональність можна змінити лише для цього служіння. Оригінал пісні не міняється.</div></div></div>'
-  +'<div class="lfoot"><button class="btn ghost" data-act="saveDraft"'+(S.busy?' disabled':'')+'>Зберегти чернетку</button><button class="btn" data-act="publish"'+(d.length&&!S.busy?'':' disabled')+'>'+(S.busy?'Зберігаю…':'Опублікувати')+'</button></div></div>'}
+  var e=S.edit,svc=svcById(e.id),d=e.items,st=stats(d),voc=svc.vocalists||[];
+  var keyOpts=function(s,cur){var m=minor(s.our||s.orig),all=ROOTS.map(function(r){return r+(m?'m':'')});if(cur&&all.indexOf(cur)<0)all.unshift(cur);return all.map(function(k){return '<option'+(k===cur?' selected':'')+'>'+k+'</option>'}).join('')};
+  var vocOpts=function(cur){var l=voc.slice();if(cur&&l.indexOf(cur)<0)l.push(cur);return '<option value="">Вокаліст…</option>'+l.map(function(v){return '<option'+(v===cur?' selected':'')+'>'+esc(v)+'</option>'}).join('')};
+  var grip=function(i){return '<span class="grip" data-grip="'+i+'" aria-label="Перетягнути">⋮⋮</span>'};
+  return '<div class="layer" data-layer="build"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">Сет-лист · '+fmt(svc.date)+'</div><button class="iconbtn" data-copy="edit" aria-label="Скопіювати текстом" title="Скопіювати текстом">'+ICON_COPY+'</button></div><div class="screen"><div class="pad">'
+  +(d.length?'<div class="card"><div class="sumline"><h2>'+totText(st)+'</h2><span class="tot" style="margin-left:auto">'+(st.unk?(st.sum?'без тривалості: '+st.unk:'тривалості не вказано'):'')+'</span></div><div class="list">'+d.map(function(it,i){
+    if(it.t!=='song')return '<div class="row" data-i="'+i+'">'+grip(i)+'<input class="txt" data-txt="'+i+'" value="'+esc(it.x)+'" placeholder="'+(it.t==='mom'?'Пункт, напр. Молитва':'Коментар')+'" style="'+(it.t==='note'?'font-style:italic':'font-weight:600')+'" aria-label="'+(it.t==='mom'?'Назва пункту':'Коментар')+'"><button class="rm" data-rm="'+i+'" aria-label="Прибрати">✕</button></div>';
+    var s=song(it.id);
+    return '<div class="row" data-i="'+i+'">'+grip(i)+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">оригінал '+esc(s.orig||'–')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><select class="sel" data-key="'+i+'" aria-label="Тональність">'+keyOpts(s,it.k)+'</select><button class="rm" data-rm="'+i+'" aria-label="Прибрати">✕</button><select class="sel v" data-voc="'+i+'" aria-label="Вокаліст">'+vocOpts(it.v)+'</select></div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Поки порожньо</b>Додайте першу пісню.</div></div>')
+  +'<div class="addrow"><button class="btn soft" data-act="pick">+ Пісня</button><button class="btn ghost" data-addmom>+ Пункт</button><button class="btn ghost" data-addnote>+ Коментар</button></div>'
+  +'<div class="note">Тягніть рядки за ⋮⋮, щоб змінити порядок. Пункт це окремий момент без пісні («Біг інтро», «Молитва»), коментар це підказка між рядками. Тональність і вокаліст змінюються лише для цього служіння.</div></div></div>'
+  +'<div class="lfoot"><button class="btn ghost" data-act="saveDraft"'+(S.busy?' disabled':'')+'>Зберегти чернетку</button><button class="btn" data-act="publish"'+(st.n&&!S.busy?'':' disabled')+'>'+(S.busy?'Зберігаю…':'Опублікувати')+'</button></div></div>'}
 
 function pickerLayer(){
-  var list=filtered(),inn={};S.edit.items.forEach(function(x){inn[x.id]=1});
+  var list=filtered(),inn={};S.edit.items.forEach(function(x){if(x.t==='song')inn[x.id]=1});
   return '<div class="layer sheet"><div class="lhead"><button class="iconbtn" data-back aria-label="Закрити">✕</button><div class="t">Додати пісню</div></div>'+filterBars()
   +'<div class="screen"><div class="pad"><div class="card"><div class="list">'+list.map(function(s){
-    return '<div class="row"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Вже в списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+'</div></div></div></div></div>'}
+    return '<div class="row"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×'+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Вже в списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+'</div></div></div></div></div>'}
 
 function render(){
   var app=$('#app');
@@ -322,12 +357,25 @@ document.addEventListener('click',function(e){
   if(d.act==='pick'){S.q='';S.f='Усі';S.stack.push({type:'pick'});render();return}
   if(d.act==='saveDraft'){saveSetlist(false);return}
   if(d.act==='publish'){saveSetlist(true);return}
-  if(d.add){if(!S.edit.items.some(function(x){return x.id===d.add}))S.edit.items.push({id:d.add,k:song(d.add).our});render();return}
+  if(d.copy){copyItems(d.copy==='edit'?S.edit.items:(function(){var v=svcById(d.copy);return v.canEdit?(v.draft||[]):(v.published||[])})());return}
+  if('addmom' in d){S.edit.items.push({t:'mom',x:'Молитва'});render();return}
+  if('addnote' in d){S.edit.items.push({t:'note',x:'(коментар)'});render();return}
+  if(d.add){if(!S.edit.items.some(function(x){return x.t==='song'&&x.id===d.add}))S.edit.items.push({t:'song',id:d.add,k:song(d.add).our,v:defVoc(svcById(S.edit.id))});render();return}
   if(d.rm!==undefined){S.edit.items.splice(+d.rm,1);render();return}
-  if(d.mv!==undefined){var i=+d.mv,j=i+(+d.d),a=S.edit.items;if(j>=0&&j<a.length){var x=a[i];a[i]=a[j];a[j]=x}render();return}
 });
-document.addEventListener('change',function(e){var t=e.target;if(t.tagName==='SELECT'&&t.dataset.key!==undefined){S.edit.items[+t.dataset.key].k=t.value;render()}});
-document.addEventListener('input',function(e){if(e.target.id==='q'){S.q=e.target.value;S.focusQ=true;render();S.focusQ=false}});
+document.addEventListener('change',function(e){var t=e.target;if(t.tagName!=='SELECT')return;
+  if(t.dataset.key!==undefined){S.edit.items[+t.dataset.key].k=t.value;render()}
+  else if(t.dataset.voc!==undefined){S.edit.items[+t.dataset.voc].v=t.value;render()}});
+(function(){var drag=null;
+  function rows(){return Array.prototype.slice.call(document.querySelectorAll('.layer[data-layer="build"] .row[data-i]'))}
+  function clear(){rows().forEach(function(r){r.classList.remove('dropb','dropa')})}
+  function target(y){var rs=rows();for(var k=0;k<rs.length;k++){var b=rs[k].getBoundingClientRect();if(y<b.top+b.height/2)return{i:k,after:false}}return{i:rs.length-1,after:true}}
+  document.addEventListener('pointerdown',function(e){var g=e.target.closest&&e.target.closest('[data-grip]');if(!g)return;e.preventDefault();drag={i:+g.dataset.grip,to:null};g.setPointerCapture(e.pointerId);g.closest('.row').classList.add('dragging')});
+  document.addEventListener('pointermove',function(e){if(!drag)return;var t=target(e.clientY);clear();drag.to=t;var r=rows()[t.i];if(r)r.classList.add(t.after?'dropa':'dropb')});
+  function end(){if(!drag)return;var d=drag;drag=null;clear();rows().forEach(function(r){r.classList.remove('dragging')});if(!d.to)return;var to=d.to.i+(d.to.after?1:0),a=S.edit.items,it=a.splice(d.i,1)[0];if(to>d.i)to--;a.splice(to,0,it);render()}
+  document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end)})();
+document.addEventListener('input',function(e){if(e.target.dataset&&e.target.dataset.txt!==undefined){S.edit.items[+e.target.dataset.txt].x=e.target.value;return}
+  if(e.target.id==='q'){S.q=e.target.value;S.focusQ=true;render();S.focusQ=false}});
 if(tg&&tg.BackButton)tg.BackButton.onClick(goBack);
 
 /* ---------- Старт ---------- */

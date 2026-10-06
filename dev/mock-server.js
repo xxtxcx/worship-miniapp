@@ -3,7 +3,8 @@
    ?role=lead|member|none змінює, ким ви себе вважаєте. Дані вигадані на основі репертуару. */
 const http = require('http'), fs = require('fs'), path = require('path');
 const PORT = process.env.PORT || 3000;
-const mk = (id, title, type, orig, our, n, extra = {}) => ({ id, title, type, status: 'Активна', orig, our, n, keysBy: '', mt: '', yt: '', reh: '', gtr: '', vit: '', links: '', related: '', notes: '', hasChords: false, ...extra });
+const DUR = { a1: 280, a2: 290, a3: 310, a4: 360, a5: 260, a6: 285 };
+const mk = (id, title, type, orig, our, n, extra = {}) => ({ dur: DUR[id] || 0, id, title, type, status: 'Активна', orig, our, n, keysBy: '', mt: '', yt: '', reh: '', gtr: '', vit: '', links: '', related: '', notes: '', hasChords: false, ...extra });
 const songs = [
   mk('a1', 'Just Want You', 'Прославлення', 'D', 'D', 18, { mt: 'https://www.multitracks.com/songs/Equippers-Revolution/Truth/Just-Want-You/' }),
   mk('a2', 'None Like You', 'Прославлення', 'C', 'C', 11),
@@ -29,7 +30,8 @@ const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 const svc = (id, n, leadName, mine) => ({
   id, date: day(n), name: 'Молодіжка', type: 'Молодіжка', lead: leadName ? [leadName] : [], mine, isLead: false, canEdit: false,
   lineup: [{ role: 'Вокал', names: ['Аня', 'Наталя', 'Артур'], lead: leadName ? [leadName] : [] }, { role: 'Барабани', names: ['Єгор'], lead: [] }, { role: 'Бас', names: ['Андрій'], lead: [] }, { role: 'Клавіші', names: ['Настя'], lead: [] }],
-  published: [{ id: 'a1', k: 'D' }, { id: 'a3', k: 'D' }, { id: 'a4', k: 'D' }],
+  vocalists: ['Наталя', 'Аня', 'Анна', 'Артур'],
+  published: [{ t: 'mom', x: 'Біг інтро' }, { t: 'song', id: 'a1', k: 'D', v: 'Аня' }, { t: 'note', x: '(None like you під час привітання)' }, { t: 'song', id: 'a2', k: 'C', v: 'Наталя' }, { t: 'mom', x: 'Молитва' }, { t: 'note', x: '(продовжуємо трішки попередню пісню..)' }, { t: 'song', id: 'a4', k: 'D', v: 'Анна' }],
 });
 const state = { services: [svc('s1', 5, 'Наталя', true), svc('s2', 12, null, true), svc('s3', 19, null, false)] };
 function forRole(role) {

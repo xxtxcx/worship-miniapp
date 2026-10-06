@@ -34,4 +34,13 @@ const outsider = L.toClient(svc, { me: people.get('p3'), people, isAdmin: false 
 assert(!outsider.mine && !outsider.lineup && !outsider.published && !outsider.draft, 'outsider sees no details');
 const admin = L.toClient(svc, { me: people.get('p3'), people, isAdmin: true }, rows);
 assert(admin.canEdit && admin.draft, 'admin can edit');
+
+// Тривалість і елементи сет-листа
+assert.strictEqual(L.parseDur('4:35'), 275); assert.strictEqual(L.parseDur(' 6:05 '), 365); assert.strictEqual(L.parseDur('1:02:10'), 3730);
+assert.strictEqual(L.parseDur(''), 0); assert.strictEqual(L.parseDur('4,5'), 0); assert.strictEqual(L.parseDur('4:5'), 0);
+const known = new Set(['aaa']);
+const ci = L.cleanItems([{ id: 'aaa', k: 'C' }, { t: 'song', id: 'aaa', k: 'Eb', v: ' Аня ' }, { id: 'zzz', k: 'D' }, { t: 'mom', x: ' Молитва ' }, { t: 'note', x: '' }, { t: 'note', x: '(коментар)' }, { t: 'bad', x: 'x' }, null], known);
+assert.deepStrictEqual(ci, [{ t: 'song', id: 'aaa', k: 'C' }, { t: 'song', id: 'aaa', k: 'Eb', v: 'Аня' }, { t: 'mom', x: 'Молитва' }, { t: 'note', x: '(коментар)' }], 'cleanItems');
+assert.deepStrictEqual(lead.vocalists, ['Наталя', 'Аня'], 'vocalists');
+assert.strictEqual(lead.draft[0].t, 'song', 'legacy item normalized');
 console.log('all tests passed');
