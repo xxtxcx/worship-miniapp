@@ -261,15 +261,19 @@ function viewCal(){
    +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div></div>'}
 
 function sortBar(){return '<div class="chips sort" role="group" aria-label="Сортування">'+[['az','А–Я'],['za','Я–А'],['most','Найчастіше'],['least','Найрідше']].map(function(x){return '<button data-sort="'+x[0]+'" aria-pressed="'+(S.sort===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'}
+function chipList(){
+  var t=[],st=[];S.songs.forEach(function(x){if(x.type&&t.indexOf(x.type)<0)t.push(x.type);if(x.status&&x.status!=='Активна'&&x.status!=='Архів'&&st.indexOf(x.status)<0)st.push(x.status)});
+  var pri=['Прославлення','Поклоніння'];t.sort(function(a,b){var i=pri.indexOf(a),j=pri.indexOf(b);return(i<0?9:i)-(j<0?9:j)||a.localeCompare(b,'uk')});
+  return ['Усі'].concat(t,st)}
 function filtered(){
   var q=S.q.toLowerCase(),f=S.f;
   var l=S.songs.filter(function(s){return(f==='Усі'||s.type===f||s.status===f)&&s.title.toLowerCase().indexOf(q)>-1});
   var cmp={az:function(a,b){return a.title.localeCompare(b.title,'en')},za:function(a,b){return b.title.localeCompare(a.title,'en')},most:function(a,b){return b.n-a.n||a.title.localeCompare(b.title,'en')},least:function(a,b){return a.n-b.n||a.title.localeCompare(b.title,'en')}}[S.sort];
   return l.sort(cmp)}
-function filterBars(){return '<div class="search"><input id="q" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"></div><div class="chips">'+['Усі','Прославлення','Поклоніння','Вчимо'].map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
+function filterBars(){return '<div class="search"><input id="q" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"></div><div class="chips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
 function viewRep(){
   var list=filtered();
-  return filterBars()+'<div class="pad"><div class="card"><div class="list">'+(list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+s.n+'× у сет-листах'+(s.status==='Вчимо'?' · вчимо':'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div>'}
+  return filterBars()+'<div class="pad"><div class="card"><div class="list">'+(list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+s.n+'× у сет-листах'+(s.status&&s.status!=='Активна'?' · '+esc(s.status.toLowerCase()):'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div>'}
 
 function songLayer(L){
   var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
@@ -322,7 +326,7 @@ function pickerLayer(){
   var sorts=[['az','А–Я'],['za','Я–А'],['most','Часті'],['least','Рідкі']];
   return '<div class="layer sheet" data-layer="pick"><div class="lhead"><button class="iconbtn" data-back aria-label="Закрити">✕</button><div class="t">Додати пісню</div></div>'
   +'<div class="pbar"><input id="pq" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"><select class="psort" data-psort aria-label="Сортування">'+sorts.map(function(x){return '<option value="'+x[0]+'"'+(S.sort===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></div>'
-  +'<div class="chips pchips">'+['Усі','Прославлення','Поклоніння','Вчимо'].map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'
+  +'<div class="chips pchips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'
   +(n?'<div class="picked"><b>У списку:</b> '+names.map(esc).join(', ')+'</div>':'')
   +'<div class="screen" id="pscreen"><div class="pad" style="padding-bottom:88px"><div class="card"><div class="list">'+list.map(function(s){
     return '<div class="row"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×'+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Прибрати зі списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+(list.length?'':'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div></div>'
