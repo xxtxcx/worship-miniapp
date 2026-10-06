@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
     const byService = L.groupBy(rows, (r) => r.service);
     res.status(200).json({
       me: { id: ctx.me.id, name: ctx.me.name, isAdmin: ctx.isAdmin },
-      songs: songs.filter((s) => s.status !== 'Архів').map((s) => ({ ...s, n: counts.get(s.id) || 0 })),
+      songs: songs.map((s) => ({ ...s, n: counts.get(s.id) || 0 })),
       services: window.map((s) => L.toClient(s, ctx, byService)),
     });
   } catch (e) {

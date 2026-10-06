@@ -262,12 +262,13 @@ function viewCal(){
 
 function sortBar(){return '<div class="chips sort" role="group" aria-label="Сортування">'+[['az','А–Я'],['za','Я–А'],['most','Найчастіше'],['least','Найрідше']].map(function(x){return '<button data-sort="'+x[0]+'" aria-pressed="'+(S.sort===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'}
 function chipList(){
-  var t=[],st=[];S.songs.forEach(function(x){if(x.type&&t.indexOf(x.type)<0)t.push(x.type);if(x.status&&x.status!=='Активна'&&x.status!=='Архів'&&st.indexOf(x.status)<0)st.push(x.status)});
+  var t=[],st=[];S.songs.forEach(function(x){if(x.type&&t.indexOf(x.type)<0)t.push(x.type);if(x.status&&x.status!=='Активна'&&st.indexOf(x.status)<0)st.push(x.status)});
   var pri=['Прославлення','Поклоніння'];t.sort(function(a,b){var i=pri.indexOf(a),j=pri.indexOf(b);return(i<0?9:i)-(j<0?9:j)||a.localeCompare(b,'uk')});
+  st.sort(function(a,b){return(a==='Архів')-(b==='Архів')});
   return ['Усі'].concat(t,st)}
 function filtered(){
   var q=S.q.toLowerCase(),f=S.f;
-  var l=S.songs.filter(function(s){return(f==='Усі'||s.type===f||s.status===f)&&s.title.toLowerCase().indexOf(q)>-1});
+  var l=S.songs.filter(function(s){return(f==='Усі'?s.status!=='Архів':(s.type===f||s.status===f))&&s.title.toLowerCase().indexOf(q)>-1});
   var cmp={az:function(a,b){return a.title.localeCompare(b.title,'en')},za:function(a,b){return b.title.localeCompare(a.title,'en')},most:function(a,b){return b.n-a.n||a.title.localeCompare(b.title,'en')},least:function(a,b){return a.n-b.n||a.title.localeCompare(b.title,'en')}}[S.sort];
   return l.sort(cmp)}
 function filterBars(){return '<div class="search"><input id="q" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"></div><div class="chips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
