@@ -214,9 +214,18 @@ function fmtD(n){return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2)}
 var ICON_COPY='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
 function stats(items){var n=0,sum=0,unk=0;items.forEach(function(x){if(x.t!=='song')return;n++;var d=song(x.id).dur;if(d)sum+=d;else unk++});return{n:n,sum:sum,unk:unk}}
 function totText(st){return st.n+' '+(st.n===1?'пісня':st.n<5?'пісні':'пісень')+(st.sum?' · ≈'+Math.round(st.sum/60)+' хв':'')}
-function listText(items){var n=0;return items.map(function(it){if(it.t!=='song')return it.x;n++;var s=song(it.id),k=it.k||s.our;return n+'. '+s.title+(k?' '+k:'')+(it.v?' - '+it.v:'')}).join('\n')}
-function copyItems(items){var txt=listText(items);function fb(){var a=document.createElement('textarea');a.value=txt;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();toast('Сет-лист скопійовано')}
- if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){toast('Сет-лист скопійовано')},fb);else fb()}
+function ytUrl(u){
+  try{var x=new URL(u),id=x.hostname==='youtu.be'?x.pathname.slice(1):x.searchParams.get('v');if(!id)return u;
+   var t=(x.searchParams.get('t')||'').replace(/s$/,'');return 'https://youtu.be/'+id+(/^\d+$/.test(t)&&t!=='0'?'?t='+t:'')}catch(e){return u}}
+function lineParts(items){var n=0;return items.map(function(it){if(it.t!=='song')return{pre:'',title:it.x,post:'',url:''};n++;var s=song(it.id),k=it.k||s.our;return{pre:n+'. ',title:s.title,post:(k?' '+k:'')+(it.v?' - '+it.v:''),url:s.yt?ytUrl(s.yt):''}})}
+function listText(items){return lineParts(items).map(function(l){return l.pre+l.title+l.post}).join('\n')}
+function listHtml(items){return lineParts(items).map(function(l){return esc(l.pre)+(l.url?'<a href="'+esc(l.url)+'">'+esc(l.title)+'</a>':esc(l.title))+esc(l.post)}).join('<br>')}
+function copyItems(items){var txt=listText(items),html=listHtml(items),links=lineParts(items).some(function(l){return l.url});
+ function plain(){var a=document.createElement('textarea');a.value=txt;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();toast('Сет-лист скопійовано'+(links?' (без посилань)':''))}
+ function plainApi(){if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){toast('Сет-лист скопійовано'+(links?' (без посилань)':''))},plain);else plain()}
+ if(links&&window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
+  navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([txt],{type:'text/plain'})})]).then(function(){toast('Сет-лист скопійовано з посиланнями')},plainApi)}
+ else plainApi()}
 function defVoc(svc){var l=(svc.lead||[])[0];return l&&(svc.vocalists||[]).indexOf(l)>-1?l:''}
 function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 var SHARP=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FLAT=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
