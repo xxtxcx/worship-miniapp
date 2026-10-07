@@ -43,4 +43,8 @@ const ci = L.cleanItems([{ id: 'aaa', k: 'C' }, { t: 'song', id: 'aaa', k: 'Eb',
 assert.deepStrictEqual(ci, [{ t: 'song', id: 'aaa', k: 'C' }, { t: 'song', id: 'aaa', k: 'Eb', v: 'Аня' }, { t: 'mom', x: 'Молитва' }, { t: 'note', x: '(коментар)' }], 'cleanItems');
 assert.deepStrictEqual(lead.vocalists, ['Наталя', 'Аня'], 'vocalists');
 assert.strictEqual(lead.draft[0].t, 'song', 'legacy item normalized');
+assert.strictEqual(L.ytUrl('https://www.youtube.com/watch?v=VV3gyslwzGo&t=982s'), 'https://youtu.be/VV3gyslwzGo?t=982');
+assert.strictEqual(L.ytUrl('https://youtu.be/Jr6p1JImrZg?si=abc'), 'https://youtu.be/Jr6p1JImrZg');
+assert.strictEqual(L.ytUrl('https://www.youtube.com/watch?v=x1&list=RDx1&start_radio=1'), 'https://youtu.be/x1');
+assert.strictEqual(L.ytUrl('not a url'), 'not a url');
 console.log('all tests passed');

@@ -145,6 +145,17 @@ function cleanItems(items, known) {
   return out;
 }
 
+// Чисте посилання на відео: без службових параметрів, але з позначкою часу, якщо була
+function ytUrl(u) {
+  try {
+    const x = new URL(u);
+    const id = x.hostname === 'youtu.be' ? x.pathname.slice(1) : x.searchParams.get('v');
+    if (!id) return u;
+    const t = (x.searchParams.get('t') || '').replace(/s$/, '');
+    return `https://youtu.be/${id}${/^\d+$/.test(t) && t !== '0' ? `?t=${t}` : ''}`;
+  } catch { return u; }
+}
+
 function loadSongs() {
   return cached('songs', 2 * 60e3, async () => {
     const pages = await queryAll(DB.songs);
@@ -283,5 +294,5 @@ const groupBy = (arr, f) => {
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
   verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadWindow, loadServicesLite,
-  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems,
+  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl,
 };
