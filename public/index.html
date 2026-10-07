@@ -102,10 +102,11 @@ button.row:active{background:var(--surface2)}
 .tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
 .songhead{background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:10px}
 .songhead .title{font-family:var(--font-display);font-weight:700;font-size:21px;line-height:1.15;overflow-wrap:anywhere}
-.keys{display:flex;flex-wrap:wrap;gap:8px}
-.kbox{display:flex;flex-direction:column;gap:2px;padding:8px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
-.kbox span{font-size:11px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
-.kbox b{font-family:var(--font-mono);font-size:18px}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.kbox.wide{flex:1 1 100%}
+.kbox{display:flex;flex-direction:column;gap:2px;padding:7px 10px;border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
+.kbox span{font-size:10.5px;color:var(--ink2);text-transform:uppercase;letter-spacing:.03em}
+.kbox b{font-family:var(--font-mono);font-size:17px}
 .kbox.hi{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .kbox.hi span{color:var(--accent-ink);opacity:.8}
 .lyr{display:flex;flex-direction:column;gap:18px}
@@ -302,7 +303,8 @@ function viewRep(){
 
 function songLayer(L){
   var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
-  var kb='<div class="kbox hi"><span>У сеті</span><b>'+esc(k||'–')+'</b></div>'+(s.orig?'<div class="kbox"><span>Оригінал</span><b>'+esc(s.orig)+'</b></div>':'')+((s.bpm||s.meter)?'<div class="kbox"><span>'+(s.bpm&&s.meter?'Темп · розмір':s.bpm?'Темп':'Розмір')+'</span><b>'+(s.bpm?s.bpm+' BPM':'')+(s.bpm&&s.meter?' · ':'')+esc(s.meter)+'</b></div>':'')+(s.dur?'<div class="kbox"><span>Тривалість</span><b>'+fmtD(s.dur)+'</b></div>':'')+(s.keysBy?'<div class="kbox"><span>По вокалістках</span><b style="font-size:13px">'+esc(s.keysBy)+'</b></div>':'');
+  var diff=s.orig&&k&&s.orig!==k,box=function(l,v,c){return '<div class="kbox'+(c?' '+c:'')+'"><span>'+l+'</span><b>'+esc(v)+'</b></div>'};
+  var kb=box(diff?'У сеті':'Тональність',k||'–','hi')+(diff?box('Оригінал',s.orig):'')+(s.bpm?box('BPM',s.bpm):'')+(s.meter?box('Розмір',s.meter):'')+(s.dur?box('Тривалість',fmtD(s.dur)):'')+(s.keysBy?'<div class="kbox wide"><span>По вокалістках</span><b style="font-size:13px">'+esc(s.keysBy)+'</b></div>':'');
   var body;
   if(!d&&!L.err)body='<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
   else if(L.err)body='<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(L.err)+'</div></div></div>';
