@@ -7,6 +7,7 @@ const DB = {
   songs: '5deee4489145405e969b35e69d99e8ba',
   services: '2b4d670f72f0491abc75b5a53da048ed',
   sets: 'e7f712cfe6d5430bbcf3d9cd90168942',
+  requests: 'd408d04660744e3c991d4bae6b2eca92',
 };
 const ROLES = ['Барабани', 'Бас', 'Клавіші', 'Електрогітара', 'Акустична гітара', 'Вокал', 'Звук'];
 const WINDOW_DAYS = 30;
@@ -264,13 +265,96 @@ function loadServicesLite() {
   });
 }
 
+/* ---------- Запити доступу ---------- */
+const seenAttempts = new Map();
+// Фіксуємо, що незареєстрована людина відкрила застосунок. Не частіше за раз на годину на людину.
+async function recordAccessRequest(user) {
+  const tg = String(user.id);
+  if (seenAttempts.has(tg) && Date.now() - seenAttempts.get(tg) < 3600e3) return;
+  if (seenAttempts.size > 500) return;
+  seenAttempts.set(tg, Date.now());
+  try {
+    const found = await queryAll(DB.requests, { property: 'Telegram ID', rich_text: { equals: tg } });
+    const now = new Date().toISOString();
+    if (found.length) {
+      const pg = found[0];
+      if (pg.properties['Статус'].select && pg.properties['Статус'].select.name === 'Відхилено') return;
+      await notion('PATCH', `/pages/${pg.id}`, { properties: {
+        'Спроб': { number: ((pg.properties['Спроб'].number) || 0) + 1 },
+        'Остання спроба': { date: { start: now } },
+      } });
+      return;
+    }
+    const name = [user.first_name, user.last_name].filter(Boolean).join(' ').trim() || tg;
+    await notion('POST', '/pages', {
+      parent: { database_id: DB.requests },
+      properties: {
+        "Ім'я": { title: [{ type: 'text', text: { content: name.slice(0, 200) } }] },
+        'Telegram ID': { rich_text: [{ type: 'text', text: { content: tg } }] },
+        'Telegram нік': { rich_text: user.username ? [{ type: 'text', text: { content: user.username } }] : [] },
+        'Статус': { select: { name: 'Новий' } },
+        'Спроб': { number: 1 },
+        'Остання спроба': { date: { start: now } },
+      },
+    });
+  } catch (e) {
+    seenAttempts.delete(tg);
+    console.error('recordAccessRequest', e.message);
+  }
+}
+
+async function loadRequests() {
+  const pages = await queryAll(DB.requests, { property: 'Статус', select: { equals: 'Новий' } });
+  return pages.map((pg) => {
+    const p = pg.properties;
+    return {
+      id: nid(pg.id), name: text(p["Ім'я"]), tgId: text(p['Telegram ID']), nick: text(p['Telegram нік']),
+      attempts: p['Спроб'].number || 1, last: (p['Остання спроба'].date && p['Остання спроба'].date.start) || pg.created_time,
+    };
+  }).sort((a, b) => b.last.localeCompare(a.last));
+}
+
+async function resolveRequest(id, approve) {
+  const pg = await notion('GET', `/pages/${id}`);
+  const p = pg.properties;
+  if (pg.parent.database_id.replace(/-/g, '') !== DB.requests) throw new Error('not a request');
+  if (approve) {
+    const nick = text(p['Telegram нік']);
+    await notion('POST', '/pages', {
+      parent: { database_id: DB.people },
+      properties: {
+        "Ім'я": { title: [{ type: 'text', text: { content: text(p["Ім'я"]).slice(0, 200) } }] },
+        chat_id: { rich_text: [{ type: 'text', text: { content: text(p['Telegram ID']) } }] },
+        'Telegram нік': { rich_text: nick ? [{ type: 'text', text: { content: nick } }] : [] },
+        'Активний': { checkbox: true },
+      },
+    });
+    invalidate('people');
+  }
+  await notion('PATCH', `/pages/${id}`, { properties: { 'Статус': { select: { name: approve ? 'Додано' : 'Відхилено' } } } });
+}
+
+// Стан сет-листа служіння: empty | draft | changed | published
+function setlistState(svc, rows) {
+  const songsOf = (a) => (a || []).filter((x) => x.t === 'song').length;
+  let pub = svc.published ? cleanItems(svc.published) : null;
+  if (!pub) pub = (rows || []).map((r) => ({ t: 'song', id: r.song, k: r.key }));
+  const draft = svc.draft ? cleanItems(svc.draft) : null;
+  const n = songsOf(pub);
+  if (!n) return { state: songsOf(draft) ? 'draft' : 'empty', songs: songsOf(draft), dur: 0 };
+  return { state: draft && JSON.stringify(draft) !== JSON.stringify(pub) ? 'changed' : 'published', songs: n };
+}
+
 /* ---------- Відповіді ---------- */
 async function currentPerson(req) {
   const user = authUser(req);
   if (!user) return { error: [401, { error: 'unauthorized' }] };
   const people = await loadPeople();
   const me = [...people.values()].find((p) => p.chatId === String(user.id));
-  if (!me) return { error: [403, { error: 'not_registered', chatId: String(user.id) }] };
+  if (!me) {
+    await recordAccessRequest(user);
+    return { error: [403, { error: 'not_registered', chatId: String(user.id) }] };
+  }
   return { me, people, isAdmin: adminIds().includes(String(user.id)) };
 }
 
@@ -311,5 +395,5 @@ const groupBy = (arr, f) => {
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
   verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadWindow, loadServicesLite,
-  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, touchVisit,
+  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, touchVisit, loadRequests, resolveRequest, setlistState,
 };

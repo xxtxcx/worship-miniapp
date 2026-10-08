@@ -149,6 +149,11 @@ button.row:active{background:var(--surface2)}
 .sumline h2{padding:0}
 .sumline .iconbtn{width:30px;height:30px}
 .sumline h2 + .iconbtn{margin-left:0}
+details.gap summary{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-weight:600;cursor:pointer;list-style:none}
+details.gap summary::-webkit-details-marker{display:none}
+details.gap summary b{font-family:var(--font-mono);color:var(--ink2)}
+.gaplist{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
+.chip2{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:99px;padding:5px 10px;font-size:13px}
 .sumline .tot{margin-left:auto}
 .sumline .tot{font-family:var(--font-mono);font-size:12.5px;color:var(--ink2);text-align:right}
 .txt{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit}
@@ -305,15 +310,38 @@ function ago(iso,now){
   var ms=now-Date.parse(iso),m=Math.floor(ms/6e4),h=Math.floor(m/60),d=Math.floor(h/24);
   if(m<2)return 'щойно';if(m<60)return m+' хв тому';if(h<24)return h+' год тому';
   if(d<2)return 'вчора';if(d<31)return d+' дн тому';return 'понад місяць тому'}
+function adminSvc(A){
+  var now=Date.parse(A.now);
+  if(!A.services.length)return '<div class="card"><div class="empty"><b>Служінь на 30 днів немає</b>Додайте їх у Notion.</div></div>';
+  var sl={empty:['Сет-лист порожній','warn'],draft:['Лише чернетка','warn'],changed:['Є неопубліковані зміни','warn'],published:['Опубліковано','']};
+  return '<div class="card"><h2>Найближчі служіння</h2><div class="list">'+A.services.map(function(u){
+    var st=sl[u.setlist.state],lead=u.lead.length?'<span class="vline">'+avatar(u.leadIds[0],u.lead[0],'s')+esc(u.lead.join(', '))+'</span>':'<span class="pill warn" style="padding:2px 8px">ліда нема</span>';
+    return '<button class="row" data-svc="'+u.id+'"><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+' <span class="voc">'+esc(u.type||'')+'</span></span><br><span class="rowsub rs">'+lead+'<span class="pill'+(st[1]?' '+st[1]:'')+'" style="padding:2px 8px">'+st[0]+(u.setlist.songs&&u.setlist.state!=='empty'?' · '+u.setlist.songs:'')+'</span></span>'+(u.missing.length?'<span class="rowsub" style="display:block;margin-top:4px">Немає: '+u.missing.map(esc).join(', ')+'</span>':'')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
+function adminReq(A){
+  if(!A.requests.length)return '<div class="card"><div class="empty"><b>Нових запитів немає</b>Коли хтось відкриє застосунок, не маючи доступу, він з\'явиться тут.</div></div>';
+  var now=Date.parse(A.now);
+  return '<div class="card"><h2>Хочуть доступ</h2><div class="list">'+A.requests.map(function(r){
+    return '<div class="row" style="flex-wrap:wrap"><span class="rowmain"><span class="rowtitle">'+esc(r.name)+'</span><br><span class="rowsub">'+(r.nick?'@'+esc(r.nick)+' · ':'')+'ID '+esc(r.tgId)+' · '+r.attempts+' '+(r.attempts===1?'спроба':'спроб')+' · '+esc(ago(r.last,now))+'</span></span><span class="btnrow" style="flex:0 0 100%;margin-left:0"><button class="btn" data-req="approve" data-id="'+r.id+'"'+(S.busy?' disabled':'')+'>Додати в базу</button><button class="btn ghost" data-req="reject" data-id="'+r.id+'"'+(S.busy?' disabled':'')+'>Відхилити</button></span></div>'}).join('')+'</div></div><div class="note">«Додати в базу» створює людину в «Люди» з її іменем з Telegram. Роль і справжнє ім\'я потім можна поправити в Notion.</div>'}
+function adminGaps(A){
+  if(!A.gaps.length)return '<div class="card"><div class="empty"><b>Усе заповнено</b>Бракуючих даних не знайдено.</div></div>';
+  return A.gaps.map(function(g){
+    return '<details class="card gap"><summary><span>'+esc(g.title)+'</span><b>'+g.items.length+'</b></summary><div class="gaplist">'+g.items.map(function(i){return g.people?'<span class="chip2">'+esc(i.title)+'</span>':'<button class="chip2" data-song="'+i.id+'">'+esc(i.title)+'</button>'}).join('')+'</div></details>'}).join('')
+   +'<div class="note">Текст пісні тут не перевіряється, лише акорди. Архівні пісні не враховуються.</div>'}
+function adminAct(A){
+  var now=Date.parse(A.now);
+  return '<div class="card"><h2>Хто й коли заходив</h2><div class="list">'+A.people.map(function(p){
+    var fresh=p.lastSeen&&now-Date.parse(p.lastSeen)<864e5,week=p.lastSeen&&now-Date.parse(p.lastSeen)<7*864e5;
+    var when=p.lastSeen?new Date(p.lastSeen).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    return '<div class="row" style="'+(p.active?'':'opacity:.55')+'"><span class="ava-wrap">'+avatar(p.registered?p.id:'',p.name,'l')+'</span><span class="rowmain"><span class="rowtitle">'+esc(p.name)+(p.active?'':' <span class="voc">(неактивний)</span>')+'</span><br><span class="rowsub">'+(p.registered?esc(ago(p.lastSeen,now))+(when?' · '+when:''):'немає chat_id')+'</span></span><span class="dotc" style="border-color:'+(fresh?'var(--ok)':week?'var(--warn)':'var(--line)')+(fresh?';background:var(--ok)':'')+'"></span></div>'}).join('')+'</div></div><div class="note">Фіксується відкриття застосунку, не частіше за раз на 10 хвилин. Дані ведуться від моменту запуску цієї функції.</div>'}
 function viewAdmin(){
   var A=S.admin;
   if(!A)return '<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
   if(A.err)return '<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(A.err)+'</div></div></div>';
-  var now=Date.parse(A.now),wk=A.people.filter(function(p){return p.lastSeen&&now-Date.parse(p.lastSeen)<7*864e5}).length,tot=A.people.length;
-  return '<div class="pad"><div><span class="pill"><span class="dot"></span>За 7 днів заходили: '+wk+' з '+tot+'</span></div><div class="card"><h2>Хто й коли заходив</h2><div class="list">'+A.people.map(function(p){
-    var fresh=p.lastSeen&&now-Date.parse(p.lastSeen)<864e5,week=p.lastSeen&&now-Date.parse(p.lastSeen)<7*864e5;
-    var when=p.lastSeen?new Date(p.lastSeen).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-    return '<div class="row" style="'+(p.active?'':'opacity:.55')+'"><span class="ava-wrap">'+avatar(p.registered?p.id:'',p.name,'l')+'</span><span class="rowmain"><span class="rowtitle">'+esc(p.name)+(p.active?'':' <span class="voc">(неактивний)</span>')+'</span><br><span class="rowsub">'+(p.registered?esc(ago(p.lastSeen,now))+(when?' · '+when:''):'немає chat_id')+'</span></span><span class="dotc" style="border-color:'+(fresh?'var(--ok)':week?'var(--warn)':'var(--line)')+(fresh?';background:var(--ok)':'')+'"></span></div>'}).join('')+'</div></div><div class="note">Журнал видно лише адмінам. Фіксується відкриття застосунку, не частіше за раз на 10 хвилин. Дані ведуться від моменту запуску цієї функції.</div></div>'}
+  var now=Date.parse(A.now),wk=A.people.filter(function(p){return p.lastSeen&&now-Date.parse(p.lastSeen)<7*864e5}).length;
+  var t=S.adminTab||'svc',bad=A.services.filter(function(u){return!u.lead.length||u.setlist.state!=='published'}).length;
+  var tabs=[['svc','Служіння',bad],['req','Доступ',A.requests.length],['gap','Дані',A.gaps.reduce(function(n,g){return n+g.items.length},0)],['act','Активність',0]];
+  return '<div class="chips" role="tablist">'+tabs.map(function(x){return '<button data-atab="'+x[0]+'" aria-pressed="'+(t===x[0])+'">'+x[1]+(x[2]?' · '+x[2]:'')+'</button>'}).join('')+'</div><div class="pad">'
+   +(t==='svc'?adminSvc(A):t==='req'?adminReq(A):t==='gap'?adminGaps(A):'<div><span class="pill"><span class="dot"></span>За 7 днів заходили: '+wk+' з '+A.people.length+'</span></div>'+adminAct(A))+'</div>'}
 
 function sortBar(){return '<div class="chips sort" role="group" aria-label="Сортування">'+[['az','А–Я'],['za','Я–А'],['most','Найчастіше'],['least','Найрідше']].map(function(x){return '<button data-sort="'+x[0]+'" aria-pressed="'+(S.sort===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'}
 function chipList(){
@@ -408,7 +436,7 @@ function loadSong(id,layer){
   if(S.cache[id])return;
   api('/api/song?id='+id).then(function(d){S.cache[id]=d;render()}).catch(function(e){layer.err=(e.data&&e.data.message)||'Спробуйте ще раз';render()});
 }
-function loadAdmin(){S.admin=null;api('/api/admin').then(function(r){S.admin=r;render()}).catch(function(e){S.admin={err:(e.data&&e.data.message)||'Спробуйте ще раз'};render()})}
+function loadAdmin(keep){if(!keep)S.admin=null;api('/api/admin').then(function(r){S.admin=r;render()}).catch(function(e){S.admin={err:(e.data&&e.data.message)||'Спробуйте ще раз'};render()})}
 function goBack(){var t=S.stack.pop();if(t&&t.type==='pick'){S.q='';S.f='Усі'}if(t&&t.type==='build'){S.edit=null}render()}
 function saveSetlist(publish){
   var e=S.edit;S.busy=true;render();
@@ -422,6 +450,8 @@ function saveSetlist(publish){
 document.addEventListener('click',function(e){
   var t=e.target.closest('button');if(!t)return;
   var top=S.stack[S.stack.length-1],d=t.dataset;
+  if(d.atab){S.adminTab=d.atab;render();return}
+  if(d.req){S.busy=true;render();api('/api/admin',{method:'POST',body:{action:d.req,id:d.id}}).then(function(){S.busy=false;toast(d.req==='approve'?'Додано в базу':'Відхилено');loadAdmin(true)}).catch(function(e){S.busy=false;toast('Не вдалося: '+((e.data&&e.data.message)||e.message))});return}
   if(d.tab){S.tab=d.tab;S.stack=[];S.q='';S.f='Усі';render();if(d.tab==='admin')loadAdmin();return}
   if(d.song){var L={type:'song',id:d.song,key:d.key,tab:'text',off:0};S.stack.push(L);render();loadSong(d.song,L);return}
   if(d.svc){S.stack.push({type:'service',id:d.svc});render();return}

@@ -48,18 +48,38 @@ assert.strictEqual(L.ytUrl('https://youtu.be/Jr6p1JImrZg?si=abc'), 'https://yout
 assert.strictEqual(L.ytUrl('https://www.youtube.com/watch?v=x1&list=RDx1&start_radio=1'), 'https://youtu.be/x1');
 assert.strictEqual(L.ytUrl('not a url'), 'not a url');
 
-// Журнал активності доступний лише адмінам
+// Адмінка доступна лише адмінам
 (async () => {
   const admin = require('../api/admin');
-  const call = async (ctx) => {
+  const approved = [];
+  L.loadPeople = async () => new Map([['p1', { id: 'p1', name: 'Наталя', chatId: '1', active: true, lastSeen: '2026-10-08T10:00:00.000Z' }], ['p2', { id: 'p2', name: 'Без чату', chatId: '', active: true, lastSeen: '' }]]);
+  L.loadSongs = async () => [{ id: 's1', title: 'Wake', status: 'Зелені', our: 'G', hasChords: false, dur: 0, bpm: 0, meter: '', yt: '', mt: '', reh: '' }, { id: 's2', title: 'Old', status: 'Архів', our: '', hasChords: false }];
+  L.loadWindow = async () => [{ id: 'v1', date: '2026-10-11', type: 'Молодіжка', leadIds: [], roles: [{ role: 'Вокал', ids: ['p1'] }], draft: null, published: null }];
+  L.loadSetRows = async () => [];
+  L.loadRequests = async () => [{ id: 'r1', name: 'Хтось', tgId: '5', nick: 'x', attempts: 2, last: '2026-10-08T09:00:00.000Z' }];
+  L.resolveRequest = async (id, ok) => approved.push([id, ok]);
+  const call = async (ctx, method = 'GET', body) => {
     L.currentPerson = async () => ctx;
-    L.loadPeople = async () => new Map([['p1', { id: 'p1', name: 'Наталя', chatId: '1', active: true, lastSeen: '2026-10-08T10:00:00.000Z' }]]);
     let out; const res = { status(c) { out = { code: c }; return { json(b) { out.body = b; } }; } };
-    await admin({}, res); return out;
+    await admin({ method, body }, res); return out;
   };
   const denied = await call({ me: { id: 'p1' }, people: new Map(), isAdmin: false });
   assert.strictEqual(denied.code, 404); assert(!JSON.stringify(denied.body).includes('Наталя'), 'non-admin gets no data');
+  const deniedPost = await call({ me: { id: 'p1' }, people: new Map(), isAdmin: false }, 'POST', { action: 'approve', id: 'a'.repeat(32) });
+  assert.strictEqual(deniedPost.code, 404); assert.strictEqual(approved.length, 0, 'non-admin cannot approve');
   const ok = await call({ me: { id: 'p1' }, people: new Map(), isAdmin: true });
-  assert.strictEqual(ok.code, 200); assert.strictEqual(ok.body.people[0].lastSeen, '2026-10-08T10:00:00.000Z');
+  assert.strictEqual(ok.code, 200);
+  assert.strictEqual(ok.body.people[0].lastSeen, '2026-10-08T10:00:00.000Z');
+  assert.strictEqual(ok.body.requests[0].name, 'Хтось');
+  assert.strictEqual(ok.body.services[0].setlist.state, 'empty'); assert.deepStrictEqual(ok.body.services[0].missing, ['Барабани', 'Бас', 'Клавіші']);
+  assert(ok.body.gaps.some((g) => g.key === 'chords' && g.items.length === 1), 'archived songs are not in gaps');
+  assert(!ok.body.gaps.some((g) => g.items.some((i) => i.title === 'Old')));
+  assert(ok.body.gaps.some((g) => g.key === 'chat' && g.items[0].title === 'Без чату'));
+  const appr = await call({ me: { id: 'p1' }, people: new Map(), isAdmin: true }, 'POST', { action: 'approve', id: 'a'.repeat(32) });
+  assert.strictEqual(appr.code, 200); assert.deepStrictEqual(approved[0], ['a'.repeat(32), true]);
+  assert.strictEqual((await call({ me: { id: 'p1' }, people: new Map(), isAdmin: true }, 'POST', { action: 'x', id: 'bad' })).code, 400);
+  assert.strictEqual(L.setlistState({ published: [{ id: 'a', k: 'C' }], draft: [{ id: 'a', k: 'D' }] }, []).state, 'changed');
+  assert.strictEqual(L.setlistState({ published: null, draft: [{ id: 'a', k: 'C' }] }, []).state, 'draft');
+  assert.strictEqual(L.setlistState({ published: [{ id: 'a', k: 'C' }], draft: null }, []).state, 'published');
   console.log('all tests passed');
 })();
