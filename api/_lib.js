@@ -260,7 +260,7 @@ function loadServicesLite() {
     const pages = await queryAll(DB.services);
     return new Map(pages.map((pg) => {
       const s = parseService(pg);
-      return [s.id, { date: s.date, name: s.name, leadIds: s.leadIds }];
+      return [s.id, { date: s.date, name: s.name, leadIds: s.leadIds, peopleIds: [...new Set([...s.leadIds, ...s.roles.flatMap((r) => r.ids)])] }];
     }));
   });
 }
@@ -345,6 +345,46 @@ function setlistState(svc, rows) {
   return { state: draft && JSON.stringify(draft) !== JSON.stringify(pub) ? 'changed' : 'published', songs: n };
 }
 
+// Статистика репертуару й команди за минулі служіння (days днів до сьогодні)
+function computeStats({ rows, services, songs, people, today = new Date(), days = 90 }) {
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const to = iso(today), from = iso(new Date(today.getTime() - days * 864e5)), stale = iso(new Date(today.getTime() - 56 * 864e5));
+  const live = songs.filter((s) => s.status !== 'Архів');
+  const plays = new Map();
+  const perService = new Map();
+  for (const r of rows) {
+    const sv = services.get(r.service);
+    if (!sv || !sv.date || sv.date > to) continue;
+    const e = plays.get(r.song) || { n: 0, last: '' };
+    e.n++; if (sv.date > e.last) e.last = sv.date;
+    plays.set(r.song, e);
+    perService.set(r.service, (perService.get(r.service) || 0) + 1);
+  }
+  const named = (s) => ({ id: s.id, title: s.title });
+  const top = live.filter((s) => plays.has(s.id)).sort((a, b) => plays.get(b.id).n - plays.get(a.id).n || a.title.localeCompare(b.title, 'uk')).slice(0, 10)
+    .map((s) => ({ ...named(s), n: plays.get(s.id).n, last: plays.get(s.id).last }));
+  const old = live.filter((s) => plays.has(s.id) && plays.get(s.id).last < stale).sort((a, b) => plays.get(a.id).last.localeCompare(plays.get(b.id).last)).slice(0, 15)
+    .map((s) => ({ ...named(s), last: plays.get(s.id).last }));
+  const never = live.filter((s) => !plays.has(s.id)).map(named);
+  const winCounts = [...perService.entries()].filter(([id]) => { const d = services.get(id).date; return d >= from; }).map(([, n]) => n);
+  const rep = { days, services: winCounts.length, avgSongs: winCounts.length ? Math.round(winCounts.reduce((a, b) => a + b, 0) / winCounts.length * 10) / 10 : 0, top, old, never };
+
+  const team = new Map([...people.values()].map((p) => [p.id, { id: p.id, name: p.name, active: p.active, registered: /^\d+$/.test(p.chatId), served: 0, led: 0, sang: 0 }]));
+  for (const [sid, sv] of services) {
+    if (!sv.date || sv.date < from || sv.date > to) continue;
+    for (const id of sv.peopleIds || []) if (team.has(id)) team.get(id).served++;
+    for (const id of sv.leadIds || []) if (team.has(id)) team.get(id).led++;
+  }
+  for (const r of rows) {
+    const sv = services.get(r.service);
+    if (!sv || !sv.date || sv.date < from || sv.date > to) continue;
+    for (const id of r.leads || []) if (team.has(id)) team.get(id).sang++;
+  }
+  const members = [...team.values()].filter((p) => p.active || p.served || p.sang)
+    .sort((a, b) => b.served - a.served || b.sang - a.sang || a.name.localeCompare(b.name, 'uk'));
+  return { rep, team: { days, members } };
+}
+
 /* ---------- Відповіді ---------- */
 async function currentPerson(req) {
   const user = authUser(req);
@@ -395,5 +435,5 @@ const groupBy = (arr, f) => {
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
   verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadWindow, loadServicesLite,
-  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, touchVisit, loadRequests, resolveRequest, setlistState,
+  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, touchVisit, loadRequests, resolveRequest, setlistState, computeStats,
 };

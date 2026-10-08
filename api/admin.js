@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
     }
 
     L.invalidate('people', 'window');
-    const [peopleMap, songs, win, rows, requests] = await Promise.all([L.loadPeople(), L.loadSongs(), L.loadWindow(), L.loadSetRows(), L.loadRequests()]);
+    const [peopleMap, songs, win, rows, requests, servicesAll] = await Promise.all([L.loadPeople(), L.loadSongs(), L.loadWindow(), L.loadSetRows(), L.loadRequests(), L.loadServicesLite()]);
     const people = [...peopleMap.values()];
     const name = (id) => (peopleMap.get(id) || {}).name;
     const rowsBy = L.groupBy(rows, (r) => r.service);
@@ -52,7 +52,8 @@ module.exports = async (req, res) => {
       .map((p) => ({ id: p.id, name: p.name, active: p.active, registered: /^\d+$/.test(p.chatId), lastSeen: p.lastSeen || null }))
       .sort((a, b) => (b.lastSeen || '').localeCompare(a.lastSeen || '') || a.name.localeCompare(b.name, 'uk'));
 
-    res.status(200).json({ now: new Date().toISOString(), services, requests, gaps, people: activity });
+    const stats = L.computeStats({ rows, services: servicesAll, songs, people: peopleMap });
+    res.status(200).json({ now: new Date().toISOString(), services, requests, gaps, people: activity, ...stats });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'server', message: String(e.message || e).slice(0, 300) });

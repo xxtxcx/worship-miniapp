@@ -48,6 +48,22 @@ assert.strictEqual(L.ytUrl('https://youtu.be/Jr6p1JImrZg?si=abc'), 'https://yout
 assert.strictEqual(L.ytUrl('https://www.youtube.com/watch?v=x1&list=RDx1&start_radio=1'), 'https://youtu.be/x1');
 assert.strictEqual(L.ytUrl('not a url'), 'not a url');
 
+// Статистика
+{
+  const today = new Date('2026-10-08T12:00:00Z');
+  const songs = [{ id: 'a', title: 'A', status: 'Зелені' }, { id: 'b', title: 'B', status: 'Зелені' }, { id: 'c', title: 'C', status: 'Зелені' }, { id: 'z', title: 'Z', status: 'Архів' }];
+  const people = new Map([['p1', { id: 'p1', name: 'Аня', active: true, chatId: '1' }], ['p2', { id: 'p2', name: 'Бо', active: true, chatId: '2' }], ['p3', { id: 'p3', name: 'Ія', active: false, chatId: '' }]]);
+  const services = new Map([['s1', { date: '2026-10-04', leadIds: ['p1'], peopleIds: ['p1', 'p2'] }], ['s2', { date: '2026-09-27', leadIds: ['p2'], peopleIds: ['p2'] }], ['s3', { date: '2026-06-01', leadIds: ['p1'], peopleIds: ['p1'] }], ['s4', { date: '2026-10-20', leadIds: ['p1'], peopleIds: ['p1'] }]]);
+  const rows = [{ service: 's1', song: 'a', leads: ['p1'] }, { service: 's1', song: 'b', leads: ['p2'] }, { service: 's2', song: 'a', leads: ['p2'] }, { service: 's3', song: 'c', leads: ['p1'] }, { service: 's4', song: 'b', leads: ['p1'] }, { service: 's2', song: 'z', leads: [] }];
+  const st = L.computeStats({ rows, services, songs, people, today });
+  assert.deepStrictEqual(st.rep.top.map((x) => [x.id, x.n]), [['a', 2], ['b', 1], ['c', 1]], 'future services and archived songs ignored');
+  assert.deepStrictEqual(st.rep.old.map((x) => x.id), ['c'], 'stale = not played for 8+ weeks');
+  assert.strictEqual(st.rep.never.length, 0); assert.strictEqual(st.rep.services, 2); assert.strictEqual(st.rep.avgSongs, 2);
+  const by = Object.fromEntries(st.team.members.map((m) => [m.id, m]));
+  assert.deepStrictEqual([by.p1.served, by.p1.led, by.p1.sang], [1, 1, 1]); assert.deepStrictEqual([by.p2.served, by.p2.led, by.p2.sang], [2, 1, 2]);
+  assert(!by.p3, 'inactive without activity is hidden');
+}
+
 // Адмінка доступна лише адмінам
 (async () => {
   const admin = require('../api/admin');
@@ -57,6 +73,7 @@ assert.strictEqual(L.ytUrl('not a url'), 'not a url');
   L.loadWindow = async () => [{ id: 'v1', date: '2026-10-11', type: 'Молодіжка', leadIds: [], roles: [{ role: 'Вокал', ids: ['p1'] }], draft: null, published: null }];
   L.loadSetRows = async () => [];
   L.loadRequests = async () => [{ id: 'r1', name: 'Хтось', tgId: '5', nick: 'x', attempts: 2, last: '2026-10-08T09:00:00.000Z' }];
+  L.loadServicesLite = async () => new Map();
   L.resolveRequest = async (id, ok) => approved.push([id, ok]);
   const call = async (ctx, method = 'GET', body) => {
     L.currentPerson = async () => ctx;
