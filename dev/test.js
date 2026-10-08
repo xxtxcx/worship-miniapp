@@ -47,4 +47,19 @@ assert.strictEqual(L.ytUrl('https://www.youtube.com/watch?v=VV3gyslwzGo&t=982s')
 assert.strictEqual(L.ytUrl('https://youtu.be/Jr6p1JImrZg?si=abc'), 'https://youtu.be/Jr6p1JImrZg');
 assert.strictEqual(L.ytUrl('https://www.youtube.com/watch?v=x1&list=RDx1&start_radio=1'), 'https://youtu.be/x1');
 assert.strictEqual(L.ytUrl('not a url'), 'not a url');
-console.log('all tests passed');
+
+// Журнал активності доступний лише адмінам
+(async () => {
+  const admin = require('../api/admin');
+  const call = async (ctx) => {
+    L.currentPerson = async () => ctx;
+    L.loadPeople = async () => new Map([['p1', { id: 'p1', name: 'Наталя', chatId: '1', active: true, lastSeen: '2026-10-08T10:00:00.000Z' }]]);
+    let out; const res = { status(c) { out = { code: c }; return { json(b) { out.body = b; } }; } };
+    await admin({}, res); return out;
+  };
+  const denied = await call({ me: { id: 'p1' }, people: new Map(), isAdmin: false });
+  assert.strictEqual(denied.code, 404); assert(!JSON.stringify(denied.body).includes('Наталя'), 'non-admin gets no data');
+  const ok = await call({ me: { id: 'p1' }, people: new Map(), isAdmin: true });
+  assert.strictEqual(ok.code, 200); assert.strictEqual(ok.body.people[0].lastSeen, '2026-10-08T10:00:00.000Z');
+  console.log('all tests passed');
+})();

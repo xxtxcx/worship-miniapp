@@ -9,6 +9,7 @@ module.exports = async (req, res) => {
     const counts = new Map();
     for (const r of rows) if (r.song) counts.set(r.song, (counts.get(r.song) || 0) + 1);
     const byService = L.groupBy(rows, (r) => r.service);
+    await L.touchVisit(ctx.me);
     res.status(200).json({
       me: { id: ctx.me.id, name: ctx.me.name, isAdmin: ctx.isAdmin },
       songs: songs.map((s) => ({ ...s, n: counts.get(s.id) || 0 })),

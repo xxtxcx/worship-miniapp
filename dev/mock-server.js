@@ -48,7 +48,9 @@ const send = (res, code, obj) => { res.writeHead(code, { 'Content-Type': 'applic
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x'), role = url.searchParams.get('role') || globalThis.role || 'lead';
   if (url.searchParams.get('role')) globalThis.role = url.searchParams.get('role');
-  if (url.pathname === '/api/bootstrap') return send(res, 200, { me: { id: 'me', name: 'Тест', isAdmin: false }, songs, services: forRole(globalThis.role || 'lead') });
+  if (url.searchParams.get('admin')) globalThis.admin = url.searchParams.get('admin');
+  if (url.pathname === '/api/admin') { if (globalThis.admin !== '1') return send(res, 404, { error: 'not_found' }); const h = (n) => new Date(Date.now() - n * 36e5).toISOString(); return send(res, 200, { now: new Date().toISOString(), people: [{ id: 'p1', name: 'Аня', active: true, registered: true, lastSeen: h(0.1) }, { id: 'p2', name: 'Наталя', active: true, registered: true, lastSeen: h(5) }, { id: 'p3', name: 'Артур', active: true, registered: true, lastSeen: h(72) }, { id: 'p4', name: 'Єгор', active: true, registered: true, lastSeen: null }, { id: 'p5', name: 'Ілля', active: false, registered: false, lastSeen: null }] }); }
+  if (url.pathname === '/api/bootstrap') return send(res, 200, { me: { id: 'me', name: 'Тест', isAdmin: globalThis.admin === '1' }, songs, services: forRole(globalThis.role || 'lead') });
   if (url.pathname === '/api/avatar') { if (url.searchParams.get('id') === 'p3') { res.writeHead(404); return res.end('{}'); } res.writeHead(200, { 'Content-Type': 'image/svg+xml' }); return res.end('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#c26"/><circle cx="48" cy="38" r="18" fill="#fff"/></svg>'); }
   if (url.pathname === '/api/song') return setTimeout(() => send(res, 200, songData[url.searchParams.get('id')] || { chords: '', lyrics: [], history: [{ date: '2026-03-01', lead: 'Аня', key: 'D' }] }), 250);
   if (url.pathname === '/api/setlist' && req.method === 'POST') {

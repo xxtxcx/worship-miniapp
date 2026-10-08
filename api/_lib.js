@@ -104,10 +104,27 @@ function loadPeople() {
     const map = new Map();
     for (const pg of pages) {
       const p = pg.properties;
-      map.set(nid(pg.id), { id: nid(pg.id), name: text(p["Ім'я"]), chatId: text(p.chat_id).trim() });
+      map.set(nid(pg.id), {
+        id: nid(pg.id), name: text(p["Ім'я"]), chatId: text(p.chat_id).trim(),
+        active: !!(p['Активний'] && p['Активний'].checkbox),
+        lastSeen: (p['Остання активність'] && p['Остання активність'].date && p['Остання активність'].date.start) || '',
+      });
     }
     return map;
   });
+}
+
+// Фіксуємо, що людина відкрила застосунок. Пишемо в Notion не частіше, ніж раз на 10 хвилин.
+async function touchVisit(me) {
+  const prev = me.lastSeen;
+  if (prev && Date.now() - Date.parse(prev) < 10 * 60e3) return;
+  me.lastSeen = new Date().toISOString();
+  try {
+    await notion('PATCH', `/pages/${me.id}`, { properties: { 'Остання активність': { date: { start: me.lastSeen } } } });
+  } catch (e) {
+    me.lastSeen = prev;
+    console.error('touchVisit', e.message);
+  }
 }
 
 function noteKey(s) {
@@ -294,5 +311,5 @@ const groupBy = (arr, f) => {
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
   verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadWindow, loadServicesLite,
-  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl,
+  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, touchVisit,
 };

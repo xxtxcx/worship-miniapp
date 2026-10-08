@@ -36,7 +36,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{ou
 .app{position:relative;height:100%;display:flex;flex-direction:column;overflow:hidden}
 .screen{flex:1;min-height:0;overflow-y:auto;background:var(--bg);-webkit-overflow-scrolling:touch}
 .pad{padding:16px;display:flex;flex-direction:column;gap:14px}
-.nav{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--surface);padding-bottom:max(6px,env(safe-area-inset-bottom,0px))}
+.nav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border-top:1px solid var(--line);background:var(--surface);padding-bottom:max(6px,env(safe-area-inset-bottom,0px))}
 .nav button{border:0;background:transparent;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--ink2)}
 .nav button[aria-current="page"]{color:var(--accent)}
 .nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -300,6 +300,21 @@ function viewCal(){
    return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>У Notion на найближчі 30 днів нічого не створено.</div></div>')
    +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div></div>'}
 
+function ago(iso,now){
+  if(!iso)return 'ще не заходив(ла)';
+  var ms=now-Date.parse(iso),m=Math.floor(ms/6e4),h=Math.floor(m/60),d=Math.floor(h/24);
+  if(m<2)return 'щойно';if(m<60)return m+' хв тому';if(h<24)return h+' год тому';
+  if(d<2)return 'вчора';if(d<31)return d+' дн тому';return 'понад місяць тому'}
+function viewAdmin(){
+  var A=S.admin;
+  if(!A)return '<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
+  if(A.err)return '<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(A.err)+'</div></div></div>';
+  var now=Date.parse(A.now),wk=A.people.filter(function(p){return p.lastSeen&&now-Date.parse(p.lastSeen)<7*864e5}).length,tot=A.people.length;
+  return '<div class="pad"><div><span class="pill"><span class="dot"></span>За 7 днів заходили: '+wk+' з '+tot+'</span></div><div class="card"><h2>Хто й коли заходив</h2><div class="list">'+A.people.map(function(p){
+    var fresh=p.lastSeen&&now-Date.parse(p.lastSeen)<864e5,week=p.lastSeen&&now-Date.parse(p.lastSeen)<7*864e5;
+    var when=p.lastSeen?new Date(p.lastSeen).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    return '<div class="row" style="'+(p.active?'':'opacity:.55')+'"><span class="ava-wrap">'+avatar(p.registered?p.id:'',p.name,'l')+'</span><span class="rowmain"><span class="rowtitle">'+esc(p.name)+(p.active?'':' <span class="voc">(неактивний)</span>')+'</span><br><span class="rowsub">'+(p.registered?esc(ago(p.lastSeen,now))+(when?' · '+when:''):'немає chat_id')+'</span></span><span class="dotc" style="border-color:'+(fresh?'var(--ok)':week?'var(--warn)':'var(--line)')+(fresh?';background:var(--ok)':'')+'"></span></div>'}).join('')+'</div></div><div class="note">Журнал видно лише адмінам. Фіксується відкриття застосунку, не частіше за раз на 10 хвилин. Дані ведуться від моменту запуску цієї функції.</div></div>'}
+
 function sortBar(){return '<div class="chips sort" role="group" aria-label="Сортування">'+[['az','А–Я'],['za','Я–А'],['most','Найчастіше'],['least','Найрідше']].map(function(x){return '<button data-sort="'+x[0]+'" aria-pressed="'+(S.sort===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'}
 function chipList(){
   var t=[],st=[];S.songs.forEach(function(x){if(x.type&&t.indexOf(x.type)<0)t.push(x.type);if(x.status&&x.status!=='Активна'&&st.indexOf(x.status)<0)st.push(x.status)});
@@ -380,8 +395,9 @@ function render(){
   if(!S.me){return}
   var keep=0,sc=$('#screen');if(sc)keep=sc.scrollTop;var pk=$('#pscreen'),pkeep=pk?pk.scrollTop:0;
   var layers=S.stack.map(function(l){return l.type==='song'?songLayer(l):l.type==='service'?serviceLayer(l):l.type==='build'?builderLayer():pickerLayer()}).join('');
-  var nav='<nav class="nav" id="nav">'+[['sunday','<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>','Неділя'],['rep','<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>','Репертуар'],['cal','<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>','Графік']].map(function(x){return '<button data-tab="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+x[2]+'</button>'}).join('')+'</nav>';
-  app.innerHTML='<div class="screen" id="screen">'+(S.tab==='sunday'?viewSunday():S.tab==='rep'?viewRep():viewCal())+'</div>'+nav+layers+(S.toast?'<div class="toast" role="status">'+esc(S.toast)+'</div>':'');
+  var tabs=[['sunday','<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>','Неділя'],['rep','<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>','Репертуар'],['cal','<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>','Графік']];if(S.me.isAdmin)tabs.push(['admin','<svg viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>','Адмін']);
+  var nav='<nav class="nav" id="nav">'+tabs.map(function(x){return '<button data-tab="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+x[2]+'</button>'}).join('')+'</nav>';
+  app.innerHTML='<div class="screen" id="screen">'+(S.tab==='sunday'?viewSunday():S.tab==='rep'?viewRep():S.tab==='admin'&&S.me.isAdmin?viewAdmin():viewCal())+'</div>'+nav+layers+(S.toast?'<div class="toast" role="status">'+esc(S.toast)+'</div>':'');
   loadAvatars();
   var ns=$('#screen');if(ns)ns.scrollTop=keep;var np=$('#pscreen');if(np)np.scrollTop=pkeep;
   var q=$(S.stack.length&&S.stack[S.stack.length-1].type==='pick'?'#pq':'#q');if(q&&S.focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}
@@ -392,6 +408,7 @@ function loadSong(id,layer){
   if(S.cache[id])return;
   api('/api/song?id='+id).then(function(d){S.cache[id]=d;render()}).catch(function(e){layer.err=(e.data&&e.data.message)||'Спробуйте ще раз';render()});
 }
+function loadAdmin(){S.admin=null;api('/api/admin').then(function(r){S.admin=r;render()}).catch(function(e){S.admin={err:(e.data&&e.data.message)||'Спробуйте ще раз'};render()})}
 function goBack(){var t=S.stack.pop();if(t&&t.type==='pick'){S.q='';S.f='Усі'}if(t&&t.type==='build'){S.edit=null}render()}
 function saveSetlist(publish){
   var e=S.edit;S.busy=true;render();
@@ -405,7 +422,7 @@ function saveSetlist(publish){
 document.addEventListener('click',function(e){
   var t=e.target.closest('button');if(!t)return;
   var top=S.stack[S.stack.length-1],d=t.dataset;
-  if(d.tab){S.tab=d.tab;S.stack=[];S.q='';S.f='Усі';render();return}
+  if(d.tab){S.tab=d.tab;S.stack=[];S.q='';S.f='Усі';render();if(d.tab==='admin')loadAdmin();return}
   if(d.song){var L={type:'song',id:d.song,key:d.key,tab:'text',off:0};S.stack.push(L);render();loadSong(d.song,L);return}
   if(d.svc){S.stack.push({type:'service',id:d.svc});render();return}
   if('back' in d){goBack();return}
