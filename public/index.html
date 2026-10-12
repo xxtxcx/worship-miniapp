@@ -6,7 +6,10 @@
 <title>D.Youth Worship</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://multitracks.blob.core.windows.net" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600;700&family=Unbounded:wght@700&family=JetBrains+Mono:wght@700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600;700&family=Unbounded:wght@700&family=JetBrains+Mono:wght@700&display=swap"></noscript>
 <style>
 /* Тема береться з Telegram: JS ставить data-theme="light|dark" за Telegram.WebApp.colorScheme.
    Поза Telegram працює prefers-color-scheme. */
@@ -90,6 +93,16 @@ button.row:active{background:var(--surface2)}
 .spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:sp .8s linear infinite;margin:0 auto 12px}
 @keyframes sp{to{transform:rotate(360deg)}}
 .layer{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:5;animation:slide .18s ease-out}
+@keyframes toastin{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+.toast.out{opacity:0}
+@keyframes leave{to{transform:translateX(100%)}}
+.screen{overscroll-behavior-y:contain}
+#replist .row,#picklist .row{content-visibility:auto;contain-intrinsic-size:auto 66px}
+@keyframes tabin{from{opacity:.0}to{opacity:1}}
+#screen.tabfade{animation:tabin .14s ease-out}
+button,.row{touch-action:manipulation}
+@media (prefers-reduced-motion:reduce){.layer,.toast,#screen.tabfade{animation:none!important}.layer.leaving{animation:none!important}}
+.layer.leaving{animation:leave .16s ease-in forwards}
 @keyframes slide{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.layer,.spin{animation:none}}
 .layer.sheet{z-index:8;animation:none}
@@ -176,16 +189,9 @@ button.row:active{background:var(--surface2)}
 .layer[data-layer=song] .lhead .songt{opacity:0;transition:opacity .15s}
 .layer[data-layer=song].scrolled .lhead .songt{opacity:1}
 .mon{padding:14px 4px 2px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
-.bar{display:block;height:5px;border-radius:3px;background:var(--surface2);margin:6px 0 4px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
 .seg{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
 .seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:8px 6px;font-weight:600;font-size:13px;color:var(--ink2)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.2)}
-details.gap summary{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-weight:600;cursor:pointer;list-style:none}
-details.gap summary::-webkit-details-marker{display:none}
-details.gap summary b{font-family:var(--font-mono);color:var(--ink2)}
-.gaplist{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
-.chip2{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:99px;padding:5px 10px;font-size:13px}
 .sumline .tot{margin-left:auto}
 .sumline .tot{font-family:var(--font-mono);font-size:12.5px;color:var(--ink2);text-align:right}
 .txt{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit}
@@ -200,7 +206,7 @@ details.gap summary b{font-family:var(--font-mono);color:var(--ink2)}
 .addrow{display:flex;gap:8px;flex-wrap:wrap}
 .addrow .btn{flex:1;min-width:100px;padding:11px 10px;font-size:14px}
 .rm{border:0;background:transparent;color:var(--ink2);font-size:18px;width:30px;height:30px}
-.toast{position:absolute;left:16px;right:16px;bottom:78px;background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:12px;font-weight:600;z-index:20;font-size:14px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(78px + env(safe-area-inset-bottom,0px));animation:toastin .18s ease-out;transition:opacity .2s;background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:12px;font-weight:600;z-index:20;font-size:14px}
 </style>
 </head>
 <body>
@@ -247,18 +253,21 @@ function personId(svc,name){
   var id='';(svc.lineup||[]).forEach(function(r){var i=r.names.indexOf(name);if(!id&&i>-1&&r.ids)id=r.ids[i]||''});
   if(!id&&svc.lead){var j=svc.lead.indexOf(name);if(j>-1&&svc.leadIds)id=svc.leadIds[j]||''}
   return id}
+function swapAva(id){
+  var u=S.ava[id];if(!u)return;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-ava="'+id+'"]'),function(el){var im=document.createElement('img');im.className=el.className;im.src=u;im.alt='';el.replaceWith(im)})}
 function loadAvatars(){
   var els=document.querySelectorAll('[data-ava]'),ids={};
-  Array.prototype.forEach.call(els,function(e){var id=e.dataset.ava;if(S.ava[id]===undefined){var ca=cachedAva(id);if(ca!==undefined){S.ava[id]=ca;return}ids[id]=1}});
+  Array.prototype.forEach.call(els,function(e){var id=e.dataset.ava;if(S.ava[id]===undefined){var ca=cachedAva(id);if(ca!==undefined){S.ava[id]=ca;if(ca)swapAva(id);return}ids[id]=1}});
   Object.keys(ids).forEach(function(id){
     S.ava[id]=0;
     fetch('/api/avatar?id='+id,{headers:{'X-Init-Data':(tg&&tg.initData)||''}}).then(function(r){if(r.status===404){lsSet('av:'+id,{t:Date.now(),d:''});throw 0}if(!r.ok)throw 0;return r.blob()}).then(function(b){
-      var fr=new FileReader();fr.onload=function(){S.ava[id]=fr.result;lsSet('av:'+id,{t:Date.now(),d:fr.result});render()};fr.readAsDataURL(b)}).catch(function(){})})}
+      var fr=new FileReader();fr.onload=function(){S.ava[id]=fr.result;lsSet('av:'+id,{t:Date.now(),d:fr.result});swapAva(id)};fr.readAsDataURL(b)}).catch(function(){})})}
 function smallCover(u){return String(u||'').replace('/albums/520/','/albums/284/')}
 function cover(s,cls){
   var t=String(s.title||'?'),h=0;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))%360;
   var dot=STATUS_DOT[s.status];
-  return '<span class="covw"><span class="cov'+(cls?' '+cls:'')+'" style="--h:'+h+'" aria-hidden="true"><span>'+esc(t.charAt(0).toUpperCase())+'</span>'+(s.cover?'<img src="'+esc(smallCover(s.cover))+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'</span>'+(dot?'<i class="sdot '+dot+(cls?' '+cls:'')+'" title="'+esc(s.status)+'" aria-label="'+esc(s.status)+'" role="img"></i>':'')+'</span>'}
+  return '<span class="covw"><span class="cov'+(cls?' '+cls:'')+'" style="--h:'+h+'" aria-hidden="true"><span>'+esc(t.charAt(0).toUpperCase())+'</span>'+(s.cover?'<img src="'+esc(smallCover(s.cover))+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'</span>'+(dot?'<i class="sdot '+dot+(cls?' '+cls:'')+'" title="'+esc(s.status)+'" aria-label="'+esc(s.status)+'" role="img"></i>':'')+'</span>'}
 var STATUS_DOT={'Зелені':'ok','Жовті':'warn'};
 var MONTHS=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 function fmtD(n){return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2)}
@@ -309,7 +318,10 @@ function chordLine(chs,n,flat){var out='',len=0;chs.forEach(function(p){var c=tC
 var S={me:null,songs:[],services:[],tab:'sunday',stack:[],sort:'az',f:'Усі',q:'',toast:'',cache:{},ava:{},pubView:{},past:{},hist:{items:[],loaded:false,more:false,busy:false},calMode:'next',edit:null,busy:false,err:null};
 var byId={};
 function song(id){return byId[id]||{id:id,title:'Невідома пісня',type:'',orig:'',our:'',n:0}}
-function toast(m){S.toast=m;render();clearTimeout(toast.t);toast.t=setTimeout(function(){S.toast='';render()},2400)}
+function toast(m){
+  var old=document.getElementById('toast');if(old)old.remove();
+  var el=document.createElement('div');el.id='toast';el.className='toast';el.setAttribute('role','status');el.textContent=m;document.body.appendChild(el);
+  clearTimeout(toast.t);toast.t=setTimeout(function(){el.classList.add('out');setTimeout(function(){el.remove()},200)},2400)}
 function svcById(id){return S.services.filter(function(s){return s.id===id})[0]||S.past[id]}
 function mySunday(){var m=S.services.filter(function(s){return s.mine});if(m.length)return m[0];return S.me&&S.me.isAdmin?S.services[0]:null}
 
@@ -374,56 +386,13 @@ function viewCal(){
    return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>У Notion на найближчі 30 днів нічого не створено.</div></div>')
    +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div>'+(tg&&tg.addToHomeScreen&&tg.initData?'<button class="btn soft wide" data-act="home">Додати на головний екран</button>':'')+'</div>'}
 
-function ago(iso,now){
-  if(!iso)return 'ще не заходив(ла)';
-  var ms=now-Date.parse(iso),m=Math.floor(ms/6e4),h=Math.floor(m/60),d=Math.floor(h/24);
-  if(m<2)return 'щойно';if(m<60)return m+' хв тому';if(h<24)return h+' год тому';
-  if(d<2)return 'вчора';if(d<31)return d+' дн тому';return 'понад місяць тому'}
-function adminSvc(A){
-  var now=Date.parse(A.now);
-  if(!A.services.length)return '<div class="card"><div class="empty"><b>Служінь на 30 днів немає</b>Додайте їх у Notion.</div></div>';
-  var sl={empty:['Сет-лист порожній','warn'],draft:['Лише чернетка','warn'],changed:['Є неопубліковані зміни','warn'],published:['Опубліковано','']};
-  return '<div class="card"><h2>Найближчі служіння</h2><div class="list">'+A.services.map(function(u){
-    var st=sl[u.setlist.state],lead=u.lead.length?'<span class="vline">'+avatar(u.leadIds[0],u.lead[0],'s')+esc(u.lead.join(', '))+'</span>':'<span class="pill warn" style="padding:2px 8px">ліда нема</span>';
-    return '<button class="row" data-svc="'+u.id+'"><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+' <span class="voc">'+esc(u.type||'')+'</span></span><br><span class="rowsub rs">'+lead+'<span class="pill'+(st[1]?' '+st[1]:'')+'" style="padding:2px 8px">'+st[0]+(u.setlist.songs&&u.setlist.state!=='empty'?' · '+u.setlist.songs:'')+'</span></span>'+(u.missing.length?'<span class="rowsub" style="display:block;margin-top:4px">Немає: '+u.missing.map(esc).join(', ')+'</span>':'')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
-function adminReq(A){
-  if(!A.requests.length)return '<div class="card"><div class="empty"><b>Нових запитів немає</b>Коли хтось відкриє застосунок, не маючи доступу, він з\'явиться тут.</div></div>';
-  var now=Date.parse(A.now);
-  return '<div class="card"><h2>Хочуть доступ</h2><div class="list">'+A.requests.map(function(r){
-    return '<div class="row" style="flex-wrap:wrap"><span class="rowmain"><span class="rowtitle">'+esc(r.name)+'</span><br><span class="rowsub">'+(r.nick?'@'+esc(r.nick)+' · ':'')+'ID '+esc(r.tgId)+' · '+r.attempts+' '+(r.attempts===1?'спроба':'спроб')+' · '+esc(ago(r.last,now))+'</span></span><span class="btnrow" style="flex:0 0 100%;margin-left:0"><button class="btn" data-req="approve" data-id="'+r.id+'"'+(S.busy?' disabled':'')+'>Додати в базу</button><button class="btn ghost" data-req="reject" data-id="'+r.id+'"'+(S.busy?' disabled':'')+'>Відхилити</button></span></div>'}).join('')+'</div></div><div class="note">«Додати в базу» створює людину в «Люди» з її іменем з Telegram. Роль і справжнє ім\'я потім можна поправити в Notion.</div>'}
-function adminGaps(A){
-  if(!A.gaps.length)return '<div class="card"><div class="empty"><b>Усе заповнено</b>Бракуючих даних не знайдено.</div></div>';
-  return A.gaps.map(function(g){
-    return '<details class="card gap"><summary><span>'+esc(g.title)+'</span><b>'+g.items.length+'</b></summary><div class="gaplist">'+g.items.map(function(i){return g.people?'<span class="chip2">'+esc(i.title)+'</span>':'<button class="chip2" data-song="'+i.id+'">'+esc(i.title)+'</button>'}).join('')+'</div></details>'}).join('')
-   +'<div class="note">Текст пісні тут не перевіряється, лише акорди. Архівні пісні не враховуються.</div>'}
-function adminAct(A){
-  var now=Date.parse(A.now);
-  return '<div class="card"><h2>Хто й коли заходив</h2><div class="list">'+A.people.map(function(p){
-    var fresh=p.lastSeen&&now-Date.parse(p.lastSeen)<864e5,week=p.lastSeen&&now-Date.parse(p.lastSeen)<7*864e5;
-    var when=p.lastSeen?new Date(p.lastSeen).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-    return '<div class="row" style="'+(p.active?'':'opacity:.55')+'"><span class="ava-wrap">'+avatar(p.registered?p.id:'',p.name,'l')+'</span><span class="rowmain"><span class="rowtitle">'+esc(p.name)+(p.active?'':' <span class="voc">(неактивний)</span>')+'</span><br><span class="rowsub">'+(p.registered?esc(ago(p.lastSeen,now))+(when?' · '+when:''):'немає chat_id')+'</span></span><span class="dotc" style="border-color:'+(fresh?'var(--ok)':week?'var(--warn)':'var(--line)')+(fresh?';background:var(--ok)':'')+'"></span></div>'}).join('')+'</div></div><div class="note">Фіксується відкриття застосунку, не частіше за раз на 10 хвилин. Дані ведуться від моменту запуску цієї функції.</div>'}
-function weeksAgo(d,now){var w=Math.floor((now-Date.parse(d))/6048e5);return w<1?'цього тижня':w+' тиж тому'}
-function adminSongs(A){
-  var r=A.rep,now=Date.parse(A.now),max=r.top.length?r.top[0].n:1;
-  var sum='<div><span class="pill"><span class="dot"></span>За '+r.days+' днів: '+r.services+' служінь · у середньому '+r.avgSongs+' пісні</span></div>';
-  var top=r.top.length?'<div class="card"><h2>Найчастіше грали</h2><div class="list">'+r.top.map(function(x,i){return '<button class="row" data-song="'+x.id+'"><span class="num">'+(i+1)+'</span><span class="rowmain"><span class="rowtitle">'+esc(x.title)+'</span><br><span class="bar"><i style="width:'+Math.round(x.n/max*100)+'%"></i></span></span><span class="key">'+x.n+'×</span></button>'}).join('')+'</div></div>':'';
-  var old=r.old.length?'<div class="card"><h2>Давно не грали</h2><div class="list">'+r.old.map(function(x){return '<button class="row" data-song="'+x.id+'"><span class="rowmain"><span class="rowtitle">'+esc(x.title)+'</span></span><span class="rowsub">'+weeksAgo(x.last,now)+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>':'';
-  var nv=r.never.length?'<details class="card gap"><summary><span>Жодного разу не грали</span><b>'+r.never.length+'</b></summary><div class="gaplist">'+r.never.map(function(x){return '<button class="chip2" data-song="'+x.id+'">'+esc(x.title)+'</button>'}).join('')+'</div></details>':'';
-  return sum+top+old+nv+'<div class="note">Рахуються минулі служіння за збереженими сет-лістами. «Давно» означає понад 8 тижнів. Архівні пісні не враховуються.</div>'}
-function adminTeam(A){
-  var m=A.team.members,max=m.reduce(function(n,p){return Math.max(n,p.served)},1);
-  return '<div class="card"><h2>За '+A.team.days+' днів</h2><div class="list">'+m.map(function(p){
-    return '<div class="row" style="'+(p.active?'':'opacity:.55')+'"><span class="ava-wrap">'+avatar(p.registered?p.id:'',p.name,'l')+'</span><span class="rowmain"><span class="rowtitle">'+esc(p.name)+'</span><br><span class="bar"><i style="width:'+Math.round(p.served/max*100)+'%"></i></span><span class="rowsub">служив(ла) '+p.served+' · вів '+p.led+' · співав(ла) '+p.sang+' '+(p.sang===1?'пісню':'пісень')+'</span></span></div>'}).join('')+'</div></div><div class="note">Служив(ла) — був(ла) у складі на служінні. Вів — лід. Співав(ла) — вокаліст пісні в сет-листі. Старі сет-лісти не містять вокалістів окремих пісень, тому там рахується лід служіння.</div>'}
-function viewAdmin(){
-  var A=S.admin;
-  if(!A)return '<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
-  if(A.err)return '<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(A.err)+'</div></div></div>';
-  var now=Date.parse(A.now),wk=A.people.filter(function(p){return p.lastSeen&&now-Date.parse(p.lastSeen)<7*864e5}).length;
-  var t=S.adminTab||'svc',bad=A.services.filter(function(u){return!u.lead.length||u.setlist.state!=='published'}).length;
-  var tabs=[['svc','Служіння',bad],['req','Доступ',A.requests.length],['gap','Дані',A.gaps.reduce(function(n,g){return n+g.items.length},0)],['songs','Репертуар',0],['team','Команда',0],['act','Активність',0]];
-  return '<div class="chips" role="tablist">'+tabs.map(function(x){return '<button data-atab="'+x[0]+'" aria-pressed="'+(t===x[0])+'">'+x[1]+(x[2]?' · '+x[2]:'')+'</button>'}).join('')+'</div><div class="pad">'
-   +(t==='svc'?adminSvc(A):t==='req'?adminReq(A):t==='gap'?adminGaps(A):t==='songs'?adminSongs(A):t==='team'?adminTeam(A):'<div><span class="pill"><span class="dot"></span>За 7 днів заходили: '+wk+' з '+A.people.length+'</span></div>'+adminAct(A))+'</div>'}
-
+var adminLoad=null;
+function ensureAdmin(){
+  if(window.viewAdminReal)return Promise.resolve();
+  if(!adminLoad)adminLoad=new Promise(function(res,rej){var sc=document.createElement('script');sc.src='/admin.js';sc.onload=res;sc.onerror=function(){adminLoad=null;rej()};document.head.appendChild(sc)});
+  return adminLoad}
+function viewAdmin(){return window.viewAdminReal?window.viewAdminReal():'<div class="center"><div><div class="spin"></div>Завантаження…</div></div>'}
+function openAdmin(){ensureAdmin().then(function(){window.loadAdmin()}).catch(function(){toast('Не вдалося завантажити адмінку')});render()}
 function sortBar(){return '<div class="chips sort" role="group" aria-label="Сортування">'+[['az','А–Я'],['za','Я–А'],['most','Найчастіше'],['least','Найрідше']].map(function(x){return '<button data-sort="'+x[0]+'" aria-pressed="'+(S.sort===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'}
 function chipList(){
   var t=[],st=[];S.songs.forEach(function(x){if(x.type&&t.indexOf(x.type)<0)t.push(x.type);if(x.status&&x.status!=='Активна'&&st.indexOf(x.status)<0)st.push(x.status)});
@@ -437,10 +406,11 @@ function filtered(){
   return l.sort(cmp)}
 function searchBox(id){return '<span class="sbox"><input id="'+id+'" type="search" placeholder="Пошук пісні або виконавця" value="'+esc(S.q)+'" aria-label="Пошук пісні"'+'>'+(S.q?'<button class="sclear" data-clearq aria-label="Очистити пошук">✕</button>':'')+'</span>'}
 function filterBars(){return '<div class="search">'+searchBox('q')+'</div><div class="chips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
-function viewRep(){
+function repRows(){
   var list=filtered();
-  return filterBars()+'<div class="pad"><div class="card"><div class="list">'+(list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'">'+cover(s)+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+(s.artist?esc(s.artist)+' · ':'')+esc(s.type||'—')+' · '+s.n+'×'+(s.status&&s.status!=='Активна'&&!STATUS_DOT[s.status]?' · '+esc(s.status.toLowerCase()):'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div>'}
-
+  return (list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'">'+cover(s)+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+(s.artist?esc(s.artist)+' · ':'')+esc(s.type||'—')+' · '+s.n+'×'+(s.status&&s.status!=='Активна'&&!STATUS_DOT[s.status]?' · '+esc(s.status.toLowerCase()):'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')}
+function viewRep(){
+  return filterBars()+'<div class="pad"><div class="card"><div class="list" id="replist">'+repRows()+'</div></div></div>'}
 function songLayer(L){
   var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
   var diff=s.orig&&k&&s.orig!==k,box=function(l,v,c){return '<div class="kbox'+(c?' '+c:'')+'"><span>'+l+'</span><b>'+esc(v)+'</b></div>'};
@@ -487,6 +457,10 @@ function builderLayer(){
   +'<div class="note">Тягніть рядки за ⋮⋮, щоб змінити порядок. Пункт це окремий момент без пісні («Біг інтро», «Молитва»), коментар це підказка між рядками. Тональність і вокаліст змінюються лише для цього служіння.</div></div></div>'
   +'<div class="lfoot"><button class="btn ghost" data-act="saveDraft"'+(S.busy?' disabled':'')+'>Зберегти чернетку</button><button class="btn" data-act="publish"'+(st.n&&!S.busy?'':' disabled')+'>'+(S.busy?'Зберігаю…':'Опублікувати')+'</button></div></div>'}
 
+function pickRows(){
+  var list=filtered(),inn={};S.edit.items.forEach(function(x){if(x.t==='song')inn[x.id]=1});
+  return list.map(function(s){
+    return '<div class="row">'+cover(s,'s')+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×'+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Прибрати зі списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+(list.length?'':'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')}
 function pickerLayer(){
   var list=filtered(),inn={},names=[],n=0;
   S.edit.items.forEach(function(x){if(x.t==='song'){inn[x.id]=1;n++;names.push(song(x.id).title)}});
@@ -495,8 +469,7 @@ function pickerLayer(){
   +'<div class="pbar">'+searchBox('pq')+'<select class="psort" data-psort aria-label="Сортування">'+sorts.map(function(x){return '<option value="'+x[0]+'"'+(S.sort===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></div>'
   +'<div class="chips pchips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'
   +(n?'<div class="picked"><b>У списку:</b> '+names.map(esc).join(', ')+'</div>':'')
-  +'<div class="screen" id="pscreen"><div class="pad" style="padding-bottom:88px"><div class="card"><div class="list">'+list.map(function(s){
-    return '<div class="row">'+cover(s,'s')+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×'+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Прибрати зі списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+(list.length?'':'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div></div>'
+  +'<div class="screen" id="pscreen"><div class="pad" style="padding-bottom:88px"><div class="card"><div class="list" id="picklist">'+pickRows()+'</div></div></div></div>'
   +(n?'<button class="btn fab" data-act="pickdone">Готово · '+n+'</button>':'')+'</div>'}
 
 function render(){
@@ -507,7 +480,7 @@ function render(){
   var layers=S.stack.map(function(l){return l.type==='song'?songLayer(l):l.type==='service'?serviceLayer(l):l.type==='build'?builderLayer():pickerLayer()}).join('');
   var tabs=[['sunday','<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>','Неділя'],['rep','<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>','Репертуар'],['cal','<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>','Графік']];if(S.me.isAdmin)tabs.push(['admin','<svg viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>','Адмін']);
   var nav='<nav class="nav" id="nav">'+tabs.map(function(x){return '<button data-tab="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+x[2]+'</button>'}).join('')+'</nav>';
-  app.innerHTML='<div class="screen" id="screen">'+(S.tab==='sunday'?viewSunday():S.tab==='rep'?viewRep():S.tab==='admin'&&S.me.isAdmin?viewAdmin():viewCal())+'</div>'+nav+layers+(S.toast?'<div class="toast" role="status">'+esc(S.toast)+'</div>':'');
+  app.innerHTML='<div class="screen" id="screen">'+(S.tab==='sunday'?viewSunday():S.tab==='rep'?viewRep():S.tab==='admin'&&S.me.isAdmin?viewAdmin():viewCal())+'</div>'+nav+layers+'';
   var ls=app.querySelectorAll(':scope > .layer');for(var li=0;li<ls.length&&li<prevDepth;li++)ls[li].classList.add('static');
   S.lastDepth=S.stack.length;
   loadAvatars();
@@ -520,8 +493,14 @@ function loadSong(id,layer){
   if(S.cache[id])return;
   api('/api/song?id='+id).then(function(d){S.cache[id]=d;render()}).catch(function(e){layer.err=(e.data&&e.data.message)||'Спробуйте ще раз';render()});
 }
-function loadAdmin(keep){if(!keep)S.admin=null;api('/api/admin').then(function(r){S.admin=r;render()}).catch(function(e){S.admin={err:(e.data&&e.data.message)||'Спробуйте ще раз'};render()})}
-function goBack(){var t=S.stack.pop();if(t&&t.type==='pick'){S.q='';S.f='Усі'}if(t&&t.type==='build'){S.edit=null}render()}
+var leaving=false;
+function goBack(immediate){
+  if(leaving)return;
+  var ls=document.querySelectorAll('#app > .layer'),el=ls[ls.length-1];
+  if(!immediate&&el&&!el.classList.contains('sheet')&&S.stack.length&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    leaving=true;el.classList.add('leaving');setTimeout(function(){leaving=false;popLayer()},150);return}
+  popLayer()}
+function popLayer(){var t=S.stack.pop();if(t&&t.type==='pick'){S.q='';S.f='Усі'}if(t&&t.type==='build'){S.edit=null}render()}
 function saveSetlist(publish){
   var e=S.edit;S.busy=true;render();
   api('/api/setlist',{method:'POST',body:{serviceId:e.id,items:e.items,publish:publish}}).then(function(r){
@@ -541,9 +520,7 @@ document.addEventListener('click',function(e){
   if(d.hsvc){var hid=d.hsvc;if(S.past[hid]||svcById(hid)){S.stack.push({type:'service',id:hid});render();return}
     api('/api/history?id='+hid).then(function(r){S.past[hid]=r.service;S.stack.push({type:'service',id:hid});render()}).catch(function(){toast('Служіння недоступне')});return}
   if(d.pubview){var pv=d.pubview.split(':');S.pubView[pv[0]]=pv[1]==='1';render();return}
-  if(d.atab){S.adminTab=d.atab;render();return}
-  if(d.req){S.busy=true;render();api('/api/admin',{method:'POST',body:{action:d.req,id:d.id}}).then(function(){S.busy=false;toast(d.req==='approve'?'Додано в базу':'Відхилено');loadAdmin(true)}).catch(function(e){S.busy=false;toast('Не вдалося: '+((e.data&&e.data.message)||e.message))});return}
-  if(d.tab){S.tab=d.tab;S.stack=[];S.q='';S.f='Усі';render();if(d.tab==='admin')loadAdmin();return}
+  if(d.tab){var prevTab=S.tab;S.tab=d.tab;S.stack=[];S.q='';S.f='Усі';render();if(prevTab!==d.tab){var scr=document.getElementById('screen');if(scr){scr.classList.add('tabfade')}}if(d.tab==='admin')openAdmin();return}
   if(d.song){var L={type:'song',id:d.song,key:d.key,tab:'text',off:0};S.stack.push(L);render();loadSong(d.song,L);return}
   if(d.svc){S.stack.push({type:'service',id:d.svc});render();return}
   if('back' in d){goBack();return}
@@ -579,14 +556,24 @@ document.addEventListener('change',function(e){var t=e.target;if(t.tagName!=='SE
   function end(){if(!drag)return;var d=drag;drag=null;clear();rows().forEach(function(r){r.classList.remove('dragging')});if(!d.to)return;var to=d.to.i+(d.to.after?1:0),a=S.edit.items,it=a.splice(d.i,1)[0];if(to>d.i)to--;a.splice(to,0,it);render()}
   document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end)})();
 document.addEventListener('input',function(e){if(e.target.dataset&&e.target.dataset.txt!==undefined){S.edit.items[+e.target.dataset.txt].x=e.target.value;return}
-  if(e.target.id==='q'||e.target.id==='pq'){S.q=e.target.value;S.focusQ=true;render();S.focusQ=false}});
-if(tg&&tg.BackButton)tg.BackButton.onClick(goBack);
+  if(e.target.id==='q'||e.target.id==='pq'){
+    S.q=e.target.value;
+    var box=e.target.closest('.sbox'),pick=e.target.id==='pq',list=document.getElementById(pick?'picklist':'replist');
+    if(list&&box){
+      list.innerHTML=pick?pickRows():repRows();
+      var cl=box.querySelector('.sclear');
+      if(S.q&&!cl){var b=document.createElement('button');b.className='sclear';b.setAttribute('data-clearq','');b.setAttribute('aria-label','Очистити пошук');b.textContent='✕';box.appendChild(b)}
+      else if(!S.q&&cl)cl.remove();
+      var sc=pick?document.getElementById('pscreen'):document.getElementById('screen');if(sc)sc.scrollTop=0;
+      loadAvatars();return}
+    S.focusQ=true;render();S.focusQ=false}});
+if(tg&&tg.BackButton)tg.BackButton.onClick(function(){goBack()});
 (function(){var sx=0,sy=0,dx=0,on=false,top=null;
   function topLayer(){var ls=document.querySelectorAll('#app > .layer');return ls[ls.length-1]}
   document.addEventListener('touchstart',function(e){on=false;if(!S.stack.length||e.touches.length!==1)return;var t=e.touches[0];if(t.clientX>36)return;sx=t.clientX;sy=t.clientY;dx=0;on=true;top=topLayer();if(top)top.style.transition='none'},{passive:true});
   document.addEventListener('touchmove',function(e){if(!on||!top)return;var t=e.touches[0];dx=t.clientX-sx;var dy=Math.abs(t.clientY-sy);if(dy>Math.abs(dx)&&dx<20){on=false;top.style.transform='';top.style.transition='';return}if(dx>0)top.style.transform='translateX('+dx+'px)'},{passive:true});
   document.addEventListener('touchend',function(){if(!on||!top)return;on=false;var el=top;top=null;
-    if(dx>90){el.style.transition='transform .15s ease-out';el.style.transform='translateX(100%)';setTimeout(function(){goBack()},120)}
+    if(dx>90){el.style.transition='transform .15s ease-out';el.style.transform='translateX(100%)';setTimeout(function(){goBack(true)},120)}
     else{el.style.transition='transform .15s ease-out';el.style.transform='';setTimeout(function(){el.style.transition=''},170)}},{passive:true});
   document.addEventListener('touchcancel',function(){if(top){top.style.transform='';top.style.transition=''}on=false;top=null},{passive:true})})();
 

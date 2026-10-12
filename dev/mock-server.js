@@ -72,5 +72,5 @@ http.createServer((req, res) => {
     }); return;
   }
   const file = path.join(__dirname, '..', 'public', url.pathname === '/' ? 'index.html' : url.pathname);
-  fs.readFile(file, (err, data) => { if (err) { res.writeHead(404); return res.end('404'); } res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(data); });
+  fs.readFile(file, (err, data) => { if (err) { res.writeHead(404); return res.end('404'); } res.writeHead(200, { 'Content-Type': file.endsWith('.js') ? 'text/javascript; charset=utf-8' : file.endsWith('.svg') ? 'image/svg+xml' : 'text/html; charset=utf-8' }); res.end(data); });
 }).listen(PORT, () => console.log(`http://localhost:${PORT}  (?role=lead|member|none)`));
