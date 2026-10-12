@@ -205,7 +205,7 @@ function applyTheme(){
   var bg=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
   try{if(tg){tg.setHeaderColor(bg);tg.setBackgroundColor(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());tg.setBottomBarColor&&tg.setBottomBarColor(bg)}}catch(e){}
 }
-if(tg){tg.ready();tg.expand();tg.onEvent('themeChanged',applyTheme)}
+if(tg){tg.ready();tg.expand();try{tg.disableVerticalSwipes&&tg.disableVerticalSwipes()}catch(e){}tg.onEvent('themeChanged',applyTheme)}
 applyTheme();
 if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!(tg&&tg.initData))applyTheme()});
 
@@ -223,7 +223,11 @@ function linkify(s){return esc(s).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" 
 function fmt(d){var p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}
 function wds(d){return['нд','пн','вт','ср','чт','пт','сб'][new Date(d+'T12:00:00').getDay()]}
 function wd(d){return new Date(d+'T12:00:00').toLocaleDateString('uk-UA',{weekday:'long'})}
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function cachedAva(id){var c=lsGet('av:'+id);if(!c)return undefined;var age=Date.now()-c.t;if(c.d&&age<3*864e5)return c.d;if(!c.d&&age<864e5)return 0;return undefined}
 function avatar(id,name,cls){
+  if(id&&S.ava[id]===undefined){var ca=cachedAva(id);if(ca!==undefined)S.ava[id]=ca}
   var u=id&&S.ava[id];
   if(u)return '<img class="ava'+(cls?' '+cls:'')+'" src="'+u+'" alt="">';
   var ini=String(name||'?').trim().split(/\s+/).slice(0,2).map(function(w){return w.charAt(0).toUpperCase()}).join('');
@@ -234,13 +238,15 @@ function personId(svc,name){
   return id}
 function loadAvatars(){
   var els=document.querySelectorAll('[data-ava]'),ids={};
-  Array.prototype.forEach.call(els,function(e){var id=e.dataset.ava;if(S.ava[id]===undefined)ids[id]=1});
+  Array.prototype.forEach.call(els,function(e){var id=e.dataset.ava;if(S.ava[id]===undefined){var ca=cachedAva(id);if(ca!==undefined){S.ava[id]=ca;return}ids[id]=1}});
   Object.keys(ids).forEach(function(id){
     S.ava[id]=0;
-    fetch('/api/avatar?id='+id,{headers:{'X-Init-Data':(tg&&tg.initData)||''}}).then(function(r){if(!r.ok)throw 0;return r.blob()}).then(function(b){S.ava[id]=URL.createObjectURL(b);render()}).catch(function(){})})}
+    fetch('/api/avatar?id='+id,{headers:{'X-Init-Data':(tg&&tg.initData)||''}}).then(function(r){if(r.status===404){lsSet('av:'+id,{t:Date.now(),d:''});throw 0}if(!r.ok)throw 0;return r.blob()}).then(function(b){
+      var fr=new FileReader();fr.onload=function(){S.ava[id]=fr.result;lsSet('av:'+id,{t:Date.now(),d:fr.result});render()};fr.readAsDataURL(b)}).catch(function(){})})}
+function smallCover(u){return String(u||'').replace('/albums/520/','/albums/284/')}
 function cover(s,cls){
   var t=String(s.title||'?'),h=0;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))%360;
-  return '<span class="cov'+(cls?' '+cls:'')+'" style="--h:'+h+'" aria-hidden="true"><span>'+esc(t.charAt(0).toUpperCase())+'</span>'+(s.cover?'<img src="'+esc(s.cover)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'</span>'}
+  return '<span class="cov'+(cls?' '+cls:'')+'" style="--h:'+h+'" aria-hidden="true"><span>'+esc(t.charAt(0).toUpperCase())+'</span>'+(s.cover?'<img src="'+esc(smallCover(s.cover))+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'</span>'}
 var MONTHS=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 function fmtD(n){return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2)}
 var ICON_SHARE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3 11 14"/><path d="M22 3 15 22l-4-8-8-4z"/></svg>';
@@ -353,7 +359,7 @@ function viewCal(){
    var la=u.leadIds&&u.leadIds[0]?avatar(u.leadIds[0],u.lead[0],'l ring'):'<span class="ava l none" aria-hidden="true">?</span>';
    var inner='<span class="ava-wrap">'+la+'</span><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
    return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>У Notion на найближчі 30 днів нічого не створено.</div></div>')
-   +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div></div>'}
+   +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div>'+(tg&&tg.addToHomeScreen&&tg.initData?'<button class="btn soft wide" data-act="home">Додати на головний екран</button>':'')+'</div>'}
 
 function ago(iso,now){
   if(!iso)return 'ще не заходив(ла)';
@@ -537,6 +543,7 @@ document.addEventListener('click',function(e){
   if(d.copy){copyItems(d.copy==='edit'?S.edit.items:(function(){var v=svcById(d.copy);return shownItems(v)})());return}
   if('addmom' in d){S.edit.items.push({t:'mom',x:'Молитва'});render();return}
   if('addnote' in d){S.edit.items.push({t:'note',x:'(коментар)'});render();return}
+  if(d.act==='home'){try{tg.addToHomeScreen()}catch(e){toast('Недоступно у вашій версії Telegram')}return}
   if(d.act==='pickdone'){goBack();return}
   if(d.add){var at=S.edit.items.findIndex(function(x){return x.t==='song'&&x.id===d.add});if(at>-1)S.edit.items.splice(at,1);else S.edit.items.push({t:'song',id:d.add,k:song(d.add).our,v:defVoc(svcById(S.edit.id))});render();return}
   if(d.rm!==undefined){S.edit.items.splice(+d.rm,1);render();return}
@@ -560,10 +567,21 @@ if(tg&&tg.BackButton)tg.BackButton.onClick(goBack);
 
 /* ---------- Старт ---------- */
 function fail(title,msg){S.err='<div class="center"><div><h1>'+esc(title)+'</h1>'+msg+'</div></div>';render()}
+function applyBoot(r){
+  var old={};S.songs.forEach(function(x){old[x.id]=x.n});
+  S.me=r.me;S.songs=r.songs.map(function(x){if(!x.n&&old[x.id])x.n=old[x.id];return x});S.services=r.services;byId={};S.songs.forEach(function(x){byId[x.id]=x})}
+var uid=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user?tg.initDataUnsafe.user.id:0,BOOT_KEY='boot1';
+var cachedBoot=uid?lsGet(BOOT_KEY):null;
+if(cachedBoot&&cachedBoot.uid===uid&&Date.now()-cachedBoot.t<7*864e5){applyBoot(cachedBoot.r);S.counts=cachedBoot.counts||{};S.songs.forEach(function(x){if(S.counts[x.id])x.n=S.counts[x.id]});render()}
+function loadCounts(){api('/api/counts').then(function(c){S.counts=c.counts;S.songs.forEach(function(x){x.n=c.counts[x.id]||0});render();if(uid)lsSet(BOOT_KEY,{uid:uid,t:Date.now(),r:{me:S.me,songs:S.songs,services:S.services},counts:c.counts})}).catch(function(){})}
 api('/api/bootstrap').then(function(r){
-  S.me=r.me;S.songs=r.songs;S.services=r.services;byId={};S.songs.forEach(function(s){byId[s.id]=s});render();
+  applyBoot(r);render();
+  if(uid)lsSet(BOOT_KEY,{uid:uid,t:Date.now(),r:{me:S.me,songs:S.songs,services:S.services},counts:S.counts||{}});
+  loadCounts();
+  api('/api/ping',{method:'POST'}).catch(function(){});
 }).catch(function(e){
   if(e.status===401)fail('Відкрийте через Telegram','Цей застосунок працює лише всередині Telegram, через кнопку бота.');
+  else if(S.me&&e.status!==403){toast('Немає зв\'язку, показано збережені дані')}
   else if(e.status===403)fail('Вас немає в базі','Telegram ID '+esc(e.data&&e.data.chatId)+' не знайдено в базі «Люди». Попросіть адміна додати вас.');
   else fail('Не вдалося завантажити',esc((e.data&&e.data.message)||e.message));
 });

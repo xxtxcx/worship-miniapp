@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
     if (!/^[0-9a-f]{32}$/.test(id)) return res.status(400).json({ error: 'bad_id' });
     const data = await L.cached(`song:${id}`, 5 * 60e3, async () => {
       const [page, lyrics, rows, services] = await Promise.all([
-        L.notion('GET', `/pages/${id}`), lyricsOf(id), L.loadSetRows(), L.loadServicesLite(),
+        L.notion('GET', `/pages/${id}`), lyricsOf(id), L.loadSetRowsOfSong(id), L.loadServicesLite(),
       ]);
       const history = rows.filter((r) => r.song === id && services.get(r.service))
         .map((r) => {

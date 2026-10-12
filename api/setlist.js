@@ -29,8 +29,7 @@ module.exports = async (req, res) => {
 
     if (publish) {
       // Синхронізуємо рядки бази «Сет-лист», щоб історія й лічильники лишались актуальними
-      L.invalidate('rows');
-      const rows = (await L.loadSetRows()).filter((r) => r.service === sid);
+      const rows = await L.loadSetRowsFor([sid]);
       await inBatches(rows, 3, (r) => L.notion('PATCH', `/pages/${r.id}`, { archived: true }));
       const byId = new Map(songs.map((s) => [s.id, s]));
       // Вокаліст пісні = людина зі складу цього служіння з таким ім'ям; якщо не вибрано, то лід служіння
@@ -52,7 +51,7 @@ module.exports = async (req, res) => {
     }
     L.invalidate('window');
     const fresh = (await L.loadWindow()).find((s) => s.id === sid);
-    const byService = L.groupBy(await L.loadSetRows(), (r) => r.service);
+    const byService = L.groupBy(await L.loadSetRowsFor([sid]), (r) => r.service);
     res.status(200).json({ service: L.toClient(fresh, ctx, byService) });
   } catch (e) {
     console.error(e);

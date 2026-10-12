@@ -209,21 +209,33 @@ function loadSongs() {
   });
 }
 
+const mapSetRow = (pg) => {
+  const p = pg.properties;
+  return {
+    id: nid(pg.id),
+    created: pg.created_time,
+    song: rel(p['Пісня'])[0],
+    service: rel(p['Служіння'])[0],
+    leads: rel(p['Лід-вокал']),
+    key: text(p['Тональність']),
+  };
+};
+
 function loadSetRows() {
-  return cached('rows', 10 * 60e3, async () => {
-    const pages = await queryAll(DB.sets);
-    return pages.map((pg) => {
-      const p = pg.properties;
-      return {
-        id: nid(pg.id),
-        created: pg.created_time,
-        song: rel(p['Пісня'])[0],
-        service: rel(p['Служіння'])[0],
-        leads: rel(p['Лід-вокал']),
-        key: text(p['Тональність']),
-      };
-    });
-  });
+  return cached('rows', 10 * 60e3, async () => (await queryAll(DB.sets)).map(mapSetRow));
+}
+
+// Лише рядки конкретних служінь: швидко, на відміну від повного завантаження історії
+async function loadSetRowsFor(serviceIds) {
+  if (!serviceIds.length) return [];
+  const filter = serviceIds.length === 1
+    ? { property: 'Служіння', relation: { contains: serviceIds[0] } }
+    : { or: serviceIds.map((id) => ({ property: 'Служіння', relation: { contains: id } })) };
+  return (await queryAll(DB.sets, filter)).map(mapSetRow);
+}
+
+async function loadSetRowsOfSong(songId) {
+  return (await queryAll(DB.sets, { property: 'Пісня', relation: { contains: songId } })).map(mapSetRow);
 }
 
 function parseService(pg) {
@@ -461,6 +473,6 @@ const groupBy = (arr, f) => {
 
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
-  verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadWindow, loadServicesLite,
+  verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadSetRowsFor, loadSetRowsOfSong, loadWindow, loadServicesLite,
   currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, touchVisit, loadAllServices, toHistory, loadRequests, resolveRequest, setlistState, computeStats,
 };
