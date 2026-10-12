@@ -45,6 +45,7 @@ module.exports = async (req, res) => {
       gap('key', 'Без тональності', (s) => !s.our),
       gap('links', 'Без жодного посилання', (s) => !(s.yt || s.mt || s.reh)),
       gap('cover', 'Без обкладинки', (s) => !s.cover),
+      gap('artist', 'Без виконавця', (s) => !s.artist),
     ].filter((g) => g.items.length);
     const noChat = people.filter((p) => p.active && !/^\d+$/.test(p.chatId)).map((p) => ({ id: p.id, title: p.name }));
     if (noChat.length) gaps.push({ key: 'chat', title: 'Люди без chat_id', items: noChat, people: true });

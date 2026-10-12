@@ -198,6 +198,7 @@ function loadSongs() {
         links: text(p['Інші лінки']),
         related: text(p["Зв'язки"]),
         notes: text(p['Нотатки']),
+        artist: text(p['Виконавець']).trim(),
         cover: (p['Обкладинка'] && p['Обкладинка'].url) || '',
         dur: parseDur(text(p['Тривалість'])),
         bpm: (p.BPM && p.BPM.number) || 0,
