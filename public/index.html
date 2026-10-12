@@ -93,6 +93,7 @@ button.row:active{background:var(--surface2)}
 @keyframes slide{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.layer,.spin{animation:none}}
 .layer.sheet{z-index:8;animation:none}
+.layer.static{animation:none}
 .lhead{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
 .lhead .t{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
 .iconbtn{border:0;background:var(--surface2);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;font-weight:700;flex:none}
@@ -502,13 +503,15 @@ function render(){
   var app=$('#app');
   if(S.err){app.innerHTML=S.err;return}
   if(!S.me){return}
-  var keep=0,sc=$('#screen');if(sc)keep=sc.scrollTop;var pk=$('#pscreen'),pkeep=pk?pk.scrollTop:0;
+  var keep=0,sc=$('#screen');if(sc)keep=sc.scrollTop;var pk=$('#pscreen'),pkeep=pk?pk.scrollTop:0,sk=$('#sscreen'),skeep=sk?sk.scrollTop:0,prevDepth=S.lastDepth||0;
   var layers=S.stack.map(function(l){return l.type==='song'?songLayer(l):l.type==='service'?serviceLayer(l):l.type==='build'?builderLayer():pickerLayer()}).join('');
   var tabs=[['sunday','<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>','Неділя'],['rep','<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>','Репертуар'],['cal','<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>','Графік']];if(S.me.isAdmin)tabs.push(['admin','<svg viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>','Адмін']);
   var nav='<nav class="nav" id="nav">'+tabs.map(function(x){return '<button data-tab="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+x[2]+'</button>'}).join('')+'</nav>';
   app.innerHTML='<div class="screen" id="screen">'+(S.tab==='sunday'?viewSunday():S.tab==='rep'?viewRep():S.tab==='admin'&&S.me.isAdmin?viewAdmin():viewCal())+'</div>'+nav+layers+(S.toast?'<div class="toast" role="status">'+esc(S.toast)+'</div>':'');
+  var ls=app.querySelectorAll(':scope > .layer');for(var li=0;li<ls.length&&li<prevDepth;li++)ls[li].classList.add('static');
+  S.lastDepth=S.stack.length;
   loadAvatars();
-  var ns=$('#screen');if(ns)ns.scrollTop=keep;var np=$('#pscreen');if(np)np.scrollTop=pkeep;
+  var ns=$('#screen');if(ns)ns.scrollTop=keep;var np=$('#pscreen');if(np)np.scrollTop=pkeep;var nss=$('#sscreen');if(nss){nss.scrollTop=skeep;if(skeep>60)nss.closest('.layer').classList.add('scrolled')}
   var q=$(S.stack.length&&S.stack[S.stack.length-1].type==='pick'?'#pq':'#q');if(q&&S.focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}
   if(tg&&tg.BackButton){if(S.stack.length)tg.BackButton.show();else tg.BackButton.hide()}
 }
@@ -578,6 +581,14 @@ document.addEventListener('change',function(e){var t=e.target;if(t.tagName!=='SE
 document.addEventListener('input',function(e){if(e.target.dataset&&e.target.dataset.txt!==undefined){S.edit.items[+e.target.dataset.txt].x=e.target.value;return}
   if(e.target.id==='q'||e.target.id==='pq'){S.q=e.target.value;S.focusQ=true;render();S.focusQ=false}});
 if(tg&&tg.BackButton)tg.BackButton.onClick(goBack);
+(function(){var sx=0,sy=0,dx=0,on=false,top=null;
+  function topLayer(){var ls=document.querySelectorAll('#app > .layer');return ls[ls.length-1]}
+  document.addEventListener('touchstart',function(e){on=false;if(!S.stack.length||e.touches.length!==1)return;var t=e.touches[0];if(t.clientX>36)return;sx=t.clientX;sy=t.clientY;dx=0;on=true;top=topLayer();if(top)top.style.transition='none'},{passive:true});
+  document.addEventListener('touchmove',function(e){if(!on||!top)return;var t=e.touches[0];dx=t.clientX-sx;var dy=Math.abs(t.clientY-sy);if(dy>Math.abs(dx)&&dx<20){on=false;top.style.transform='';top.style.transition='';return}if(dx>0)top.style.transform='translateX('+dx+'px)'},{passive:true});
+  document.addEventListener('touchend',function(){if(!on||!top)return;on=false;var el=top;top=null;
+    if(dx>90){el.style.transition='transform .15s ease-out';el.style.transform='translateX(100%)';setTimeout(function(){goBack()},120)}
+    else{el.style.transition='transform .15s ease-out';el.style.transform='';setTimeout(function(){el.style.transition=''},170)}},{passive:true});
+  document.addEventListener('touchcancel',function(){if(top){top.style.transform='';top.style.transition=''}on=false;top=null},{passive:true})})();
 
 /* ---------- Старт ---------- */
 function fail(title,msg){S.err='<div class="center"><div><h1>'+esc(title)+'</h1>'+msg+'</div></div>';render()}
