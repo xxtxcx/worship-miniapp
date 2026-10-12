@@ -10,8 +10,8 @@ const COVER = (c1, c2) => 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg 
 const COVERS = { a1: COVER('#e96443', '#904e95'), a5: COVER('#2193b0', '#6dd5ed'), a2: COVER('#134e5e', '#71b280') };
 const mk = (id, title, type, orig, our, n, extra = {}) => ({ artist: ARTISTS[id] || '', cover: COVERS[id] || '', dur: DUR[id] || 0, bpm: (META[id] || [0])[0], meter: (META[id] || [0, ''])[1], id, title, type, status: 'Активна', orig, our, n, keysBy: '', mt: '', yt: '', reh: '', gtr: '', vit: '', links: '', related: '', notes: '', hasChords: false, ...extra });
 const songs = [
-  mk('a1', 'Just Want You', 'Прославлення', 'D', 'D', 18, { keysBy: 'Наталя: A', mt: 'https://www.multitracks.com/songs/Equippers-Revolution/Truth/Just-Want-You/' }),
-  mk('a2', 'None Like You', 'Прославлення', 'C', 'C', 11),
+  mk('a1', 'Just Want You', 'Прославлення', 'D', 'D', 18, { status: 'Зелені', keysBy: 'Наталя: A', mt: 'https://www.multitracks.com/songs/Equippers-Revolution/Truth/Just-Want-You/' }),
+  mk('a2', 'None Like You', 'Прославлення', 'C', 'C', 11, { status: 'Жовті' }),
   mk('a3', 'Relentless(Remix)', 'Прославлення', 'D', 'D', 4, { yt: 'https://www.youtube.com/watch?v=TOLW_dXoIgk', gtr: 'EG2' }),
   mk('a4', 'Holy Spirit', 'Поклоніння', 'D', 'D', 9),
   mk('a5', 'Wake', 'Прославлення', 'G', 'G', 9, { hasChords: true, mt: 'https://www.multitracks.com/songs/Hillsong-Young-And-Free/Wake/Wake/' }),
