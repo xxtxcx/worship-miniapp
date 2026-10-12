@@ -126,6 +126,10 @@ button.row:active{background:var(--surface2)}
 .plain{padding:12px 16px;border-top:1px solid var(--line);font-size:14px;white-space:pre-line;overflow-wrap:anywhere}
 .plain a{color:var(--accent)}
 .search{display:flex;gap:8px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.sbox{position:relative;flex:1;min-width:0;display:flex}
+.sbox input{width:100%;padding-right:38px}
+.sbox input::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
+.sclear{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:0;border-radius:50%;background:var(--line);color:var(--ink2);font-size:13px;line-height:1;display:grid;place-items:center}
 .search input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit}
 .chips{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--line)}
 .chips button{flex:none;border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--ink2)}
@@ -422,7 +426,8 @@ function filtered(){
   var l=S.songs.filter(function(s){return(f==='Усі'?s.status!=='Архів':(s.type===f||s.status===f))&&(s.title+' '+(s.artist||'')).toLowerCase().indexOf(q)>-1});
   var cmp={az:function(a,b){return a.title.localeCompare(b.title,'en')},za:function(a,b){return b.title.localeCompare(a.title,'en')},most:function(a,b){return b.n-a.n||a.title.localeCompare(b.title,'en')},least:function(a,b){return a.n-b.n||a.title.localeCompare(b.title,'en')}}[S.sort];
   return l.sort(cmp)}
-function filterBars(){return '<div class="search"><input id="q" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"></div><div class="chips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
+function searchBox(id){return '<span class="sbox"><input id="'+id+'" type="search" placeholder="Пошук пісні або виконавця" value="'+esc(S.q)+'" aria-label="Пошук пісні"'+'>'+(S.q?'<button class="sclear" data-clearq aria-label="Очистити пошук">✕</button>':'')+'</span>'}
+function filterBars(){return '<div class="search">'+searchBox('q')+'</div><div class="chips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
 function viewRep(){
   var list=filtered();
   return filterBars()+'<div class="pad"><div class="card"><div class="list">'+(list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'">'+cover(s)+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+(s.artist?esc(s.artist)+' · ':'')+esc(s.type||'—')+' · '+s.n+'×'+(s.status&&s.status!=='Активна'?' · '+esc(s.status.toLowerCase()):'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div>'}
@@ -478,7 +483,7 @@ function pickerLayer(){
   S.edit.items.forEach(function(x){if(x.t==='song'){inn[x.id]=1;n++;names.push(song(x.id).title)}});
   var sorts=[['az','А–Я'],['za','Я–А'],['most','Часті'],['least','Рідкі']];
   return '<div class="layer sheet" data-layer="pick"><div class="lhead"><button class="iconbtn" data-back aria-label="Закрити">✕</button><div class="t">Додати пісню</div></div>'
-  +'<div class="pbar"><input id="pq" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"><select class="psort" data-psort aria-label="Сортування">'+sorts.map(function(x){return '<option value="'+x[0]+'"'+(S.sort===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></div>'
+  +'<div class="pbar">'+searchBox('pq')+'<select class="psort" data-psort aria-label="Сортування">'+sorts.map(function(x){return '<option value="'+x[0]+'"'+(S.sort===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></div>'
   +'<div class="chips pchips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'
   +(n?'<div class="picked"><b>У списку:</b> '+names.map(esc).join(', ')+'</div>':'')
   +'<div class="screen" id="pscreen"><div class="pad" style="padding-bottom:88px"><div class="card"><div class="list">'+list.map(function(s){
@@ -518,6 +523,7 @@ function saveSetlist(publish){
 document.addEventListener('click',function(e){
   var t=e.target.closest('button');if(!t)return;
   var top=S.stack[S.stack.length-1],d=t.dataset;
+  if('clearq' in d){S.q='';render();return}
   if(d.artist){S.tab='rep';S.stack=[];S.q=d.artist;S.f='Усі';render();return}
   if(d.calmode){S.calMode=d.calmode;render();if(d.calmode==='past'&&!S.hist.loaded)loadHistory(false);return}
   if('histmore' in d){loadHistory(true);return}
