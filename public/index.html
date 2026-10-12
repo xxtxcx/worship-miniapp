@@ -37,9 +37,18 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-siz
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .app{position:relative;height:100%;display:flex;flex-direction:column;overflow:hidden}
+html.fs{--ptop:calc(var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px))}
+html.fs .app{padding-top:var(--ptop)}
+html.fs .layer{padding-top:var(--ptop)}
+html.fs .toast{bottom:calc(78px + var(--tg-safe-area-inset-bottom,0px))}
+@media (min-width:700px){
+  body{background:var(--surface2)}
+  .app{max-width:560px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line);background:var(--bg)}
+  .toast{max-width:528px;margin:0 auto}
+}
 .screen{flex:1;min-height:0;overflow-y:auto;background:var(--bg);-webkit-overflow-scrolling:touch}
 .pad{padding:16px;display:flex;flex-direction:column;gap:14px}
-.nav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border-top:1px solid var(--line);background:var(--surface);padding-bottom:max(6px,env(safe-area-inset-bottom,0px))}
+.nav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border-top:1px solid var(--line);background:var(--surface);padding-bottom:max(6px,env(safe-area-inset-bottom,0px),var(--tg-safe-area-inset-bottom,0px))}
 .nav button{border:0;background:transparent;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--ink2)}
 .nav button[aria-current="page"]{color:var(--accent)}
 .nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -110,7 +119,7 @@ button,.row{touch-action:manipulation}
 .lhead{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
 .lhead .t{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
 .iconbtn{border:0;background:var(--surface2);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;font-weight:700;flex:none}
-.lfoot{padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
+.lfoot{padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px),var(--tg-safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
 .tabs{display:flex;gap:6px;padding:4px 16px 0;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
 .tabs button{border:0;background:transparent;padding:9px 12px;font-weight:600;color:var(--ink2);border-bottom:2px solid transparent}
 .tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
@@ -201,7 +210,7 @@ button,.row{touch-action:manipulation}
 .pchips{padding:2px 16px 8px;border-bottom:0}
 .picked{padding:6px 16px;font-size:12px;line-height:1.35;color:var(--ink2);background:var(--surface);border-bottom:1px solid var(--line);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .picked b{color:var(--ink)}
-.fab{position:absolute;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom,0px));box-shadow:0 6px 20px rgba(0,0,0,.28);z-index:3}
+.fab{position:absolute;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom,0px),var(--tg-safe-area-inset-bottom,0px));box-shadow:0 6px 20px rgba(0,0,0,.28);z-index:3}
 .sel.v{font-family:inherit;font-weight:500;flex:0 0 calc(100% - 38px);margin-left:38px;padding:8px 10px}
 .addrow{display:flex;gap:8px;flex-wrap:wrap}
 .addrow .btn{flex:1;min-width:100px;padding:11px 10px;font-size:14px}
@@ -222,7 +231,8 @@ function applyTheme(){
   var bg=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
   try{if(tg){tg.setHeaderColor(bg);tg.setBackgroundColor(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());tg.setBottomBarColor&&tg.setBottomBarColor(bg)}}catch(e){}
 }
-if(tg){tg.ready();tg.expand();try{tg.disableVerticalSwipes&&tg.disableVerticalSwipes()}catch(e){}tg.onEvent('themeChanged',applyTheme)}
+function syncFs(){document.documentElement.classList.toggle('fs',!!(tg&&tg.isFullscreen))}
+if(tg){tg.ready();tg.expand();syncFs();try{tg.onEvent('fullscreenChanged',syncFs)}catch(e){}try{tg.disableVerticalSwipes&&tg.disableVerticalSwipes()}catch(e){}tg.onEvent('themeChanged',applyTheme)}
 applyTheme();
 if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!(tg&&tg.initData))applyTheme()});
 
@@ -384,7 +394,7 @@ function viewCal(){
    var la=u.leadIds&&u.leadIds[0]?avatar(u.leadIds[0],u.lead[0],'l ring'):'<span class="ava l none" aria-hidden="true">?</span>';
    var inner='<span class="ava-wrap">'+la+'</span><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
    return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>У Notion на найближчі 30 днів нічого не створено.</div></div>')
-   +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div>'+(tg&&tg.addToHomeScreen&&tg.initData?'<button class="btn soft wide" data-act="home">Додати на головний екран</button>':'')+'</div>'}
+   +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div>'+(tg&&tg.addToHomeScreen&&tg.initData?'<button class="btn soft wide" data-act="home">Додати на головний екран</button>':'')+(tg&&tg.requestFullscreen&&tg.initData&&/ios|android/.test(tg.platform)?'<button class="btn ghost wide" data-act="fs">'+(tg.isFullscreen?'Вийти з повного екрана':'На весь екран')+'</button>':'')+'</div>'}
 
 var adminLoad=null;
 function ensureAdmin(){
@@ -544,6 +554,7 @@ document.addEventListener('click',function(e){
   if(d.copy){copyItems(d.copy==='edit'?S.edit.items:(function(){var v=svcById(d.copy);return shownItems(v)})());return}
   if('addmom' in d){S.edit.items.push({t:'mom',x:'Молитва'});render();return}
   if('addnote' in d){S.edit.items.push({t:'note',x:'(коментар)'});render();return}
+  if(d.act==='fs'){try{if(tg.isFullscreen)tg.exitFullscreen();else tg.requestFullscreen();setTimeout(function(){syncFs();render()},400)}catch(e){toast('Недоступно у вашій версії Telegram')}return}
   if(d.act==='home'){try{tg.addToHomeScreen()}catch(e){toast('Недоступно у вашій версії Telegram')}return}
   if(d.act==='pickdone'){goBack();return}
   if(d.add){var at=S.edit.items.findIndex(function(x){return x.t==='song'&&x.id===d.add});if(at>-1)S.edit.items.splice(at,1);else S.edit.items.push({t:'song',id:d.add,k:song(d.add).our,v:defVoc(svcById(S.edit.id))});render();return}
