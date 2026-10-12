@@ -48,6 +48,10 @@ assert.strictEqual(L.ytUrl('https://youtu.be/Jr6p1JImrZg?si=abc'), 'https://yout
 assert.strictEqual(L.ytUrl('https://www.youtube.com/watch?v=x1&list=RDx1&start_radio=1'), 'https://youtu.be/x1');
 assert.strictEqual(L.ytUrl('not a url'), 'not a url');
 
+assert.strictEqual(L.photoOf({ files: [{ type: 'file', file: { url: 'https://s3/x.png' } }] }), 'https://s3/x.png');
+assert.strictEqual(L.photoOf({ files: [{ type: 'external', external: { url: 'https://e/y.jpg' } }] }), 'https://e/y.jpg');
+assert.strictEqual(L.photoOf({ files: [] }), ''); assert.strictEqual(L.photoOf(undefined), '');
+
 // Історія: toHistory показує склад і опублікований сет-лист усім, у тому числі зі старих рядків бази
 {
   const people = new Map([['p1', { id: 'p1', name: 'Наталя' }], ['p2', { id: 'p2', name: 'Аня' }]]);
@@ -74,6 +78,35 @@ assert.strictEqual(L.ytUrl('not a url'), 'not a url');
   assert.deepStrictEqual([by.p1.served, by.p1.led, by.p1.sang], [1, 1, 1]); assert.deepStrictEqual([by.p2.served, by.p2.led, by.p2.sang], [2, 1, 2]);
   assert(!by.p3, 'inactive without activity is hidden');
 }
+
+// Аватар: фото з Notion має пріоритет над Telegram і працює без chat_id; завеликі файли ігноруються
+(async () => {
+  const avatar = require('../api/avatar');
+  const calls = [];
+  const realFetch = global.fetch;
+  global.fetch = async (url) => {
+    calls.push(String(url));
+    if (String(url).startsWith('https://s3/')) {
+      const big = String(url).includes('big');
+      return { ok: true, headers: { get: () => 'image/png' }, arrayBuffer: async () => new Uint8Array(big ? 800 * 1024 : 10).buffer };
+    }
+    return { ok: true, json: async () => ({ ok: true, result: { photos: [] } }), headers: { get: () => '' } };
+  };
+  let seq = 0;
+  const run = async (person) => {
+    const pid = String(++seq).padStart(32, '0');
+    L.currentPerson = async () => ({ me: { id: 'm' }, people: new Map([[pid, person]]), isAdmin: false });
+    let out = {}; const res = { setHeader(k, v) { out[k] = v; }, status(c) { out.code = c; return { json(b) { out.body = b; }, send(b) { out.sent = b; } }; } };
+    await avatar({ query: { id: pid } }, res); return out;
+  };
+  const manual = await run({ id: 'p', chatId: '', photo: 'https://s3/ok.png' });
+  assert.strictEqual(manual.code, 200); assert.strictEqual(manual['Content-Type'], 'image/png'); assert(!calls.some((c) => c.includes('telegram')), 'manual photo does not call Telegram');
+  const none = await run({ id: 'q', chatId: '', photo: '' });
+  assert.strictEqual(none.code, 404);
+  const big = await run({ id: 'r', chatId: '', photo: 'https://s3/big.png' });
+  assert.strictEqual(big.code, 404, 'oversized photo is ignored');
+  global.fetch = realFetch;
+})();
 
 // Адмінка доступна лише адмінам
 (async () => {

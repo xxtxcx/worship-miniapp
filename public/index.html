@@ -242,7 +242,7 @@ function wds(d){return['нд','пн','вт','ср','чт','пт','сб'][new Dat
 function wd(d){return new Date(d+'T12:00:00').toLocaleDateString('uk-UA',{weekday:'long'})}
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-function cachedAva(id){var c=lsGet('av:'+id);if(!c)return undefined;var age=Date.now()-c.t;if(c.d&&age<3*864e5)return c.d;if(!c.d&&age<864e5)return 0;return undefined}
+function cachedAva(id){var c=lsGet('av:'+id);if(!c)return undefined;var age=Date.now()-c.t;if(c.d&&age<3*864e5)return c.d;if(!c.d&&age<2*36e5)return 0;return undefined}
 function avatar(id,name,cls){
   if(id&&S.ava[id]===undefined){var ca=cachedAva(id);if(ca!==undefined)S.ava[id]=ca}
   var u=id&&S.ava[id];

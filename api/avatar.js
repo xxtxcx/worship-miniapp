@@ -14,7 +14,18 @@ async function fetchAvatar(chatId) {
   if (!f.ok) throw new Error(`getFile: ${f.description}`);
   const img = await fetch(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${f.result.file_path}`);
   if (!img.ok) throw new Error(`file download ${img.status}`);
-  return Buffer.from(await img.arrayBuffer());
+  return { buf: Buffer.from(await img.arrayBuffer()), type: 'image/jpeg' };
+}
+
+const MAX_PHOTO = 700 * 1024;
+// Фото, яке адмін поклав у Notion («Фото» в базі «Люди»), має пріоритет над фото з Telegram
+async function fetchManual(url) {
+  const img = await fetch(url);
+  if (!img.ok) throw new Error(`manual photo ${img.status}`);
+  const type = (img.headers.get('content-type') || '').split(';')[0];
+  if (!/^image\/(jpeg|png|webp|gif)$/.test(type)) return null;
+  const buf = Buffer.from(await img.arrayBuffer());
+  return buf.length <= MAX_PHOTO ? { buf, type } : null;
 }
 
 module.exports = async (req, res) => {
@@ -23,12 +34,17 @@ module.exports = async (req, res) => {
     if (ctx.error) return res.status(ctx.error[0]).json(ctx.error[1]);
     const id = L.nid(String(req.query.id || ''));
     const person = ctx.people.get(id);
-    if (!person || !/^\d+$/.test(person.chatId)) return res.status(404).json({ error: 'no_avatar' });
-    const buf = await L.cached(`ava:${id}`, 3600e3, () => fetchAvatar(person.chatId));
-    if (!buf) return res.status(404).json({ error: 'no_avatar' });
-    res.setHeader('Content-Type', 'image/jpeg');
+    if (!person) return res.status(404).json({ error: 'no_avatar' });
+    const hasTg = /^\d+$/.test(person.chatId);
+    if (!person.photo && !hasTg) return res.status(404).json({ error: 'no_avatar' });
+    const out = await L.cached(`ava:${id}:${person.photo ? 'm' : 't'}`, 3600e3, async () => {
+      if (person.photo) { const m = await fetchManual(person.photo); if (m) return m; }
+      return hasTg ? fetchAvatar(person.chatId) : null;
+    });
+    if (!out) return res.status(404).json({ error: 'no_avatar' });
+    res.setHeader('Content-Type', out.type);
     res.setHeader('Cache-Control', 'private, max-age=86400');
-    res.status(200).send(buf);
+    res.status(200).send(out.buf);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'server' });

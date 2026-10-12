@@ -99,6 +99,13 @@ function authUser(req) {
 const adminIds = () => (process.env.ADMIN_CHAT_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
 
 /* ---------- Дані ---------- */
+// Перший файл з колонки «Фото» (завантажений у Notion або зовнішнє посилання)
+function photoOf(prop) {
+  const f = prop && prop.files && prop.files[0];
+  if (!f) return '';
+  return (f.file && f.file.url) || (f.external && f.external.url) || '';
+}
+
 function loadPeople() {
   return cached('people', 5 * 60e3, async () => {
     const pages = await queryAll(DB.people);
@@ -108,6 +115,7 @@ function loadPeople() {
       map.set(nid(pg.id), {
         id: nid(pg.id), name: text(p["Ім'я"]), chatId: text(p.chat_id).trim(),
         active: !!(p['Активний'] && p['Активний'].checkbox),
+        photo: photoOf(p['Фото']),
         lastSeen: (p['Остання активність'] && p['Остання активність'].date && p['Остання активність'].date.start) || '',
       });
     }
@@ -474,5 +482,5 @@ const groupBy = (arr, f) => {
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
   verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadSetRowsFor, loadSetRowsOfSong, loadWindow, loadServicesLite,
-  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, touchVisit, loadAllServices, toHistory, loadRequests, resolveRequest, setlistState, computeStats,
+  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, photoOf, touchVisit, loadAllServices, toHistory, loadRequests, resolveRequest, setlistState, computeStats,
 };
