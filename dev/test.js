@@ -48,6 +48,17 @@ assert.strictEqual(L.ytUrl('https://youtu.be/Jr6p1JImrZg?si=abc'), 'https://yout
 assert.strictEqual(L.ytUrl('https://www.youtube.com/watch?v=x1&list=RDx1&start_radio=1'), 'https://youtu.be/x1');
 assert.strictEqual(L.ytUrl('not a url'), 'not a url');
 
+// Історія: toHistory показує склад і опублікований сет-лист усім, у тому числі зі старих рядків бази
+{
+  const people = new Map([['p1', { id: 'p1', name: 'Наталя' }], ['p2', { id: 'p2', name: 'Аня' }]]);
+  const svc = { id: 's', name: 'Мол', date: '2026-09-27', type: 'Молодіжка', leadIds: ['p1'], roles: [{ role: 'Вокал', ids: ['p1', 'p2'] }, { role: 'Бас', ids: [] }], draft: [{ id: 'secret' }], published: null };
+  const rows = [{ created: '2026-09-27T10:00:00Z', song: 'b', key: 'D', leads: ['p2'] }, { created: '2026-09-27T09:00:00Z', song: 'a', key: 'C', leads: ['p1'] }];
+  const h = L.toHistory(svc, { people }, rows);
+  assert(h.past && !h.canEdit && !h.draft, 'history is read-only and hides drafts');
+  assert.deepStrictEqual(h.published.map((x) => [x.id, x.v]), [['a', 'Наталя'], ['b', 'Аня']], 'order by creation, vocalist from row');
+  assert.deepStrictEqual(h.lineup.map((r) => r.role), ['Вокал']);
+}
+
 // Статистика
 {
   const today = new Date('2026-10-08T12:00:00Z');

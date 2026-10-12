@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
         .map((r) => {
           const s = services.get(r.service);
           const lead = r.leads.map((i) => (ctx.people.get(i) || {}).name).filter(Boolean).join(', ');
-          return { date: s.date, lead, key: r.key };
+          return { service: r.service, date: s.date, lead, key: r.key };
         })
         .sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 8);
       return { chords: L.text(page.properties['Акорди']), lyrics, history };

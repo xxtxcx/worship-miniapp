@@ -149,6 +149,12 @@ button.row:active{background:var(--surface2)}
 .sumline h2{padding:0}
 .sumline .iconbtn{width:30px;height:30px}
 .sumline h2 + .iconbtn{margin-left:0}
+.cov{position:relative;flex:none;width:44px;height:44px;border-radius:10px;overflow:hidden;display:grid;place-items:center;background:hsl(var(--h) 38% 34%);color:#fff;font-family:var(--font-display);font-weight:700;font-size:17px}
+.cov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cov.s{width:36px;height:36px;border-radius:8px;font-size:14px}
+.cov.l{width:72px;height:72px;border-radius:14px;font-size:26px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.titlerow{display:flex;gap:14px;align-items:center}
+.mon{padding:14px 4px 2px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
 .bar{display:block;height:5px;border-radius:3px;background:var(--surface2);margin:6px 0 4px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
 .seg{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
@@ -222,6 +228,10 @@ function loadAvatars(){
   Object.keys(ids).forEach(function(id){
     S.ava[id]=0;
     fetch('/api/avatar?id='+id,{headers:{'X-Init-Data':(tg&&tg.initData)||''}}).then(function(r){if(!r.ok)throw 0;return r.blob()}).then(function(b){S.ava[id]=URL.createObjectURL(b);render()}).catch(function(){})})}
+function cover(s,cls){
+  var t=String(s.title||'?'),h=0;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))%360;
+  return '<span class="cov'+(cls?' '+cls:'')+'" style="--h:'+h+'" aria-hidden="true"><span>'+esc(t.charAt(0).toUpperCase())+'</span>'+(s.cover?'<img src="'+esc(s.cover)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'</span>'}
+var MONTHS=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 function fmtD(n){return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2)}
 var ICON_SHARE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3 11 14"/><path d="M22 3 15 22l-4-8-8-4z"/></svg>';
 var ICON_COPY='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
@@ -267,11 +277,11 @@ function parseChords(txt){
 function chordLine(chs,n,flat){var out='',len=0;chs.forEach(function(p){var c=tChord(p[0],n,flat),pad=Math.max(p[1]-len,len?1:0);out+=' '.repeat(pad)+'<span class="c">'+esc(c)+'</span>';len+=pad+c.length});return out}
 
 /* ---------- Стан ---------- */
-var S={me:null,songs:[],services:[],tab:'sunday',stack:[],sort:'az',f:'Усі',q:'',toast:'',cache:{},ava:{},pubView:{},edit:null,busy:false,err:null};
+var S={me:null,songs:[],services:[],tab:'sunday',stack:[],sort:'az',f:'Усі',q:'',toast:'',cache:{},ava:{},pubView:{},past:{},hist:{items:[],loaded:false,more:false,busy:false},calMode:'next',edit:null,busy:false,err:null};
 var byId={};
 function song(id){return byId[id]||{id:id,title:'Невідома пісня',type:'',orig:'',our:'',n:0}}
 function toast(m){S.toast=m;render();clearTimeout(toast.t);toast.t=setTimeout(function(){S.toast='';render()},2400)}
-function svcById(id){return S.services.filter(function(s){return s.id===id})[0]}
+function svcById(id){return S.services.filter(function(s){return s.id===id})[0]||S.past[id]}
 function mySunday(){var m=S.services.filter(function(s){return s.mine});if(m.length)return m[0];return S.me&&S.me.isAdmin?S.services[0]:null}
 
 /* ---------- Екрани ---------- */
@@ -285,10 +295,13 @@ function setlistCard(items,svc){
    return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span></span>'+(it.v?'<span class="vline" title="'+esc(it.v)+'">'+avatar(personId(svc,it.v),it.v)+'</span>':'')+'<span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
 
 function shownItems(svc){return svc.canEdit?(S.pubView[svc.id]&&svc.hasChanges?(svc.published||[]):(svc.draft||[])):(svc.published||[])}
+function lineupHtml(svc){return (svc.lineup||[]).map(function(r){return '<dt>'+esc(r.role)+'</dt><dd>'+r.names.map(function(n,ni){return '<span class="who'+(r.lead&&r.lead.indexOf(n)>-1?' lead':'')+'">'+avatar(r.ids&&r.ids[ni],n,r.lead&&r.lead.indexOf(n)>-1?'ring':'')+esc(n)+'</span>'}).join('')+'</dd>'}).join('')}
 function serviceBody(svc){
   var items=shownItems(svc),showPub=svc.canEdit&&svc.hasChanges&&S.pubView[svc.id];
+  if(svc.past)return '<div class="hero"><span class="eyebrow">'+esc(svc.type||'Служіння')+'</span><div class="date">'+fmt(svc.date)+'</div><div class="meta">'+wd(svc.date)+(svc.lead.length?' · лід: '+esc(svc.lead.join(', ')):'')+'</div><div><span class="pill" style="background:var(--surface2);color:var(--ink2)"><span class="dot"></span>Минуле служіння</span></div></div>'
+   +((svc.lineup||[]).length?'<div class="card"><h2>Склад</h2><dl class="lineup">'+lineupHtml(svc)+'</dl></div>':'')+setlistCard(items,svc);
   var status=svc.canEdit?(svc.hasChanges?'<span class="pill warn"><span class="dot"></span>Є неопубліковані зміни</span>':(svc.published&&svc.published.length?'<span class="pill"><span class="dot"></span>Опубліковано для команди</span>':'<span class="pill warn"><span class="dot"></span>Ще не опубліковано</span>')):(svc.published&&svc.published.length?'<span class="pill"><span class="dot"></span>Сет-лист від ліда</span>':'<span class="pill warn"><span class="dot"></span>Сет-лист ще не опубліковано</span>');
-  var lu=(svc.lineup||[]).map(function(r){return '<dt>'+esc(r.role)+'</dt><dd>'+r.names.map(function(n,ni){return '<span class="who'+(r.lead&&r.lead.indexOf(n)>-1?' lead':'')+'">'+avatar(r.ids&&r.ids[ni],n,r.lead&&r.lead.indexOf(n)>-1?'ring':'')+esc(n)+'</span>'}).join('')+'</dd>'}).join('');
+  var lu=lineupHtml(svc);
   return '<div class="hero"><span class="eyebrow">'+esc(svc.type||'Служіння')+'</span><div class="date">'+fmt(svc.date)+'</div><div class="meta">'+wd(svc.date)+(svc.lead.length?' · лід: '+esc(svc.lead.join(', ')):' · лід не призначений')+'</div><div>'+status+'</div></div>'
    +(lu?'<div class="card"><h2>Склад</h2><dl class="lineup">'+lu+'</dl></div>':'')
    +(svc.canEdit&&svc.hasChanges?'<div class="seg" role="group" aria-label="Що показувати"><button data-pubview="'+svc.id+':0" aria-pressed="'+(!showPub)+'">Моя чернетка</button><button data-pubview="'+svc.id+':1" aria-pressed="'+(!!showPub)+'">Опубліковано</button></div>':'')
@@ -302,10 +315,30 @@ function viewSunday(){
     return '<div class="pad"><div class="hero"><span class="eyebrow">Найближчий місяць</span><div class="t2">Тебе немає в графіку на цей місяць</div><div class="meta">Вчасно проголосуй за свої побажання щодо служіння, і тут з\'явиться склад та сет-лист. Репертуар лишається доступним.</div><div><span class="pill warn"><span class="dot"></span>0 служінь у найближчі 30 днів</span></div></div><button class="btn soft" data-tab="rep">Відкрити репертуар</button></div>'}
   return '<div class="pad">'+serviceBody(svc)+'</div>'}
 
+function calSeg(){return '<div class="seg" role="group" aria-label="Графік"><button data-calmode="next" aria-pressed="'+(S.calMode==='next')+'">Найближчі</button><button data-calmode="past" aria-pressed="'+(S.calMode==='past')+'">Минулі</button></div>'}
+function viewHist(){
+  var H=S.hist;
+  if(!H.loaded)return '<div class="center" style="min-height:200px"><div><div class="spin"></div>Завантаження…</div></div>';
+  if(!H.items.length)return '<div class="card"><div class="empty"><b>Минулих служінь ще немає</b>Тут з\'являтимуться служіння разом зі складом і сет-листами.</div></div>';
+  var out='',cur='';
+  H.items.forEach(function(u){
+    var key=u.date.slice(0,7);
+    if(key!==cur){if(cur)out+='</div></div>';cur=key;out+='<div class="mon">'+MONTHS[+u.date.slice(5,7)-1]+' '+u.date.slice(0,4)+'</div><div class="card"><div class="list">'}
+    var n=(u.published||[]).filter(function(x){return x.t==='song'}).length,la=u.leadIds&&u.leadIds[0]?avatar(u.leadIds[0],u.lead[0],'l ring'):'<span class="ava l none" aria-hidden="true">?</span>';
+    out+='<button class="row" data-svc="'+u.id+'"><span class="ava-wrap">'+la+'</span><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+(u.lead.length?' · лід: '+esc(u.lead.join(', ')):'')+(n?' · '+n+' '+(n===1?'пісня':n<5?'пісні':'пісень'):'')+'</span></span><span class="chev">›</span></button>'});
+  out+='</div></div>';
+  return out+(H.more?'<button class="btn soft wide" data-histmore'+(H.busy?' disabled':'')+'>'+(H.busy?'Завантажую…':'Показати ще')+'</button>':'')}
+function loadHistory(more){
+  var H=S.hist;if(H.busy)return;H.busy=true;if(more)render();
+  api('/api/history?offset='+(more?H.items.length:0)+'&limit=12').then(function(r){
+    r.services.forEach(function(u){S.past[u.id]=u});
+    H.items=more?H.items.concat(r.services):r.services;H.more=r.hasMore;H.loaded=true;H.busy=false;render()
+  }).catch(function(e){H.busy=false;H.loaded=true;toast('Не вдалося завантажити: '+((e.data&&e.data.message)||e.message))})}
 function viewCal(){
+  if(S.calMode==='past')return '<div class="pad">'+calSeg()+viewHist()+'</div>';
   var mine=S.services.filter(function(s){return s.mine}).length;
   var head=mine?'<span class="pill"><span class="dot"></span>Ви служите: '+mine+' з '+S.services.length+'</span>':'<span class="pill warn"><span class="dot"></span>Тебе немає в графіку на цей місяць</span>';
-  return '<div class="pad"><div>'+head+'</div>'+(S.services.length?'<div class="card"><h2>Найближчі 30 днів</h2><div class="list">'+S.services.map(function(u){var vis=u.mine||S.me.isAdmin;
+  return '<div class="pad">'+calSeg()+'<div>'+head+'</div>'+(S.services.length?'<div class="card"><h2>Найближчі 30 днів</h2><div class="list">'+S.services.map(function(u){var vis=u.mine||S.me.isAdmin;
    var tag=u.isLead?'<span class="pill lead">ви лід</span>':u.mine?'<span class="pill">ви служите</span>':'<span class="rowsub">не в складі</span>';
    var la=u.leadIds&&u.leadIds[0]?avatar(u.leadIds[0],u.lead[0],'l ring'):'<span class="ava l none" aria-hidden="true">?</span>';
    var inner='<span class="ava-wrap">'+la+'</span><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
@@ -376,7 +409,7 @@ function filtered(){
 function filterBars(){return '<div class="search"><input id="q" type="search" placeholder="Пошук пісні" value="'+esc(S.q)+'" aria-label="Пошук пісні"></div><div class="chips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
 function viewRep(){
   var list=filtered();
-  return filterBars()+'<div class="pad"><div class="card"><div class="list">'+(list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+s.n+'× у сет-листах'+(s.status&&s.status!=='Активна'?' · '+esc(s.status.toLowerCase()):'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div>'}
+  return filterBars()+'<div class="pad"><div class="card"><div class="list">'+(list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'">'+cover(s)+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+s.n+'× у сет-листах'+(s.status&&s.status!=='Активна'?' · '+esc(s.status.toLowerCase()):'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div>'}
 
 function songLayer(L){
   var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
@@ -401,9 +434,9 @@ function songLayer(L){
     var A=function(ico,name,url){return url?'<a class="link" href="'+esc(url)+'" target="_blank" rel="noopener"><span class="ico">'+ico+'</span><span><b>'+name+'</b><small>'+esc(url.replace(/^https?:\/\//,''))+'</small></span></a>':'<div class="link off"><span class="ico">'+ico+'</span><span><b>'+name+'</b><small>немає посилання</small></span></div>'};
     body='<div class="pad"><div class="card"><div class="links">'+A('YT','YouTube',s.yt)+A('MT','Multitracks',s.mt)+A('RM','Rehearsal mix',s.reh)+'</div>'
       +(s.gtr?'<div class="plain"><b>Гітарні партії</b><br>'+linkify(s.gtr)+'</div>':'')+(s.vit?'<div class="plain"><b>Партії Віталіка</b><br>'+linkify(s.vit)+'</div>':'')+(s.related?'<div class="plain"><b>Зв\'язки з іншими піснями</b><br>'+linkify(s.related)+'</div>':'')+(s.links?'<div class="plain"><b>Інші лінки</b><br>'+linkify(s.links)+'</div>':'')+(s.notes?'<div class="plain"><b>Нотатки</b><br>'+linkify(s.notes)+'</div>':'')+'</div>'
-      +'<div class="card"><h2>Грали раніше</h2><div class="list">'+(d.history.length?d.history.map(function(h){return '<div class="row"><span class="rowmain"><span class="rowtitle">'+fmt(h.date)+'</span><br><span class="rowsub">лід: '+esc(h.lead||'—')+'</span></span><span class="key">'+esc(h.key||'–')+'</span></div>'}).join(''):'<div class="empty">Ще не було в сет-листах.</div>')+'</div></div></div>'}
+      +'<div class="card"><h2>Грали раніше</h2><div class="list">'+(d.history.length?d.history.map(function(h){return '<button class="row" data-hsvc="'+h.service+'"><span class="rowmain"><span class="rowtitle">'+fmt(h.date)+'</span><br><span class="rowsub">лід: '+esc(h.lead||'—')+'</span></span><span class="key">'+esc(h.key||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty">Ще не було в сет-листах.</div>')+'</div></div></div>'}
   return '<div class="layer" data-layer="song"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">'+esc(s.title)+'</div></div>'
-   +'<div class="songhead"><div class="title">'+esc(s.title)+'</div><div class="keys">'+kb+'</div></div>'
+   +'<div class="songhead"><div class="titlerow">'+cover(s,'l')+'<div class="title">'+esc(s.title)+'</div></div><div class="keys">'+kb+'</div></div>'
    +'<div class="tabs" role="tablist">'+[['text','Текст'],['chords','Акорди'],['mat','Матеріали']].map(function(x){return '<button role="tab" data-tab2="'+x[0]+'" aria-selected="'+(t===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'
    +'<div class="screen">'+body+'</div></div>'}
 
@@ -433,7 +466,7 @@ function pickerLayer(){
   +'<div class="chips pchips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'
   +(n?'<div class="picked"><b>У списку:</b> '+names.map(esc).join(', ')+'</div>':'')
   +'<div class="screen" id="pscreen"><div class="pad" style="padding-bottom:88px"><div class="card"><div class="list">'+list.map(function(s){
-    return '<div class="row"><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×'+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Прибрати зі списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+(list.length?'':'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div></div>'
+    return '<div class="row">'+cover(s,'s')+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+esc(s.type||'—')+' · '+esc(s.our||'–')+' · '+s.n+'×'+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><button class="add'+(inn[s.id]?' done':'')+'" data-add="'+s.id+'" aria-label="'+(inn[s.id]?'Прибрати зі списку':'Додати')+'">'+(inn[s.id]?'✓':'+')+'</button></div>'}).join('')+(list.length?'':'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')+'</div></div></div></div>'
   +(n?'<button class="btn fab" data-act="pickdone">Готово · '+n+'</button>':'')+'</div>'}
 
 function render(){
@@ -469,6 +502,10 @@ function saveSetlist(publish){
 document.addEventListener('click',function(e){
   var t=e.target.closest('button');if(!t)return;
   var top=S.stack[S.stack.length-1],d=t.dataset;
+  if(d.calmode){S.calMode=d.calmode;render();if(d.calmode==='past'&&!S.hist.loaded)loadHistory(false);return}
+  if('histmore' in d){loadHistory(true);return}
+  if(d.hsvc){var hid=d.hsvc;if(S.past[hid]||svcById(hid)){S.stack.push({type:'service',id:hid});render();return}
+    api('/api/history?id='+hid).then(function(r){S.past[hid]=r.service;S.stack.push({type:'service',id:hid});render()}).catch(function(){toast('Служіння недоступне')});return}
   if(d.pubview){var pv=d.pubview.split(':');S.pubView[pv[0]]=pv[1]==='1';render();return}
   if(d.atab){S.adminTab=d.atab;render();return}
   if(d.req){S.busy=true;render();api('/api/admin',{method:'POST',body:{action:d.req,id:d.id}}).then(function(){S.busy=false;toast(d.req==='approve'?'Додано в базу':'Відхилено');loadAdmin(true)}).catch(function(e){S.busy=false;toast('Не вдалося: '+((e.data&&e.data.message)||e.message))});return}

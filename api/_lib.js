@@ -198,6 +198,7 @@ function loadSongs() {
         links: text(p['Інші лінки']),
         related: text(p["Зв'язки"]),
         notes: text(p['Нотатки']),
+        cover: (p['Обкладинка'] && p['Обкладинка'].url) || '',
         dur: parseDur(text(p['Тривалість'])),
         bpm: (p.BPM && p.BPM.number) || 0,
         meter: text(p['Розмір']).trim(),
@@ -253,6 +254,10 @@ function loadWindow() {
     );
     return pages.map(parseService);
   });
+}
+
+function loadAllServices() {
+  return cached('servicesAll', 10 * 60e3, async () => (await queryAll(DB.services)).map(parseService));
 }
 
 function loadServicesLite() {
@@ -398,6 +403,28 @@ async function currentPerson(req) {
   return { me, people, isAdmin: adminIds().includes(String(user.id)) };
 }
 
+const lineupOf = (svc, people) => {
+  const names = (ids) => ids.map((i) => (people.get(i) || {}).name).filter(Boolean);
+  const known = (ids) => ids.filter((i) => people.get(i) && people.get(i).name);
+  return svc.roles.map((r) => ({ role: r.role, names: names(r.ids), ids: known(r.ids), lead: r.role === 'Вокал' ? names(r.ids.filter((i) => svc.leadIds.includes(i))) : [] }))
+    .filter((r) => r.names.length);
+};
+
+// Минуле служіння для історії: склад і опублікований сет-лист, лише для перегляду. Бачать усі з бази.
+function toHistory(svc, ctx, rows) {
+  const { people } = ctx;
+  const names = (ids) => ids.map((i) => (people.get(i) || {}).name).filter(Boolean);
+  let published = svc.published;
+  if (!published) {
+    published = (rows || []).slice().sort((a, b) => a.created.localeCompare(b.created)).map((r) => ({ t: 'song', id: r.song, k: r.key, v: names(r.leads)[0] || '' }));
+  }
+  return {
+    id: svc.id, date: svc.date, name: svc.name, type: svc.type, past: true, mine: false, isLead: false, canEdit: false,
+    lead: names(svc.leadIds), leadIds: svc.leadIds.filter((i) => people.get(i) && people.get(i).name),
+    lineup: lineupOf(svc, people), published: cleanItems(published),
+  };
+}
+
 function toClient(svc, ctx, rowsByService) {
   const { me, people, isAdmin } = ctx;
   const mine = svc.leadIds.includes(me.id) || svc.roles.some((r) => r.ids.includes(me.id));
@@ -410,8 +437,7 @@ function toClient(svc, ctx, rowsByService) {
   };
   if (!mine && !isAdmin) return out;
   const known = (ids) => ids.filter((i) => people.get(i) && people.get(i).name);
-  out.lineup = svc.roles.map((r) => ({ role: r.role, names: names(r.ids), ids: known(r.ids), lead: r.role === 'Вокал' ? names(r.ids.filter((i) => svc.leadIds.includes(i))) : [] }))
-    .filter((r) => r.names.length);
+  out.lineup = lineupOf(svc, people);
   let published = svc.published;
   if (!published) {
     const rows = (rowsByService.get(svc.id) || []).slice().sort((a, b) => a.created.localeCompare(b.created));
@@ -435,5 +461,5 @@ const groupBy = (arr, f) => {
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
   verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadWindow, loadServicesLite,
-  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, touchVisit, loadRequests, resolveRequest, setlistState, computeStats,
+  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, touchVisit, loadAllServices, toHistory, loadRequests, resolveRequest, setlistState, computeStats,
 };
