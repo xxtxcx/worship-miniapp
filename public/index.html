@@ -411,10 +411,12 @@ function repRows(){
   return (list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'">'+cover(s)+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+(s.artist?esc(s.artist)+' · ':'')+esc(s.type||'—')+' · '+s.n+'×'+(s.status&&s.status!=='Активна'&&!STATUS_DOT[s.status]?' · '+esc(s.status.toLowerCase()):'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')}
 function viewRep(){
   return filterBars()+'<div class="pad"><div class="card"><div class="list" id="replist">'+repRows()+'</div></div></div>'}
-function songLayer(L){
+function updateSong(L){
+  var b=document.getElementById('sbody');if(!b){render();return}
+  b.innerHTML=songBodyHtml(L);
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tab2]'),function(x){x.setAttribute('aria-selected',String(x.dataset.tab2===(L.tab||'text')))})}
+function songBodyHtml(L){
   var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
-  var diff=s.orig&&k&&s.orig!==k,box=function(l,v,c){return '<div class="kbox'+(c?' '+c:'')+'"><span>'+l+'</span><b>'+esc(v)+'</b></div>'};
-  var kb=box(diff?'У сеті':'Тональність',k||'–','hi')+(diff?box('Оригінал',s.orig):'')+(s.bpm?box('BPM',s.bpm):'')+(s.meter?box('Розмір',s.meter):'')+(s.dur?box('Тривалість',fmtD(s.dur)):'');
   var body;
   if(!d&&!L.err)body='<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
   else if(L.err)body='<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(L.err)+'</div></div></div>';
@@ -435,10 +437,15 @@ function songLayer(L){
     body='<div class="pad"><div class="card"><div class="links">'+A('YT','YouTube',s.yt)+A('MT','Multitracks',s.mt)+A('RM','Rehearsal mix',s.reh)+'</div>'
       +(s.gtr?'<div class="plain"><b>Гітарні партії</b><br>'+linkify(s.gtr)+'</div>':'')+(s.vit?'<div class="plain"><b>Партії Віталіка</b><br>'+linkify(s.vit)+'</div>':'')+(s.related?'<div class="plain"><b>Зв\'язки з іншими піснями</b><br>'+linkify(s.related)+'</div>':'')+(s.links?'<div class="plain"><b>Інші лінки</b><br>'+linkify(s.links)+'</div>':'')+(s.notes?'<div class="plain"><b>Нотатки</b><br>'+linkify(s.notes)+'</div>':'')+'</div>'
       +'<div class="card"><h2>Грали раніше</h2><div class="list">'+(d.history.length?d.history.map(function(h){return '<button class="row" data-hsvc="'+h.service+'"><span class="rowmain"><span class="rowtitle">'+fmt(h.date)+'</span><br><span class="rowsub">лід: '+esc(h.lead||'—')+'</span></span><span class="key">'+esc(h.key||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty">Ще не було в сет-листах.</div>')+'</div></div></div>'}
+  return body}
+function songLayer(L){
+  var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
+  var diff=s.orig&&k&&s.orig!==k,box=function(l,v,c){return '<div class="kbox'+(c?' '+c:'')+'"><span>'+l+'</span><b>'+esc(v)+'</b></div>'};
+  var kb=box(diff?'У сеті':'Тональність',k||'–','hi')+(diff?box('Оригінал',s.orig):'')+(s.bpm?box('BPM',s.bpm):'')+(s.meter?box('Розмір',s.meter):'')+(s.dur?box('Тривалість',fmtD(s.dur)):'');
   return '<div class="layer" data-layer="song"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t songt">'+esc(s.title)+'</div></div>'
    +'<div class="screen" id="sscreen"><div class="songhead"><div class="titlerow">'+cover(s,'m')+'<div class="tcol"><div class="title">'+esc(s.title)+'</div>'+(s.artist?'<button class="artist" data-artist="'+esc(s.artist)+'">'+esc(s.artist)+' <span>›</span></button>':'')+'</div></div><div class="keys">'+kb+'</div>'+(s.keysBy?'<div class="kv"><b>По вокалістках:</b> '+esc(s.keysBy)+'</div>':'')+'</div>'
    +'<div class="tabs" role="tablist">'+[['text','Текст'],['chords','Акорди'],['mat','Матеріали']].map(function(x){return '<button role="tab" data-tab2="'+x[0]+'" aria-selected="'+(t===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'
-   +body+'</div></div>'}
+   +'<div id="sbody">'+songBodyHtml(L)+'</div></div></div>'}
 
 function serviceLayer(L){var svc=svcById(L.id);if(!svc)return '';
   return '<div class="layer"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">'+fmt(svc.date)+' · '+esc(svc.type||'Служіння')+'</div></div><div class="screen"><div class="pad">'+serviceBody(svc)+'</div></div></div>'}
@@ -524,8 +531,8 @@ document.addEventListener('click',function(e){
   if(d.song){var L={type:'song',id:d.song,key:d.key,tab:'text',off:0};S.stack.push(L);render();loadSong(d.song,L);return}
   if(d.svc){S.stack.push({type:'service',id:d.svc});render();return}
   if('back' in d){goBack();return}
-  if(d.tab2){top.tab=d.tab2;render();return}
-  if(d.off){top.off=(top.off||0)+(+d.off);render();return}
+  if(d.tab2){top.tab=d.tab2;updateSong(top);return}
+  if(d.off){top.off=(top.off||0)+(+d.off);updateSong(top);return}
   if(d.f){S.f=d.f;render();return}
   if(d.sort){S.sort=d.sort;render();return}
   if(d.edit){var sv=svcById(d.edit);S.edit={id:sv.id,items:JSON.parse(JSON.stringify(sv.draft||[]))};S.stack.push({type:'build'});render();return}
