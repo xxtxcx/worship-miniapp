@@ -432,9 +432,10 @@ function viewRep(){
 var YT_SVG='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="1.5" y="4.5" width="21" height="15" rx="4.5" fill="#FF0000"/><path d="M10 9l5.5 3-5.5 3z" fill="#fff"/></svg>';
 function matIcon(name,url){
   var n=String(name||'').toLowerCase(),u=String(url||'').toLowerCase();
-  if(/youtube|ютуб/.test(n)||/youtu\.?be/.test(u))return YT_SVG;
-  if(/multitracks|мультитрек/.test(n)||/multitracks\.com/.test(u))return '<span class="mt">MT</span>';
-  if(/rehearsal|репетиц|worshiponline/.test(n+u))return '🎧';
+  // спочатку за назвою поля, тому «Гітарні партії» з посиланням на YouTube лишається з гітарою
+  if(/youtube|ютуб/.test(n))return YT_SVG;
+  if(/multitracks|мультитрек/.test(n))return '<span class="mt">MT</span>';
+  if(/rehearsal|репетиц/.test(n))return '🎧';
   if(/гітар|guitar|електро|акуст/.test(n))return '🎸';
   if(/клавіш|keys|piano|піаніно|синт|synth/.test(n))return '🎹';
   if(/бас|bass/.test(n))return '🎸';
@@ -444,6 +445,9 @@ function matIcon(name,url){
   if(/текст|lyrics|нотатк|notes?\b/.test(n))return '📝';
   if(/парті/.test(n))return '🎼';
   if(/переклад|transl/.test(n))return '🌐';
+  if(/youtu\.?be/.test(u))return YT_SVG;
+  if(/multitracks\.com/.test(u))return '<span class="mt">MT</span>';
+  if(/worshiponline/.test(u))return '🎧';
   if(/spotify|apple\.com|music\.|deezer/.test(u))return '🎧';
   if(/drive\.google|dropbox|notion\./.test(u))return '📁';
   return '🔗'}
