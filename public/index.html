@@ -144,7 +144,15 @@ button,.row{touch-action:manipulation}
 .link{display:flex;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink)}
 .link:first-child{border-top:0}
 .link .ico{width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
-.link.off{opacity:.45;pointer-events:none}
+.link .ico{font-size:19px;line-height:1}
+.link .mt{font-family:var(--font-mono);font-weight:700;font-size:12px;color:var(--accent)}
+.link .lm{flex:1;min-width:0;display:block}
+.link .lm b{display:block}
+.link.block{align-items:flex-start}
+.link.block .ico{margin-top:1px}
+.mtext{display:block;font-size:14px;white-space:pre-line;overflow-wrap:anywhere;margin-top:2px}
+.mtext a{color:var(--accent)}
+.link .chev{margin-left:auto}
 .link small{display:block;color:var(--ink2);font-size:12px;overflow-wrap:anywhere}
 .plain{padding:12px 16px;border-top:1px solid var(--line);font-size:14px;white-space:pre-line;overflow-wrap:anywhere}
 .plain a{color:var(--accent)}
@@ -421,6 +429,30 @@ function repRows(){
   return (list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'">'+cover(s)+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+(s.artist?esc(s.artist)+' · ':'')+esc(s.type||'—')+' · '+s.n+'×'+(s.status&&s.status!=='Активна'&&!STATUS_DOT[s.status]?' · '+esc(s.status.toLowerCase()):'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')}
 function viewRep(){
   return filterBars()+'<div class="pad"><div class="card"><div class="list" id="replist">'+repRows()+'</div></div></div>'}
+var YT_SVG='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="1.5" y="4.5" width="21" height="15" rx="4.5" fill="#FF0000"/><path d="M10 9l5.5 3-5.5 3z" fill="#fff"/></svg>';
+function matIcon(name,url){
+  var n=String(name||'').toLowerCase(),u=String(url||'').toLowerCase();
+  if(/youtube|ютуб/.test(n)||/youtu\.?be/.test(u))return YT_SVG;
+  if(/multitracks|мультитрек/.test(n)||/multitracks\.com/.test(u))return '<span class="mt">MT</span>';
+  if(/rehearsal|репетиц|worshiponline/.test(n+u))return '🎧';
+  if(/гітар|guitar|електро|акуст/.test(n))return '🎸';
+  if(/клавіш|keys|piano|піаніно|синт|synth/.test(n))return '🎹';
+  if(/бас|bass/.test(n))return '🎸';
+  if(/барабан|drum|ударн/.test(n))return '🥁';
+  if(/вокал|голос|vocal|бек|хор/.test(n))return '🎤';
+  if(/ноти|chart|sheet|табул|лід-шит/.test(n))return '🎼';
+  if(/текст|lyrics|нотатк|notes?\b/.test(n))return '📝';
+  if(/парті/.test(n))return '🎼';
+  if(/переклад|transl/.test(n))return '🌐';
+  if(/spotify|apple\.com|music\.|deezer/.test(u))return '🎧';
+  if(/drive\.google|dropbox|notion\./.test(u))return '📁';
+  return '🔗'}
+function materialRow(m){
+  var ic='<span class="ico">'+matIcon(m.name,m.links&&m.links[0]&&m.links[0].url)+'</span>';
+  if(m.links&&m.links.length===1&&!m.text){var l=m.links[0];
+    return '<a class="link" href="'+esc(l.url)+'" target="_blank" rel="noopener">'+ic+'<span class="lm"><b>'+esc(m.name)+'</b><small>'+esc(l.label||l.url.replace(/^https?:\/\/(www\.)?/,''))+'</small></span><span class="chev">›</span></a>'}
+  var body=m.links?m.links.map(function(l){return '<a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.label||l.url.replace(/^https?:\/\/(www\.)?/,''))+'</a>'}).join('<br>'):linkify(m.text);
+  return '<div class="link block">'+ic+'<span class="lm"><b>'+esc(m.name)+'</b><span class="mtext">'+body+'</span></span></div>'}
 function updateSong(L){
   var b=document.getElementById('sbody');if(!b){render();return}
   b.innerHTML=songBodyHtml(L);
@@ -443,9 +475,8 @@ function songBodyHtml(L){
        +parseChords(d.chords).map(function(sec){return '<div class="sec">'+(sec.h?'<h3>'+esc(sec.h)+'</h3>':'')+'<div class="chordblock">'+sec.lines.map(function(l){return(l.chs.length?chordLine(l.chs,n,flat)+'\n':'')+esc(l.t)}).join('\n')+'</div></div>'}).join('')+'</div>'}
     else body='<div class="pad"><div class="card"><div class="empty"><b>Акордів ще немає</b>Додайте їх у поле «Акорди» пісні в Notion (формат: [G]В надії ми кожен [D]день).</div></div></div>'}
   else{
-    var A=function(ico,name,url){return url?'<a class="link" href="'+esc(url)+'" target="_blank" rel="noopener"><span class="ico">'+ico+'</span><span><b>'+name+'</b><small>'+esc(url.replace(/^https?:\/\//,''))+'</small></span></a>':'<div class="link off"><span class="ico">'+ico+'</span><span><b>'+name+'</b><small>немає посилання</small></span></div>'};
-    body='<div class="pad"><div class="card"><div class="links">'+A('YT','YouTube',s.yt)+A('MT','Multitracks',s.mt)+A('RM','Rehearsal mix',s.reh)+'</div>'
-      +(s.gtr?'<div class="plain"><b>Гітарні партії</b><br>'+linkify(s.gtr)+'</div>':'')+(s.vit?'<div class="plain"><b>Партії Віталіка</b><br>'+linkify(s.vit)+'</div>':'')+(s.related?'<div class="plain"><b>Зв\'язки з іншими піснями</b><br>'+linkify(s.related)+'</div>':'')+(s.links?'<div class="plain"><b>Інші лінки</b><br>'+linkify(s.links)+'</div>':'')+(s.notes?'<div class="plain"><b>Нотатки</b><br>'+linkify(s.notes)+'</div>':'')+'</div>'
+    var mats=s.materials||[];
+    body='<div class="pad">'+(mats.length?'<div class="card"><div class="links">'+mats.map(materialRow).join('')+'</div></div>':'')
       +'<div class="card"><h2>Грали раніше</h2><div class="list">'+(d.history.length?d.history.map(function(h){return '<button class="row" data-hsvc="'+h.service+'"><span class="rowmain"><span class="rowtitle">'+fmt(h.date)+'</span><br><span class="rowsub">лід: '+esc(h.lead||'—')+'</span></span><span class="key">'+esc(h.key||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty">Ще не було в сет-листах.</div>')+'</div></div></div>'}
   return body}
 function songLayer(L){

@@ -182,6 +182,32 @@ function ytUrl(u) {
   } catch { return u; }
 }
 
+// Матеріали пісні: усі непорожні поля типів «URL», «Файли» та «Текст», яких немає в списку службових.
+// Нове поле в Notion автоматично стає матеріалом. Порядок: YouTube, Multitracks, Rehearsal mix, далі за алфавітом, «Інші лінки» і «Нотатки» в кінці.
+const NOT_MATERIAL = new Set(['Назва', 'Тип', 'Статус', 'Оригінальна тональність', 'Наша тональність', 'Тональності вокалістів', 'BPM', 'Розмір',
+  'Тривалість', 'Виконавець', 'Обкладинка', 'Акорди', 'Бридж', 'Переклад', 'Структура', 'Сет-лист']);
+const MAT_FIRST = ['YouTube', 'Multitracks', 'Rehearsal mix'];
+const MAT_LAST = ['Інші лінки', "Зв'язки", 'Нотатки'];
+const URL_ONLY = /^https?:\/\/\S+$/;
+function materialsOf(p) {
+  const out = [];
+  for (const [name, prop] of Object.entries(p)) {
+    if (NOT_MATERIAL.has(name)) continue;
+    if (prop.type === 'url') {
+      if (prop.url) out.push({ name, links: [{ url: prop.url }] });
+    } else if (prop.type === 'files') {
+      const links = (prop.files || []).map((f) => ({ url: (f.file && f.file.url) || (f.external && f.external.url) || '', label: f.name || '' })).filter((x) => x.url);
+      if (links.length) out.push({ name, links });
+    } else if (prop.type === 'rich_text') {
+      const t = text(prop).trim();
+      if (!t) continue;
+      out.push(URL_ONLY.test(t) ? { name, links: [{ url: t }] } : { name, text: t });
+    }
+  }
+  const rank = (n) => (MAT_FIRST.includes(n) ? MAT_FIRST.indexOf(n) - 100 : MAT_LAST.includes(n) ? MAT_LAST.indexOf(n) + 100 : 0);
+  return out.sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name, 'uk'));
+}
+
 function loadSongs() {
   return cached('songs', 2 * 60e3, async () => {
     const pages = await queryAll(DB.songs);
@@ -207,6 +233,7 @@ function loadSongs() {
         related: text(p["Зв'язки"]),
         notes: text(p['Нотатки']),
         artist: text(p['Виконавець']).trim(),
+        materials: materialsOf(p),
         cover: (p['Обкладинка'] && p['Обкладинка'].url) || '',
         dur: parseDur(text(p['Тривалість'])),
         bpm: (p.BPM && p.BPM.number) || 0,
@@ -482,5 +509,5 @@ const groupBy = (arr, f) => {
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
   verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadSetRowsFor, loadSetRowsOfSong, loadWindow, loadServicesLite,
-  currentPerson, toClient, groupBy, noteKey, parseDur, cleanItems, ytUrl, photoOf, touchVisit, loadAllServices, toHistory, loadRequests, resolveRequest, setlistState, computeStats,
+  currentPerson, toClient, groupBy, noteKey, parseDur, materialsOf, cleanItems, ytUrl, photoOf, touchVisit, loadAllServices, toHistory, loadRequests, resolveRequest, setlistState, computeStats,
 };

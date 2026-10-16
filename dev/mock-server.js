@@ -5,10 +5,14 @@ const http = require('http'), fs = require('fs'), path = require('path');
 const PORT = process.env.PORT || 3000;
 const META = { a1: [147, '4/4'], a2: [72, '4/4'], a5: [131, '4/4'] };
 const ARTISTS = { a1: 'Equippers Revolution', a2: 'Equippers Worship', a5: 'Hillsong Young & Free', a8: 'REVERE' };
+const MATS = {
+  a5: [{ name: 'YouTube', links: [{ url: 'https://youtu.be/abc' }] }, { name: 'Multitracks', links: [{ url: 'https://www.multitracks.com/songs/Hillsong-Young-And-Free/Wake/Wake/' }] }, { name: 'Гітарні партії', text: 'Електро: https://drive.google.com/file/d/1/view\nАкустика: Am F C G, каподастр 2' }, { name: 'Клавіші партії', links: [{ url: 'https://drive.google.com/file/d/2/view' }] }, { name: 'Бас', links: [{ url: 'https://example.com/bass.pdf', label: 'bass-line.pdf' }] }, { name: 'Нотатки', text: 'Починаємо тихо, бридж двічі' }],
+  a1: [{ name: 'YouTube', links: [{ url: 'https://youtu.be/xyz' }] }],
+};
 const DUR = { a1: 280, a2: 290, a3: 310, a4: 360, a5: 260, a6: 285 };
 const COVER = (c1, c2) => 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="200" height="200" fill="url(#g)"/><circle cx="100" cy="100" r="46" fill="none" stroke="#fff" stroke-width="6"/></svg>`);
 const COVERS = { a1: COVER('#e96443', '#904e95'), a5: COVER('#2193b0', '#6dd5ed'), a2: COVER('#134e5e', '#71b280') };
-const mk = (id, title, type, orig, our, n, extra = {}) => ({ artist: ARTISTS[id] || '', cover: COVERS[id] || '', dur: DUR[id] || 0, bpm: (META[id] || [0])[0], meter: (META[id] || [0, ''])[1], id, title, type, status: 'Активна', orig, our, n, keysBy: '', mt: '', yt: '', reh: '', gtr: '', vit: '', links: '', related: '', notes: '', hasChords: false, ...extra });
+const mk = (id, title, type, orig, our, n, extra = {}) => ({ materials: MATS[id] || [], artist: ARTISTS[id] || '', cover: COVERS[id] || '', dur: DUR[id] || 0, bpm: (META[id] || [0])[0], meter: (META[id] || [0, ''])[1], id, title, type, status: 'Активна', orig, our, n, keysBy: '', mt: '', yt: '', reh: '', gtr: '', vit: '', links: '', related: '', notes: '', hasChords: false, ...extra });
 const songs = [
   mk('a1', 'Just Want You', 'Прославлення', 'D', 'D', 18, { status: 'Зелені', keysBy: 'Наталя: A', mt: 'https://www.multitracks.com/songs/Equippers-Revolution/Truth/Just-Want-You/' }),
   mk('a2', 'None Like You', 'Прославлення', 'C', 'C', 11, { status: 'Жовті' }),

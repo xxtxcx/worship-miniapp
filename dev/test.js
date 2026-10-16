@@ -52,6 +52,21 @@ assert.strictEqual(L.photoOf({ files: [{ type: 'file', file: { url: 'https://s3/
 assert.strictEqual(L.photoOf({ files: [{ type: 'external', external: { url: 'https://e/y.jpg' } }] }), 'https://e/y.jpg');
 assert.strictEqual(L.photoOf({ files: [] }), ''); assert.strictEqual(L.photoOf(undefined), '');
 
+// Матеріали: нове поле Notion стає матеріалом автоматично
+{
+  const rt = (s) => ({ type: 'rich_text', rich_text: s ? [{ plain_text: s }] : [] });
+  const m = L.materialsOf({
+    'Назва': { type: 'title', title: [{ plain_text: 'X' }] }, 'Виконавець': rt('Hillsong'), 'Обкладинка': { type: 'url', url: 'https://c/x.jpg' },
+    'YouTube': { type: 'url', url: 'https://youtu.be/a' }, 'Multitracks': { type: 'url', url: null },
+    'Клавіші партії': { type: 'url', url: 'https://drive/k' }, 'Гітарні партії': rt('Лід: https://drive/g, ритм: Am F'), 'Бас': rt('https://drive/b'),
+    'Нотатки': rt('Грати тихо'), 'Інші лінки': rt(''), 'BPM': { type: 'number', number: 70 }, 'Хор': { type: 'files', files: [{ name: 'a.pdf', file: { url: 'https://s3/a.pdf' } }] },
+  });
+  assert.deepStrictEqual(m.map((x) => x.name), ['YouTube', 'Бас', 'Гітарні партії', 'Клавіші партії', 'Хор', 'Нотатки'], 'order and filtering');
+  assert.deepStrictEqual(m.find((x) => x.name === 'Бас').links, [{ url: 'https://drive/b' }], 'url-only text becomes a link');
+  assert(m.find((x) => x.name === 'Гітарні партії').text.includes('Am F'));
+  assert.strictEqual(m.find((x) => x.name === 'Хор').links[0].label, 'a.pdf');
+}
+
 // Історія: toHistory показує склад і опублікований сет-лист усім, у тому числі зі старих рядків бази
 {
   const people = new Map([['p1', { id: 'p1', name: 'Наталя' }], ['p2', { id: 'p2', name: 'Аня' }]]);
