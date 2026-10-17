@@ -153,6 +153,12 @@ button,.row{touch-action:manipulation}
 .mtext{display:block;font-size:14px;white-space:pre-line;overflow-wrap:anywhere;margin-top:2px}
 .mtext a{color:var(--accent)}
 .link .chev{margin-left:auto}
+.hrow{padding:0;gap:0;align-items:stretch}
+.hmain{border:0;background:transparent;color:inherit;font:inherit;text-align:left;padding:12px 0 12px 16px;flex:1;min-width:0;display:flex;align-items:center;gap:12px}
+.hmain.hside{flex:none;padding:12px 16px 12px 10px}
+.ytbtn{flex:none;display:grid;place-items:center;width:44px;align-self:center;height:36px;border-radius:10px}
+.ytbtn:active{background:var(--surface2)}
+.ytmini{display:inline-grid;place-items:center;width:28px;height:28px;flex:none}
 .link small{display:block;color:var(--ink2);font-size:12px;overflow-wrap:anywhere}
 .plain{padding:12px 16px;border-top:1px solid var(--line);font-size:14px;white-space:pre-line;overflow-wrap:anywhere}
 .plain a{color:var(--accent)}
@@ -351,7 +357,7 @@ function setlistCard(items,svc){
    if(it.t==='mom')return '<div class="row moment"><span class="num"><i class="dotc"></i></span><span class="rowmain"><span class="rowtitle">'+esc(it.x)+'</span></span></div>';
    if(it.t==='note')return '<div class="noterow">'+esc(it.x)+'</div>';
    var s=song(it.id),k=it.k||s.our;n++;
-   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span></span>'+(it.v?'<span class="vline" title="'+esc(it.v)+'">'+avatar(personId(svc,it.v),it.v)+'</span>':'')+'<span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
+   return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span></span>'+(it.v?'<span class="vline" title="'+esc(it.v)+'">'+avatar(personId(svc,it.v),it.v)+'</span>':'')+(it.link?'<span class="ytmini" data-yt="'+esc(it.link)+'" role="link" aria-label="Відкрити запис">'+YT_SVG+'</span>':'')+'<span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
 
 function shownItems(svc){return svc.canEdit?(S.pubView[svc.id]&&svc.hasChanges?(svc.published||[]):(svc.draft||[])):(svc.published||[])}
 function lineupHtml(svc){return (svc.lineup||[]).map(function(r){return '<dt>'+esc(r.role)+'</dt><dd>'+r.names.map(function(n,ni){return '<span class="who'+(r.lead&&r.lead.indexOf(n)>-1?' lead':'')+'">'+avatar(r.ids&&r.ids[ni],n,r.lead&&r.lead.indexOf(n)>-1?'ring':'')+esc(n)+'</span>'}).join('')+'</dd>'}).join('')}
@@ -481,7 +487,7 @@ function songBodyHtml(L){
   else{
     var mats=s.materials||[];
     body='<div class="pad">'+(mats.length?'<div class="card"><div class="links">'+mats.map(materialRow).join('')+'</div></div>':'')
-      +'<div class="card"><h2>Грали раніше</h2><div class="list">'+(d.history.length?d.history.map(function(h){return '<button class="row" data-hsvc="'+h.service+'"><span class="rowmain"><span class="rowtitle">'+fmt(h.date)+'</span><br><span class="rowsub">лід: '+esc(h.lead||'—')+'</span></span><span class="key">'+esc(h.key||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty">Ще не було в сет-листах.</div>')+'</div></div></div>'}
+      +'<div class="card"><h2>Грали раніше</h2><div class="list">'+(d.history.length?d.history.map(function(h){return '<div class="row hrow"><button class="hmain" data-hsvc="'+h.service+'"><span class="rowmain"><span class="rowtitle">'+fmt(h.date)+'</span><br><span class="rowsub">лід: '+esc(h.lead||'—')+'</span></span></button>'+(h.link?'<a class="ytbtn" href="'+esc(h.link)+'" target="_blank" rel="noopener" aria-label="Відкрити запис" title="Відкрити запис">'+YT_SVG+'</a>':'')+'<button class="hmain hside" data-hsvc="'+h.service+'"><span class="key">'+esc(h.key||'–')+'</span><span class="chev">›</span></button></div>'}).join(''):'<div class="empty">Ще не було в сет-листах.</div>')+'</div></div></div>'}
   return body}
 function songLayer(L){
   var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
@@ -563,6 +569,7 @@ function saveSetlist(publish){
 }
 
 document.addEventListener('click',function(e){
+  var yt=e.target.closest('[data-yt]');if(yt){e.preventDefault();e.stopPropagation();var u=yt.dataset.yt;if(tg&&tg.openLink)tg.openLink(u);else window.open(u,'_blank','noopener');return}
   var t=e.target.closest('button');if(!t)return;
   var top=S.stack[S.stack.length-1],d=t.dataset;
   if('clearq' in d){S.q='';render();return}

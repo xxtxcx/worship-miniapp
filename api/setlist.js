@@ -30,6 +30,7 @@ module.exports = async (req, res) => {
     if (publish) {
       // Синхронізуємо рядки бази «Сет-лист», щоб історія й лічильники лишались актуальними
       const rows = await L.loadSetRowsFor([sid]);
+      const linkBySong = new Map(rows.filter((r) => r.link).map((r) => [r.song, r.link])); // посилання на записи, додані вручну, не губимо при повторній публікації
       await inBatches(rows, 3, (r) => L.notion('PATCH', `/pages/${r.id}`, { archived: true }));
       const byId = new Map(songs.map((s) => [s.id, s]));
       // Вокаліст пісні = людина зі складу цього служіння з таким ім'ям; якщо не вибрано, то лід служіння
@@ -45,6 +46,7 @@ module.exports = async (req, res) => {
           'Пісня': { relation: [{ id: it.id }] },
           'Тональність': { rich_text: it.k ? [{ type: 'text', text: { content: it.k } }] : [] },
           'Лід-вокал': { relation: (idByName.has(it.v) ? [idByName.get(it.v)] : svc.leadIds).map((id) => ({ id })) },
+          ...(linkBySong.get(it.id) ? { 'Посилання': { url: linkBySong.get(it.id) } } : {}),
         },
       }));
       L.invalidate('rows');

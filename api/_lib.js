@@ -253,6 +253,7 @@ const mapSetRow = (pg) => {
     service: rel(p['Служіння'])[0],
     leads: rel(p['Лід-вокал']),
     key: text(p['Тональність']),
+    link: (p['Посилання'] && p['Посилання'].url) || '',
   };
 };
 
@@ -461,6 +462,7 @@ const lineupOf = (svc, people) => {
 // Минуле служіння для історії: склад і опублікований сет-лист, лише для перегляду. Бачать усі з бази.
 function toHistory(svc, ctx, rows) {
   const { people } = ctx;
+  const linkBy = new Map((rows || []).filter((r) => r.link).map((r) => [r.song, r.link]));
   const names = (ids) => ids.map((i) => (people.get(i) || {}).name).filter(Boolean);
   let published = svc.published;
   if (!published) {
@@ -469,7 +471,8 @@ function toHistory(svc, ctx, rows) {
   return {
     id: svc.id, date: svc.date, name: svc.name, type: svc.type, past: true, mine: false, isLead: false, canEdit: false,
     lead: names(svc.leadIds), leadIds: svc.leadIds.filter((i) => people.get(i) && people.get(i).name),
-    lineup: lineupOf(svc, people), published: cleanItems(published),
+    lineup: lineupOf(svc, people),
+    published: cleanItems(published).map((it) => (it.t === 'song' && linkBy.get(it.id) ? { ...it, link: linkBy.get(it.id) } : it)),
   };
 }
 

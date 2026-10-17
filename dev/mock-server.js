@@ -67,7 +67,7 @@ http.createServer((req, res) => {
     if (url.searchParams.get('id')) { const f = all.find((x) => x.id === url.searchParams.get('id')); return f ? send(res, 200, { service: f }) : send(res, 404, { error: 'not_found' }); }
     return send(res, 200, { services: all, total: all.length, hasMore: false });
   }
-  if (url.pathname === '/api/song') return setTimeout(() => send(res, 200, songData[url.searchParams.get('id')] || { chords: '', lyrics: [], history: [{ service: 'h1', date: '2026-03-01', lead: 'Аня', key: 'D' }] }), 250);
+  if (url.pathname === '/api/song') return setTimeout(() => send(res, 200, songData[url.searchParams.get('id')] || { chords: '', lyrics: [], history: [{ service: 'h1', date: '2026-10-18', lead: 'Аня', key: 'D', link: 'https://youtu.be/abc' }, { service: 'h2', date: '2026-03-01', lead: 'Наталя', key: 'C' }] }), 250);
   if (url.pathname === '/api/setlist' && req.method === 'POST') {
     let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => {
       const { serviceId, items, publish } = JSON.parse(b), s = state.services.find((x) => x.id === serviceId);

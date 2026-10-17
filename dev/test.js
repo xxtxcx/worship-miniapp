@@ -71,11 +71,12 @@ assert.strictEqual(L.photoOf({ files: [] }), ''); assert.strictEqual(L.photoOf(u
 {
   const people = new Map([['p1', { id: 'p1', name: 'Наталя' }], ['p2', { id: 'p2', name: 'Аня' }]]);
   const svc = { id: 's', name: 'Мол', date: '2026-09-27', type: 'Молодіжка', leadIds: ['p1'], roles: [{ role: 'Вокал', ids: ['p1', 'p2'] }, { role: 'Бас', ids: [] }], draft: [{ id: 'secret' }], published: null };
-  const rows = [{ created: '2026-09-27T10:00:00Z', song: 'b', key: 'D', leads: ['p2'] }, { created: '2026-09-27T09:00:00Z', song: 'a', key: 'C', leads: ['p1'] }];
+  const rows = [{ created: '2026-09-27T10:00:00Z', song: 'b', key: 'D', leads: ['p2'], link: 'https://youtu.be/b' }, { created: '2026-09-27T09:00:00Z', song: 'a', key: 'C', leads: ['p1'] }];
   const h = L.toHistory(svc, { people }, rows);
   assert(h.past && !h.canEdit && !h.draft, 'history is read-only and hides drafts');
   assert.deepStrictEqual(h.published.map((x) => [x.id, x.v]), [['a', 'Наталя'], ['b', 'Аня']], 'order by creation, vocalist from row');
   assert.deepStrictEqual(h.lineup.map((r) => r.role), ['Вокал']);
+  assert.strictEqual(h.published.find((x) => x.id === 'b').link, 'https://youtu.be/b'); assert.strictEqual(h.published.find((x) => x.id === 'a').link, undefined, 'link only where present');
 }
 
 // Статистика
