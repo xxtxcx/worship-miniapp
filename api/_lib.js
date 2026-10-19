@@ -227,7 +227,6 @@ function loadSongs() {
         mt: p.Multitracks.url || '',
         yt: p.YouTube.url || '',
         reh: p['Rehearsal mix'].url || '',
-        gtr: text(p['Гітарні партії']),
         vit: text(p['Партії Віталік']),
         links: text(p['Інші лінки']),
         related: text(p["Зв'язки"]),

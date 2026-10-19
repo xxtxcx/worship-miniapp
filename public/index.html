@@ -145,6 +145,7 @@ button,.row{touch-action:manipulation}
 .link:first-child{border-top:0}
 .link .ico{width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
 .link .ico{font-size:19px;line-height:1}
+.link .ico .ins{width:28px;height:28px;object-fit:contain;display:block}
 .link .mt{font-family:var(--font-mono);font-weight:700;font-size:12px;color:var(--accent)}
 .link .lm{flex:1;min-width:0;display:block}
 .link .lm b{display:block}
@@ -436,15 +437,17 @@ function repRows(){
 function viewRep(){
   return filterBars()+'<div class="pad"><div class="card"><div class="list" id="replist">'+repRows()+'</div></div></div>'}
 var YT_SVG='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="1.5" y="4.5" width="21" height="15" rx="4.5" fill="#FF0000"/><path d="M10 9l5.5 3-5.5 3z" fill="#fff"/></svg>';
+function INS(f){return '<img class="ins" src="/icons/'+f+'.png" alt="" width="28" height="28" loading="lazy">'}
 function matIcon(name,url){
   var n=String(name||'').toLowerCase(),u=String(url||'').toLowerCase();
-  // спочатку за назвою поля, тому «Гітарні партії» з посиланням на YouTube лишається з гітарою
+  // спочатку за назвою поля, тому «Електрогітара» з посиланням на YouTube лишається з гітарою
   if(/youtube|ютуб/.test(n))return YT_SVG;
   if(/multitracks|мультитрек/.test(n))return '<span class="mt">MT</span>';
   if(/rehearsal|репетиц/.test(n))return '🎧';
-  if(/гітар|guitar|електро|акуст/.test(n))return '🎸';
-  if(/клавіш|keys|piano|піаніно|синт|synth/.test(n))return '🎹';
-  if(/бас|bass/.test(n))return '🎸';
+  if(/акуст|acoustic/.test(n))return INS('acoustic');
+  if(/електро|electric|гітар|guitar/.test(n))return INS('electric');
+  if(/клавіш|keys|piano|піаніно|синт|synth/.test(n))return INS('keys');
+  if(/бас|bass/.test(n))return INS('bass');
   if(/барабан|drum|ударн/.test(n))return '🥁';
   if(/вокал|голос|vocal|бек|хор/.test(n))return '🎤';
   if(/ноти|chart|sheet|табул|лід-шит/.test(n))return '🎼';
