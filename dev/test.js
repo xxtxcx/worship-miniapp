@@ -160,3 +160,16 @@ assert.strictEqual(L.photoOf({ files: [] }), ''); assert.strictEqual(L.photoOf(u
   assert.strictEqual(L.setlistState({ published: [{ id: 'a', k: 'C' }], draft: null }, []).state, 'published');
   console.log('all tests passed');
 })();
+
+// Нагадування: за 5 і 2 дні, ролі, пропуск людей без chat_id
+{
+  const B = require('../api/_bot');
+  const pp = new Map([['a', { id: 'a', name: 'Аня', chatId: '1', active: true }], ['b', { id: 'b', name: 'Наталя', chatId: '', active: true }], ['c', { id: 'c', name: 'Софія', chatId: '3', active: false }]]);
+  const sv = (date) => ({ id: date, date, type: 'Молодіжка', name: 'M', leadIds: ['a'], roles: [{ role: 'Вокал', ids: ['a', 'b', 'c'] }] });
+  const r = B.remindersFor([sv('2026-10-25'), sv('2026-10-22'), sv('2026-10-24')], pp, '2026-10-20');
+  assert.strictEqual(r.out.length, 2, 'two reminders (5 and 2 days) for one person with chat_id');
+  assert(r.out[0].text.includes('Лід-вокал, Вокал') && r.out[0].text.includes('Через 5 днів') && r.out[0].text.includes('Наталя'));
+  assert.strictEqual(r.missing.length, 2, 'no chat_id reported');
+  assert.strictEqual(B.nextService([sv('2026-10-25'), sv('2026-10-21')], '2026-10-20').date, '2026-10-21');
+  assert.strictEqual(B.daysWord(2), 'дні'); assert.strictEqual(B.daysWord(5), 'днів');
+}

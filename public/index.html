@@ -119,6 +119,25 @@ button,.row{touch-action:manipulation}
 .lhead{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
 .lhead .t{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
 .iconbtn{border:0;background:var(--surface2);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;font-weight:700;flex:none}
+.layer.live{z-index:9}
+.lhead .t small.lnum{display:block;font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:.03em}
+.lhead .iconbtn[data-lfs]{font-size:13px;width:38px}
+.lstrip{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--line);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.lstrip::-webkit-scrollbar{display:none}
+.lchip{flex:none;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:99px;padding:7px 12px;font-weight:600;font-size:13px;white-space:nowrap}
+.lchip[aria-current="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.lkeybar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
+.lkeybar .stepper{display:flex;align-items:center;gap:8px}
+.lkeybar .stepper b{font-family:var(--font-mono);font-size:20px;min-width:52px;text-align:center}
+.lkeybar .iconbtn{width:40px;height:40px;font-size:18px}
+.lkeybar .lsub{flex:1;min-width:0;font-size:12px;color:var(--ink2);line-height:1.25}
+.lfoot .btn[disabled]{opacity:.4}
+.lfoot .btn.ghost{flex:none;width:56px;font-size:22px;padding:12px 0}
+.lfoot .lnext{flex:1;min-width:0;justify-content:space-between;text-align:left;padding:14px 16px}
+.lfoot .lnext span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.lfoot .lnext b{flex:none;font-family:var(--font-mono)}
+.iconbtn.acc{font-size:18px}
+.live .chordblock{white-space:pre;overflow-x:auto}
 .lfoot{padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px),var(--tg-safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
 .tabs{display:flex;gap:6px;padding:4px 16px 0;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
 .tabs button{border:0;background:transparent;padding:9px 12px;font-weight:600;color:var(--ink2);border-bottom:2px solid transparent}
@@ -297,6 +316,7 @@ var STATUS_DOT={'Зелені':'ok','Жовті':'warn'};
 var MONTHS=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 function fmtD(n){return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2)}
 var ICON_SHARE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3 11 14"/><path d="M22 3 15 22l-4-8-8-4z"/></svg>';
+var ICON_LIVE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M10 8.5v4l3.5-2z"/><path d="M8 21h8M12 17v4"/></svg>';
 var ICON_COPY='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
 function stats(items){var n=0,sum=0,unk=0;items.forEach(function(x){if(x.t!=='song')return;n++;var d=song(x.id).dur;if(d)sum+=d;else unk++});return{n:n,sum:sum,unk:unk}}
 function totText(st){return st.n+' '+(st.n===1?'пісня':st.n<5?'пісні':'пісень')+(st.sum?' · ≈'+Math.round(st.sum/60)+' хв':'')}
@@ -321,7 +341,11 @@ var SHARP=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FLAT=['C','Db',
 var ROOTS=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 function idx(k){var m=/^([A-G])([#b]?)/.exec(k||'');if(!m)return 0;var i=SHARP.indexOf(m[1]);if(m[2]==='#')i++;if(m[2]==='b')i--;return(i+12)%12}
 function flatKey(k){return /^(F(?!#)|[A-G]b)/.test(k||'')}
-function tChord(c,n,flat){var m=/^([A-G][#b]?)(.*)$/.exec(c);if(!m)return c;var i=(idx(m[1])+n+120)%12;return(flat?FLAT:SHARP)[i]+m[2]}
+function tNote(r,n,flat){return(flat?FLAT:SHARP)[(idx(r)+n+120)%12]}
+function tChord(c,n,flat){var m=/^([A-G][#b]?)(.*)$/.exec(c);if(!m)return c;var rest=m[2].replace(/\/([A-G][#b]?)/,function(_,b){return '/'+tNote(b,n,flat)});return tNote(m[1],n,flat)+rest}
+var ACC=lsGet('acc');/* 'b' | '#' | null (авто) */
+function useFlat(tk){return ACC==='b'?true:ACC==='#'?false:flatKey(tk)}
+function accBtn(flat){return '<button class="iconbtn acc" data-acc aria-label="Дієзи або бемолі" title="Перемкнути дієзи та бемолі" aria-pressed="'+(flat?'true':'false')+'">'+(flat?'♭':'♯')+'</button>'}
 function minor(k){return /m$/.test(k||'')}
 
 /* ---------- Акорди (ChordPro) ---------- */
@@ -354,7 +378,7 @@ function mySunday(){var m=S.services.filter(function(s){return s.mine});if(m.len
 function setlistCard(items,svc){
   if(!items.length)return '<div class="card"><h2>Сет-лист</h2><div class="empty"><b>Сет-лист порожній</b>'+(svc.canEdit?'Натисніть «Редагувати», щоб додати пісні.':'Лід ще не опублікував список на це служіння.')+'</div></div>';
   var st=stats(items),n=0;
-  return '<div class="card"><div class="sumline"><h2>Сет-лист</h2><button class="iconbtn" data-copy="'+svc.id+'" aria-label="Скопіювати текстом" title="Скопіювати текстом">'+ICON_COPY+'</button><button class="iconbtn" data-share="'+svc.id+'" aria-label="Надіслати в чат" title="Надіслати в чат">'+ICON_SHARE+'</button><span class="tot">'+totText(st)+(st.unk&&st.sum?'<br>без тривалості: '+st.unk:'')+'</span></div><div class="list">'+items.map(function(it){
+  return '<div class="card"><div class="sumline"><h2>Сет-лист</h2><button class="iconbtn" data-live="'+svc.id+'" aria-label="Режим служіння" title="Режим служіння: акорди всіх пісень підряд, екран не гасне">'+ICON_LIVE+'</button><button class="iconbtn" data-copy="'+svc.id+'" aria-label="Скопіювати текстом" title="Скопіювати текстом">'+ICON_COPY+'</button><button class="iconbtn" data-share="'+svc.id+'" aria-label="Надіслати в чат" title="Надіслати в чат">'+ICON_SHARE+'</button><span class="tot">'+totText(st)+(st.unk&&st.sum?'<br>без тривалості: '+st.unk:'')+'</span></div><div class="list">'+items.map(function(it){
    if(it.t==='mom')return '<div class="row moment"><span class="num"><i class="dotc"></i></span><span class="rowmain"><span class="rowtitle">'+esc(it.x)+'</span></span></div>';
    if(it.t==='note')return '<div class="noterow">'+esc(it.x)+'</div>';
    var s=song(it.id),k=it.k||s.our;n++;
@@ -481,10 +505,10 @@ function songBodyHtml(L){
     body=secs.length?'<div class="pad lyr">'+secs.map(function(x){return '<div class="sec">'+(x.h?'<h3>'+esc(x.h)+'</h3>':'')+'<p>'+esc(x.t)+'</p></div>'}).join('')+'</div>':'<div class="pad"><div class="card"><div class="empty"><b>Тексту ще немає</b>Додайте його на сторінці пісні в Notion, і він з\'явиться тут.</div></div></div>'}
   else if(t==='chords'){
     if(d.chords){
-      var n=idx(k)-idx(s.our)+(L.off||0),tk=ROOTS[(idx(s.our)+n+120)%12]+(minor(s.our)?'m':''),flat=flatKey(tk);
+      var n=idx(k)-idx(s.our)+(L.off||0),tk=ROOTS[(idx(s.our)+n+120)%12]+(minor(s.our)?'m':''),flat=useFlat(tk);
       if(L.off===undefined)L.off=0;
       var shown=(flat?FLAT:SHARP)[(idx(s.our)+n+120)%12]+(minor(s.our)?'m':'');
-      body='<div class="pad"><div class="tr"><span>Тональність акордів</span><span class="stepper"><button class="iconbtn" data-off="-1" aria-label="Нижче на півтону">−</button><b>'+esc(shown)+'</b><button class="iconbtn" data-off="1" aria-label="Вище на півтону">+</button></span></div>'
+      body='<div class="pad"><div class="tr"><span>Тональність акордів</span><span class="stepper"><button class="iconbtn" data-off="-1" aria-label="Нижче на півтону">−</button><b>'+esc(shown)+'</b><button class="iconbtn" data-off="1" aria-label="Вище на півтону">+</button>'+accBtn(flat)+'</span></div>'
        +parseChords(d.chords).map(function(sec){return '<div class="sec">'+(sec.h?'<h3>'+esc(sec.h)+'</h3>':'')+'<div class="chordblock">'+sec.lines.map(function(l){return(l.chs.length?chordLine(l.chs,n,flat)+'\n':'')+esc(l.t)}).join('\n')+'</div></div>'}).join('')+'</div>'}
     else body='<div class="pad"><div class="card"><div class="empty"><b>Акордів ще немає</b>Додайте їх у поле «Акорди» пісні в Notion (формат: [G]В надії ми кожен [D]день).</div></div></div>'}
   else{
@@ -533,12 +557,61 @@ function pickerLayer(){
   +'<div class="screen" id="pscreen"><div class="pad" style="padding-bottom:88px"><div class="card"><div class="list" id="picklist">'+pickRows()+'</div></div></div></div>'
   +(n?'<button class="btn fab" data-act="pickdone">Готово · '+n+'</button>':'')+'</div>'}
 
+
+/* ---------- Режим служіння ---------- */
+var LK=lsGet('lk')||{},LFS=+lsGet('lfs')||15,WL=null;
+function liveItems(L){var svc=svcById(L.svc);return svc?shownItems(svc).filter(function(x){return x.t==='song'}):[]}
+function liveInfo(L){
+  var it=liveItems(L)[L.i];if(!it)return null;
+  var s=song(it.id),setKey=it.k||s.our,delta=LK[it.id]||0,n=idx(setKey)-idx(s.our)+delta;
+  var tk=ROOTS[(idx(s.our)+n+120)%12]+(minor(s.our)?'m':''),flat=useFlat(tk);
+  var shown=(flat?FLAT:SHARP)[(idx(s.our)+n+120)%12]+(minor(s.our)?'m':'');
+  var capo=(idx(setKey)-idx(shown)+12)%12;
+  return{it:it,s:s,setKey:setKey,delta:delta,n:n,flat:flat,shown:shown,capo:capo<10?capo:0};
+}
+function liveBody(L,I){
+  var d=S.cache[I.s.id];
+  if(!d&&!L.errs[I.s.id])return '<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
+  if(!d)return '<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>Відкрийте пісню окремо й спробуйте ще раз.</div></div></div>';
+  if(!d.chords){
+    var secs=d.lyrics||[];
+    return '<div class="pad"><div class="card"><div class="empty"><b>Акордів ще немає</b>Показую текст, якщо він є.</div></div>'+secs.map(function(x){return '<div class="sec">'+(x.h?'<h3>'+esc(x.h)+'</h3>':'')+'<p style="font-size:'+LFS+'px;white-space:pre-wrap">'+esc(x.t)+'</p></div>'}).join('')+'</div>'}
+  return '<div class="pad">'+parseChords(d.chords).map(function(sec){return '<div class="sec">'+(sec.h?'<h3>'+esc(sec.h)+'</h3>':'')+'<div class="chordblock" style="font-size:'+LFS+'px">'+sec.lines.map(function(l){return(l.chs.length?chordLine(l.chs,I.n,I.flat)+'\n':'')+esc(l.t)}).join('\n')+'</div></div>'}).join('')+'</div>'}
+function liveLayer(L){
+  var items=liveItems(L),I=liveInfo(L);
+  if(!I)return '<div class="layer live" data-layer="live"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">Режим служіння</div></div><div class="center"><div><b>У сет-листі немає пісень</b></div></div></div>';
+  var nx=items[L.i+1],pv=items[L.i-1];
+  var chips=items.map(function(it,k){var t=song(it.id).title;return '<button class="lchip" data-lgo="'+k+'" aria-current="'+(k===L.i)+'">'+(k+1)+' · '+esc(t.length>16?t.slice(0,15)+'…':t)+'</button>'}).join('');
+  var sub='у сеті '+esc(I.setKey||'–')+(I.capo?' · капо '+I.capo:'');
+  return '<div class="layer live" data-layer="live"><div class="lhead"><button class="iconbtn" data-back aria-label="Вийти з режиму служіння">✕</button><div class="t"><small class="lnum">'+(L.i+1)+' з '+items.length+'</small>'+esc(I.s.title)+'</div><button class="iconbtn" data-lfs="-1" aria-label="Менший шрифт">A−</button><button class="iconbtn" data-lfs="1" aria-label="Більший шрифт">A+</button></div>'
+   +'<div class="lstrip" id="lstrip">'+chips+'</div>'
+   +'<div class="lkeybar"><span class="stepper"><button class="iconbtn" data-lk="-1" aria-label="Нижче на півтону">−</button><b>'+esc(I.shown)+'</b><button class="iconbtn" data-lk="1" aria-label="Вище на півтону">+</button></span><span class="lsub">'+sub+'</span>'+(I.delta?'<button class="iconbtn" data-lkreset aria-label="Скинути до тональності сету" title="Скинути до тональності сету">↺</button>':'')+accBtn(I.flat)+'</div>'
+   +'<div class="screen" id="lscreen">'+liveBody(L,I)+'</div>'
+   +'<div class="lfoot"><button class="btn ghost" data-lgo="'+(L.i-1)+'"'+(pv?'':' disabled')+' aria-label="Попередня пісня">‹</button><button class="btn lnext" data-lgo="'+(L.i+1)+'"'+(nx?'':' disabled')+'>'+(nx?'<span>'+esc(song(nx.id).title)+'</span><b>'+esc(nx.k||song(nx.id).our||'')+' ›</b>':'Кінець сет-листа')+'</button></div></div>'}
+function updateLive(L,toTop){
+  var el=document.querySelector('#app > .layer[data-layer="live"]');if(!el){render();return}
+  var sc=document.getElementById('lscreen'),keep=sc?sc.scrollTop:0;
+  el.outerHTML=liveLayer(L).replace('class="layer live"','class="layer live static"');
+  var n=document.getElementById('lscreen');if(n)n.scrollTop=toTop?0:keep;
+  var cur=document.querySelector('#lstrip [aria-current="true"]');if(cur&&cur.scrollIntoView)cur.scrollIntoView({inline:'center',block:'nearest'})}
+function wakeOn(){try{if(!navigator.wakeLock){if(!S.wakeWarned){S.wakeWarned=true;toast('Цей Telegram не вміє тримати екран увімкненим')}return}
+  navigator.wakeLock.request('screen').then(function(l){WL=l;l.addEventListener('release',function(){if(WL===l)WL=null})}).catch(function(){})}catch(e){}}
+function wakeOff(){try{if(WL)WL.release()}catch(e){}WL=null}
+document.addEventListener('visibilitychange',function(){var t=S.stack[S.stack.length-1];if(document.visibilityState==='visible'&&t&&t.type==='live'&&!WL)wakeOn()});
+function openLive(svcId){
+  var L={type:'live',svc:svcId,i:0,errs:{}};S.stack.push(L);render();wakeOn();
+  liveItems(L).forEach(function(it){if(S.cache[it.id])return;
+    api('/api/song?id='+it.id).then(function(d){S.cache[it.id]=d}).catch(function(){L.errs[it.id]=1}).then(function(){var t=S.stack[S.stack.length-1];if(t===L)updateLive(L,false)})})}
+(function(){var sx=0,sy=0,on=false;
+  document.addEventListener('touchstart',function(e){on=false;var t=S.stack[S.stack.length-1];if(!t||t.type!=='live'||e.touches.length!==1||!e.target.closest('#lscreen'))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;on=sx>36},{passive:true});
+  document.addEventListener('touchend',function(e){if(!on)return;on=false;var t=S.stack[S.stack.length-1];if(!t||t.type!=='live')return;var c=e.changedTouches[0],dx=c.clientX-sx,dy=c.clientY-sy;
+    if(Math.abs(dx)>80&&Math.abs(dy)<Math.abs(dx)/2){var to=t.i+(dx<0?1:-1);if(to>=0&&to<liveItems(t).length){t.i=to;updateLive(t,true)}}},{passive:true})})();
 function render(){
   var app=$('#app');
   if(S.err){app.innerHTML=S.err;return}
   if(!S.me){return}
   var keep=0,sc=$('#screen');if(sc)keep=sc.scrollTop;var pk=$('#pscreen'),pkeep=pk?pk.scrollTop:0,sk=$('#sscreen'),skeep=sk?sk.scrollTop:0,prevDepth=S.lastDepth||0;
-  var layers=S.stack.map(function(l){return l.type==='song'?songLayer(l):l.type==='service'?serviceLayer(l):l.type==='build'?builderLayer():pickerLayer()}).join('');
+  var layers=S.stack.map(function(l){return l.type==='song'?songLayer(l):l.type==='service'?serviceLayer(l):l.type==='live'?liveLayer(l):l.type==='build'?builderLayer():pickerLayer()}).join('');
   var tabs=[['sunday','<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>','Неділя'],['rep','<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>','Репертуар'],['cal','<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>','Графік']];if(S.me.isAdmin)tabs.push(['admin','<svg viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>','Адмін']);
   var nav='<nav class="nav" id="nav">'+tabs.map(function(x){return '<button data-tab="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+x[2]+'</button>'}).join('')+'</nav>';
   app.innerHTML='<div class="screen" id="screen">'+(S.tab==='sunday'?viewSunday():S.tab==='rep'?viewRep():S.tab==='admin'&&S.me.isAdmin?viewAdmin():viewCal())+'</div>'+nav+layers+'';
@@ -561,7 +634,7 @@ function goBack(immediate){
   if(!immediate&&el&&!el.classList.contains('sheet')&&S.stack.length&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
     leaving=true;el.classList.add('leaving');setTimeout(function(){leaving=false;popLayer()},150);return}
   popLayer()}
-function popLayer(){var t=S.stack.pop();if(t&&t.type==='pick'){S.q='';S.f='Усі'}if(t&&t.type==='build'){S.edit=null}render()}
+function popLayer(){var t=S.stack.pop();if(t&&t.type==='live')wakeOff();if(t&&t.type==='pick'){S.q='';S.f='Усі'}if(t&&t.type==='build'){S.edit=null}render()}
 function saveSetlist(publish){
   var e=S.edit;S.busy=true;render();
   api('/api/setlist',{method:'POST',body:{serviceId:e.id,items:e.items,publish:publish}}).then(function(r){
@@ -587,6 +660,13 @@ document.addEventListener('click',function(e){
   if(d.svc){S.stack.push({type:'service',id:d.svc});render();return}
   if('back' in d){goBack();return}
   if(d.tab2){top.tab=d.tab2;updateSong(top);return}
+  if(d.live){openLive(d.live);return}
+  if(d.lgo!==undefined&&top&&top.type==='live'){var to=+d.lgo;if(to>=0&&to<liveItems(top).length){top.i=to;updateLive(top,true)}return}
+  if(d.lk&&top&&top.type==='live'){var I=liveInfo(top);LK[I.it.id]=(LK[I.it.id]||0)+(+d.lk);lsSet('lk',LK);updateLive(top,false);return}
+  if('lkreset' in d&&top&&top.type==='live'){var I2=liveInfo(top);delete LK[I2.it.id];lsSet('lk',LK);updateLive(top,false);return}
+  if(d.lfs&&top&&top.type==='live'){LFS=Math.max(11,Math.min(30,LFS+(+d.lfs)*1.5));lsSet('lfs',LFS);updateLive(top,false);return}
+  if('acc' in d){var cur=top&&top.type==='live'?liveInfo(top).flat:(function(){var s=song(top.id),k=top.key||s.our,n=idx(k)-idx(s.our)+(top.off||0);return useFlat(ROOTS[(idx(s.our)+n+120)%12]+(minor(s.our)?'m':''))})();
+    ACC=cur?'#':'b';lsSet('acc',ACC);if(top.type==='live')updateLive(top,false);else updateSong(top);return}
   if(d.off){top.off=(top.off||0)+(+d.off);updateSong(top);return}
   if(d.f){S.f=d.f;render();return}
   if(d.sort){S.sort=d.sort;render();return}
