@@ -341,10 +341,11 @@ function defVoc(svc){var l=(svc.lead||[])[0];return l&&(svc.vocalists||[]).index
 function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 var SHARP=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FLAT=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 var ROOTS=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
-function idx(k){var m=/^([A-G])([#b]?)/.exec(k||'');if(!m)return 0;var i=SHARP.indexOf(m[1]);if(m[2]==='#')i++;if(m[2]==='b')i--;return(i+12)%12}
+function idx(k){var m=/^([A-G])([#b]?)/.exec(String(k||'').replace(/^H/,'B'));if(!m)return 0;var i=SHARP.indexOf(m[1]);if(m[2]==='#')i++;if(m[2]==='b')i--;return(i+12)%12}
 function flatKey(k){return /^(F(?!#)|[A-G]b)/.test(k||'')}
+/* H — німецький запис ноти B (сі), транспонується так само */
 function tNote(r,n,flat){return(flat?FLAT:SHARP)[(idx(r)+n+120)%12]}
-function tChord(c,n,flat){var m=/^([A-G][#b]?)(.*)$/.exec(c);if(!m)return c;var rest=m[2].replace(/\/([A-G][#b]?)/,function(_,b){return '/'+tNote(b,n,flat)});return tNote(m[1],n,flat)+rest}
+function tChord(c,n,flat){var m=/^([A-H][#b]?)(.*)$/.exec(c);if(!m)return c;var rest=m[2].replace(/\/([A-H][#b]?)/,function(_,b){return '/'+tNote(b,n,flat)});return tNote(m[1],n,flat)+rest}
 var ACC=lsGet('acc');/* 'b' | '#' | null (авто) */
 function useFlat(tk,acc){var a=acc===undefined?ACC:acc;return a==='b'?true:a==='#'?false:flatKey(tk)}
 var NTX=!!lsGet('ntx');/* лише акорди, без тексту */
