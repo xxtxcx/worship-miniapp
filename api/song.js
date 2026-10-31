@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
           return { service: r.service, date: s.date, lead, key: r.key, link: r.link || '' };
         })
         .sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 8);
-      return { chords: L.text(page.properties['Акорди']), lyrics, history };
+      return { chords: L.text(page.properties['Акорди']), lyrics, history, structure: L.text(page.properties['Структура']).trim() };
     });
     res.status(200).json(data);
   } catch (e) {

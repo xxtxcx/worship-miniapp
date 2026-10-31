@@ -32,7 +32,7 @@ const wake = `# 1 куплет
 [G]Ти зі мною, Ти зі [D]мною.
 [Em]В моєму серці завжди [C]Ти.`;
 const songData = {
-  a5: { chords: wake, lyrics: [{ h: '1 КУПЛЕТ', t: 'В надії ми кожен день,\nІ погляд свій підносим вверх.' }, { h: 'ПРИСПІВ', t: 'Ти зі мною, Ти зі мною.\nВ моєму серці завжди Ти.' }], history: [{ date: '2026-04-12', lead: 'Діана', key: 'G' }, { date: '2026-02-15', lead: 'Квітка', key: 'Ab' }] },
+  a5: { chords: wake, lyrics: [{ h: '1 КУПЛЕТ', t: 'В надії ми кожен день,\nІ погляд свій підносим вверх.' }, { h: 'ПРИСПІВ', t: 'Ти зі мною, Ти зі мною.\nВ моєму серці завжди Ти.' }], history: [{ date: '2026-04-12', lead: 'Діана', key: 'G' }, { date: '2026-02-15', lead: 'Квітка', key: 'Ab' }], structure: 'I Is*2 V1 C V1 C*2 B C E' },
 };
 const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 const svc = (id, n, leadName, mine) => ({

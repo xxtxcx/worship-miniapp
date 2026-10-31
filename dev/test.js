@@ -173,3 +173,18 @@ assert.strictEqual(L.photoOf({ files: [] }), ''); assert.strictEqual(L.photoOf(u
   assert.strictEqual(B.nextService([sv('2026-10-25'), sv('2026-10-21')], '2026-10-20').date, '2026-10-21');
   assert.strictEqual(B.daysWord(2), 'дні'); assert.strictEqual(B.daysWord(5), 'днів');
 }
+
+// Структура пісні (MultiTracks → код, розбір, зіставлення із секціями)
+{
+  const St = require('../public/structure.js');
+  const map = [['I', 'Intro'], ['Is', 'Instrumental'], ['Is', 'Instrumental'], ['V1', 'Verse 1'], ['Pc', 'Pre Chorus'], ['C', 'Chorus'], ['Rf', 'Refrain'], ['V2', 'Verse 2'], ['C', 'Chorus'], ['C', 'Chorus'], ['R', 'Refrain 2']];
+  assert.strictEqual(St.fromMap(map), 'I Is*2 V1 Pc C Rf V2 C*2 Rf2');
+  assert.strictEqual(St.parse('I Is*2 V1').length, 4);
+  assert.deepStrictEqual(St.chips(St.parse('I Is*2 V1')).map((c) => c.code + c.count), ['I1', 'Is2', 'V11']);
+  const p = St.plan(St.parse('V1 C V2 C Rf'), ['Куплет 1:', 'Приспів', 'Куплет 2']);
+  assert.deepStrictEqual(p.items.map((x) => x.sec), [0, 1, 2, 1, -1]);
+  assert.deepStrictEqual(p.items.map((x) => x.repeat), [false, false, false, true, false], 'repeat of chorus');
+  assert.strictEqual(St.headType('Рефрен').type, 'Rf', 'refrain is not chorus');
+  assert.strictEqual(St.headType('Перед приспів').type, 'Pc');
+  assert.strictEqual(St.headType('1 КУПЛЕТ').n, 1);
+}
