@@ -40,7 +40,7 @@ assert.strictEqual(L.parseDur('4:35'), 275); assert.strictEqual(L.parseDur(' 6:0
 assert.strictEqual(L.parseDur(''), 0); assert.strictEqual(L.parseDur('4,5'), 0); assert.strictEqual(L.parseDur('4:5'), 0);
 const known = new Set(['aaa']);
 const ci = L.cleanItems([{ id: 'aaa', k: 'C' }, { t: 'song', id: 'aaa', k: 'Eb', v: ' Аня ' }, { id: 'zzz', k: 'D' }, { t: 'mom', x: ' Молитва ' }, { t: 'note', x: '' }, { t: 'note', x: '(коментар)' }, { t: 'bad', x: 'x' }, null], known);
-assert.deepStrictEqual(ci, [{ t: 'song', id: 'aaa', k: 'C' }, { t: 'song', id: 'aaa', k: 'Eb', v: 'Аня' }, { t: 'mom', x: 'Молитва' }, { t: 'note', x: '(коментар)' }], 'cleanItems');
+assert.deepStrictEqual(ci, [{ t: 'song', id: 'aaa', k: 'C' }, { t: 'song', id: 'aaa', k: 'Eb', v: 'Аня Г.' }, { t: 'mom', x: 'Молитва' }, { t: 'note', x: '(коментар)' }], 'cleanItems');
 assert.deepStrictEqual(lead.vocalists, ['Наталя', 'Аня'], 'vocalists');
 assert.strictEqual(lead.draft[0].t, 'song', 'legacy item normalized');
 assert.strictEqual(L.ytUrl('https://www.youtube.com/watch?v=VV3gyslwzGo&t=982s'), 'https://youtu.be/VV3gyslwzGo?t=982');
@@ -69,12 +69,12 @@ assert.strictEqual(L.photoOf({ files: [] }), ''); assert.strictEqual(L.photoOf(u
 
 // Історія: toHistory показує склад і опублікований сет-лист усім, у тому числі зі старих рядків бази
 {
-  const people = new Map([['p1', { id: 'p1', name: 'Наталя' }], ['p2', { id: 'p2', name: 'Аня' }]]);
+  const people = new Map([['p1', { id: 'p1', name: 'Наталя' }], ['p2', { id: 'p2', name: 'Оля' }]]);
   const svc = { id: 's', name: 'Мол', date: '2026-09-27', type: 'Молодіжка', leadIds: ['p1'], roles: [{ role: 'Вокал', ids: ['p1', 'p2'] }, { role: 'Бас', ids: [] }], draft: [{ id: 'secret' }], published: null };
   const rows = [{ created: '2026-09-27T10:00:00Z', song: 'b', key: 'D', leads: ['p2'], link: 'https://youtu.be/b' }, { created: '2026-09-27T09:00:00Z', song: 'a', key: 'C', leads: ['p1'] }];
   const h = L.toHistory(svc, { people }, rows);
   assert(h.past && !h.canEdit && !h.draft, 'history is read-only and hides drafts');
-  assert.deepStrictEqual(h.published.map((x) => [x.id, x.v]), [['a', 'Наталя'], ['b', 'Аня']], 'order by creation, vocalist from row');
+  assert.deepStrictEqual(h.published.map((x) => [x.id, x.v]), [['a', 'Наталя'], ['b', 'Оля']], 'order by creation, vocalist from row');
   assert.deepStrictEqual(h.lineup.map((r) => r.role), ['Вокал']);
   assert.strictEqual(h.published.find((x) => x.id === 'b').link, 'https://youtu.be/b'); assert.strictEqual(h.published.find((x) => x.id === 'a').link, undefined, 'link only where present');
 }
@@ -187,4 +187,18 @@ assert.strictEqual(L.photoOf({ files: [] }), ''); assert.strictEqual(L.photoOf(u
   assert.strictEqual(St.headType('Рефрен').type, 'Rf', 'refrain is not chorus');
   assert.strictEqual(St.headType('Перед приспів').type, 'Pc');
   assert.strictEqual(St.headType('1 КУПЛЕТ').n, 1);
+}
+
+// Перейменовані люди в старих сет-листах
+{
+  const r = L.cleanItems([{ t: 'song', id: 'a'.repeat(32), k: 'C', v: 'Аня' }, { t: 'song', id: 'a'.repeat(32), k: 'C', v: 'Анна' }, { t: 'song', id: 'a'.repeat(32), k: 'C', v: 'Аня Г.' }]);
+  assert.deepStrictEqual(r.map((x) => x.v), ['Аня Г.', 'Аня Л.', 'Аня Г.']);
+}
+
+// Людина з прапорцем «Бачить усе» бачить склад і сет-лист, але не редагує
+{
+  const people = new Map([['p1', { id: 'p1', name: 'Наталя' }], ['p3', { id: 'p3', name: 'Ілона', seeAll: true }]]);
+  const svc = { id: 's', name: 'Мол', date: '2026-10-11', type: 'Молодіжка', leadIds: ['p1'], roles: [{ role: 'Вокал', ids: ['p1'] }], draft: [{ id: 'x', k: 'D' }], published: [{ id: 'y', k: 'C' }] };
+  const v = L.toClient(svc, { me: people.get('p3'), people, isAdmin: false, seeAll: true }, new Map());
+  assert(!v.mine && v.lineup && v.published[0].id === 'y' && !v.canEdit && !v.draft, 'seeAll sees but cannot edit');
 }

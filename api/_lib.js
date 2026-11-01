@@ -10,7 +10,7 @@ const DB = {
   requests: 'd408d04660744e3c991d4bae6b2eca92',
 };
 const ROLES = ['Барабани', 'Бас', 'Клавіші', 'Електрогітара', 'Акустична гітара', 'Вокал', 'Звук'];
-const WINDOW_DAYS = 30;
+const WINDOW_DAYS = 90;
 
 /* ---------- Notion ---------- */
 async function notion(method, path, body, attempt = 0) {
@@ -115,6 +115,7 @@ function loadPeople() {
       map.set(nid(pg.id), {
         id: nid(pg.id), name: text(p["Ім'я"]), chatId: text(p.chat_id).trim(),
         active: !!(p['Активний'] && p['Активний'].checkbox),
+        seeAll: !!(p['Бачить усе'] && p['Бачить усе'].checkbox),
         photo: photoOf(p['Фото']),
         lastSeen: (p['Остання активність'] && p['Остання активність'].date && p['Остання активність'].date.start) || '',
       });
@@ -152,6 +153,8 @@ function parseDur(str) {
 
 // Елементи сет-листа: пісня {t:'song',id,k,v}, пункт {t:'mom',x}, коментар {t:'note',x}.
 // Старий формат {id,k} читається як пісня. З known (Set id пісень) невідомі пісні відкидаються.
+// Старі записи сет-листів містять імена до перейменування в базі «Люди»: Аня → Аня Г., Анна → Аня Л.
+const LEGACY_NAMES = { 'Аня': 'Аня Г.', 'Анна': 'Аня Л.' };
 function cleanItems(items, known) {
   const out = [];
   for (const x of Array.isArray(items) ? items : []) {
@@ -164,7 +167,8 @@ function cleanItems(items, known) {
     const id = nid(String(x.id || ''));
     if (known ? !known.has(id) : !id) continue;
     const it = { t: 'song', id, k: String(x.k || '').slice(0, 4) };
-    const v = String(x.v || '').trim().slice(0, 60);
+    let v = String(x.v || '').trim().slice(0, 60);
+    v = LEGACY_NAMES[v] || v;
     if (v) it.v = v;
     out.push(it);
   }
@@ -448,7 +452,8 @@ async function currentPerson(req) {
     await recordAccessRequest(user);
     return { error: [403, { error: 'not_registered', chatId: String(user.id) }] };
   }
-  return { me, people, isAdmin: adminIds().includes(String(user.id)) };
+  const isAdmin = adminIds().includes(String(user.id));
+  return { me, people, isAdmin, seeAll: isAdmin || !!me.seeAll };
 }
 
 const lineupOf = (svc, people) => {
@@ -477,6 +482,7 @@ function toHistory(svc, ctx, rows) {
 
 function toClient(svc, ctx, rowsByService) {
   const { me, people, isAdmin } = ctx;
+  const seeAll = isAdmin || !!ctx.seeAll;
   const mine = svc.leadIds.includes(me.id) || svc.roles.some((r) => r.ids.includes(me.id));
   const isLead = svc.leadIds.includes(me.id);
   const canEdit = isLead || isAdmin;
@@ -485,7 +491,7 @@ function toClient(svc, ctx, rowsByService) {
     id: svc.id, date: svc.date, name: svc.name, type: svc.type,
     lead: names(svc.leadIds), leadIds: svc.leadIds.filter((i) => people.get(i) && people.get(i).name), mine, isLead, canEdit,
   };
-  if (!mine && !isAdmin) return out;
+  if (!mine && !seeAll) return out;
   const known = (ids) => ids.filter((i) => people.get(i) && people.get(i).name);
   out.lineup = lineupOf(svc, people);
   let published = svc.published;

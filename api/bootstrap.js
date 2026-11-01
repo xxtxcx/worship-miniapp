@@ -11,9 +11,11 @@ module.exports = async (req, res) => {
     const rows = await L.loadSetRowsFor(window.map((s) => s.id));
     const byService = L.groupBy(rows, (r) => r.service);
     res.status(200).json({
-      me: { id: ctx.me.id, name: ctx.me.name, isAdmin: ctx.isAdmin },
+      me: { id: ctx.me.id, name: ctx.me.name, isAdmin: ctx.isAdmin, seeAll: ctx.seeAll },
       songs: songs.map((s) => ({ ...s, n: 0 })),
       services: window.map((s) => L.toClient(s, ctx, byService)),
+      // Для редактора графіка: лише адмінам
+      ...(ctx.isAdmin ? { people: [...ctx.people.values()].filter((p) => p.name).map((p) => ({ id: p.id, name: p.name, active: p.active })).sort((a, b) => a.name.localeCompare(b.name, 'uk')) } : {}),
     });
   } catch (e) {
     console.error(e);

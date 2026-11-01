@@ -152,6 +152,20 @@ button,.row{touch-action:manipulation}
 .rep{border:1px dashed var(--c,var(--line));background:transparent;color:var(--ink2);border-radius:10px;padding:8px 12px;text-align:left;font-weight:600;font-size:13px;width:100%}
 .sec{scroll-margin-top:60px}
 .lkeybar .iconbtn{width:38px}
+.schedbar{display:flex;gap:8px}
+.schedbar .btn{flex:1}
+.card.sched h2{padding-bottom:6px}
+.pchips2{display:flex;flex-wrap:wrap;gap:8px;padding:6px 14px 14px}
+.pchip{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--line);border-radius:99px;padding:3px 4px 3px 4px;font-size:14px}
+.pchip.lead{border-color:var(--lead);background:var(--lead-soft)}
+.pchip .pname{border:0;background:transparent;color:var(--ink);font-weight:600;padding:2px 2px;font:inherit;font-weight:600}
+.pchip .px{border:0;background:transparent;color:var(--ink2);width:26px;height:26px;border-radius:50%}
+.padd{border:1.5px dashed var(--line);background:transparent;color:var(--accent);border-radius:99px;padding:7px 14px;font-weight:600}
+.sform{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px}
+.sform label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink2);min-width:0}
+.sform input,.sform select{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;min-width:0;width:100%}
+.btn.danger{color:var(--danger)}
+.btn[disabled]{opacity:.5}
 .lfoot{padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px),var(--tg-safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
 .tabs{display:flex;gap:6px;padding:4px 16px 0;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
 .tabs button{border:0;background:transparent;padding:9px 12px;font-weight:600;color:var(--ink2);border-bottom:2px solid transparent}
@@ -408,7 +422,7 @@ function charW(){if(!CW){var sp=document.createElement('span');sp.style.cssText=
 function colsFor(px){var app=document.getElementById('app'),w=(app?app.clientWidth:window.innerWidth)-32-28-2;return Math.max(8,Math.floor(w/(charW()*px))-1)}
 
 /* ---------- Стан ---------- */
-var S={me:null,songs:[],services:[],tab:'sunday',stack:[],sort:'az',f:'Усі',q:'',toast:'',cache:{},ava:{},pubView:{},past:{},hist:{items:[],loaded:false,more:false,busy:false},calMode:'next',edit:null,busy:false,err:null};
+var S={me:null,songs:[],services:[],people:[],sched:null,schedEdit:false,tab:'sunday',stack:[],sort:'az',f:'Усі',q:'',toast:'',cache:{},ava:{},pubView:{},past:{},hist:{items:[],loaded:false,more:false,busy:false},calMode:'next',edit:null,busy:false,err:null};
 var byId={};
 function song(id){return byId[id]||{id:id,title:'Невідома пісня',type:'',orig:'',our:'',n:0}}
 function toast(m){
@@ -416,7 +430,7 @@ function toast(m){
   var el=document.createElement('div');el.id='toast';el.className='toast';el.setAttribute('role','status');el.textContent=m;document.body.appendChild(el);
   clearTimeout(toast.t);toast.t=setTimeout(function(){el.classList.add('out');setTimeout(function(){el.remove()},200)},2400)}
 function svcById(id){return S.services.filter(function(s){return s.id===id})[0]||S.past[id]}
-function mySunday(){var m=S.services.filter(function(s){return s.mine});if(m.length)return m[0];return S.me&&S.me.isAdmin?S.services[0]:null}
+function mySunday(){var m=S.services.filter(function(s){return s.mine});if(m.length)return m[0];return S.me&&S.me.seeAll?S.services[0]:null}
 
 /* ---------- Екрани ---------- */
 function setlistCard(items,svc){
@@ -472,12 +486,15 @@ function viewCal(){
   if(S.calMode==='past')return '<div class="pad">'+calSeg()+viewHist()+'</div>';
   var mine=S.services.filter(function(s){return s.mine}).length;
   var head=mine?'<span class="pill"><span class="dot"></span>Ви служите: '+mine+' з '+S.services.length+'</span>':'<span class="pill warn"><span class="dot"></span>Тебе немає в графіку на цей місяць</span>';
-  return '<div class="pad">'+calSeg()+'<div>'+head+'</div>'+(S.services.length?'<div class="card"><h2>Найближчі 30 днів</h2><div class="list">'+S.services.map(function(u){var vis=u.mine||S.me.isAdmin;
+  var ed=S.me.isAdmin&&S.schedEdit;
+  var bar=S.me.isAdmin?'<div class="schedbar">'+(ed?'<button class="btn" data-snew>＋ Нове служіння</button><button class="btn ghost" data-act="schedEdit">Готово</button>':'<button class="btn soft" data-act="schedEdit">✎ Редагувати графік</button>')+'</div>':'';
+  return '<div class="pad">'+calSeg()+'<div>'+head+'</div>'+bar+(S.services.length?'<div class="card"><h2>Найближчі служіння</h2><div class="list">'+S.services.map(function(u){var vis=u.mine||S.me.seeAll||ed;
    var tag=u.isLead?'<span class="pill lead">ви лід</span>':u.mine?'<span class="pill">ви служите</span>':'<span class="rowsub">не в складі</span>';
    var la=u.leadIds&&u.leadIds[0]?avatar(u.leadIds[0],u.lead[0],'l ring'):'<span class="ava l none" aria-hidden="true">?</span>';
    var inner='<span class="ava-wrap">'+la+'</span><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
-   return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>У Notion на найближчі 30 днів нічого не створено.</div></div>')
-   +'<div class="note">Лід призначається в Notion у полі «Лід-вокал». Лід редагує сет-лист, решта складу бачить його для перегляду.</div>'+(tg&&tg.addToHomeScreen&&tg.initData?'<button class="btn soft wide" data-act="home">Додати на головний екран</button>':'')+(tg&&tg.requestFullscreen&&tg.initData&&/ios|android/.test(tg.platform)?'<button class="btn ghost wide" data-act="fs">'+(tg.isFullscreen?'Вийти з повного екрана':'На весь екран')+'</button>':'')+'</div>'}
+   if(ed)return '<button class="row" data-sedit="'+u.id+'">'+inner.replace(/<span class="chev">›<\/span>$/,'')+'<span class="chev">✎</span></button>';
+   return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>Поки нічого не створено.</div></div>')
+   +'<div class="note">Лід-вокал служіння редагує сет-лист, решта складу бачить його для перегляду.</div>'+(tg&&tg.addToHomeScreen&&tg.initData?'<button class="btn soft wide" data-act="home">Додати на головний екран</button>':'')+(tg&&tg.requestFullscreen&&tg.initData&&/ios|android/.test(tg.platform)?'<button class="btn ghost wide" data-act="fs">'+(tg.isFullscreen?'Вийти з повного екрана':'На весь екран')+'</button>':'')+'</div>'}
 
 var adminLoad=null;
 function ensureAdmin(){
@@ -665,12 +682,62 @@ function openLive(svcId){
   document.addEventListener('touchstart',function(e){on=false;var t=S.stack[S.stack.length-1];if(!t||t.type!=='live'||e.touches.length!==1||!e.target.closest('#lscreen'))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;on=sx>36},{passive:true});
   document.addEventListener('touchend',function(e){if(!on)return;on=false;var t=S.stack[S.stack.length-1];if(!t||t.type!=='live')return;var c=e.changedTouches[0],dx=c.clientX-sx,dy=c.clientY-sy;
     if(Math.abs(dx)>80&&Math.abs(dy)<Math.abs(dx)/2){var to=t.i+(dx<0?1:-1);if(to>=0&&to<liveItems(t).length){t.i=to;updateLive(t,true)}}},{passive:true})})();
+
+/* ---------- Редактор графіка (адмін) ---------- */
+var SCHED_TYPES=['Молодіжка','Підліткове','Молитва','Вечір хвали','Зустріч команди','Інше'];
+var SCHED_ROLES=[['Вокал','Вокал'],['Барабани','Барабани'],['Бас','Бас'],['Електрогітара','Електрогітара'],['Акустична гітара','Акустична гітара'],['Клавіші','Клавіші'],['Звук','Звук']];
+function nextSunday(from){var d=from?new Date(from+'T12:00:00'):new Date();d.setDate(d.getDate()+((7-d.getDay())%7||(from?7:0)));return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function schedFrom(u){var e={id:u?u.id:null,date:u?u.date:'',type:u?(u.type||'Молодіжка'):'Молодіжка',roles:{},leads:u?(u.leadIds||[]).slice():[],busy:false,confirmDel:false};
+  SCHED_ROLES.forEach(function(r){e.roles[r[0]]=[]});
+  (u&&u.lineup||[]).forEach(function(r){if(e.roles[r.role])e.roles[r.role]=(r.ids||[]).slice()});
+  return e}
+function personName(id){var p=S.people.filter(function(x){return x.id===id})[0];return p?p.name:'?'}
+function schedLoad(id){var n=0;S.services.forEach(function(u){if(S.sched&&u.id===S.sched.id)return;var seen={};(u.lineup||[]).forEach(function(r){(r.ids||[]).forEach(function(i){if(i===id)seen[i]=1})});if(seen[id])n++});return n}
+function schedLayer(){
+  var e=S.sched;if(!e)return '';
+  var typeSel='<select data-stype aria-label="Тип служіння">'+SCHED_TYPES.map(function(t){return '<option'+(t===e.type?' selected':'')+'>'+t+'</option>'}).join('')+'</select>';
+  var cards=SCHED_ROLES.map(function(r){var ids=e.roles[r[0]]||[];
+    var chips=ids.map(function(i){var isL=r[0]==='Вокал'&&e.leads.indexOf(i)>-1;
+      return '<span class="pchip'+(isL?' lead':'')+'">'+avatar(i,personName(i))+(r[0]==='Вокал'?'<button class="pname" data-slead="'+i+'" aria-pressed="'+isL+'" title="Зробити лідом">'+(isL?'★ ':'☆ ')+esc(personName(i))+'</button>':'<span class="pname">'+esc(personName(i))+'</span>')+'<button class="px" data-prm="'+esc(r[0])+'|'+i+'" aria-label="Прибрати">✕</button></span>'}).join('');
+    return '<div class="card sched"><h2>'+r[1]+(ids.length?' · '+ids.length:'')+'</h2><div class="pchips2">'+chips+'<button class="padd" data-padd="'+esc(r[0])+'">＋ Додати</button></div></div>'}).join('');
+  var copy=S.services.filter(function(u){return u.id!==e.id&&u.lineup&&e.date&&u.date<e.date}).slice(-1)[0];
+  return '<div class="layer" data-layer="sched"><div class="lhead"><button class="iconbtn" data-back aria-label="Назад">←</button><div class="t">'+(e.id?'Редагувати служіння':'Нове служіння')+'</div></div>'
+   +'<div class="screen" id="schscreen"><div class="pad"><div class="card"><div class="sform"><label>Дата<input type="date" id="sdate" data-sdate value="'+esc(e.date)+'"></label><label>Тип'+typeSel+'</label></div></div>'
+   +(copy&&!e.id?'<button class="btn ghost wide" data-act="schedCopy">Скопіювати склад з '+fmt(copy.date).slice(0,5)+'</button>':'')
+   +cards+'<div class="note">Лід-вокал — зірочка біля імені у вокалістах. Люди, яких додали, одразу бачать служіння в застосунку.</div></div></div>'
+   +'<div class="lfoot">'+(e.id?'<button class="btn ghost danger" data-act="schedDelete">'+(e.confirmDel?'Точно видалити?':'Видалити')+'</button>':'')+'<button class="btn" data-act="schedSave"'+(e.busy||!e.date?' disabled':'')+' style="flex:1">'+(e.busy?'Збереження…':'Зберегти')+'</button></div></div>'}
+function ppRows(){
+  var e=S.sched,L2=S.stack[S.stack.length-1],role=L2&&L2.role,cur=e.roles[role]||[],q=(S.pq||'').toLowerCase().trim();
+  var other={};SCHED_ROLES.forEach(function(r){if(r[0]!==role)(e.roles[r[0]]||[]).forEach(function(i){(other[i]=other[i]||[]).push(r[0])})});
+  var list=S.people.filter(function(p){return !q||p.name.toLowerCase().indexOf(q)>-1}).sort(function(a,b){return (b.active?1:0)-(a.active?1:0)||a.name.localeCompare(b.name,'uk')});
+  return list.map(function(p){var on=cur.indexOf(p.id)>-1,n=schedLoad(p.id);
+    return '<button class="row" data-pp="'+p.id+'">'+avatar(p.id,p.name)+'<span class="rowmain"><span class="rowtitle">'+esc(p.name)+'</span><br><span class="rowsub">'+(n?n+' у графіку':'ще не в графіку')+(other[p.id]?' · тут же: '+esc(other[p.id].join(', ')):'')+(p.active?'':' · неактивний')+'</span></span><span class="key'+(on?' hi':'')+'">'+(on?'✓':'')+'</span></button>'}).join('')||'<div class="empty">Нікого не знайдено.</div>'}
+function ppickLayer(){
+  var L2=S.stack[S.stack.length-1];
+  return '<div class="layer sheet" data-layer="ppick"><div class="lhead"><button class="iconbtn" data-back aria-label="Закрити">✕</button><div class="t">'+esc(L2.role)+'</div></div>'
+   +'<div class="pbar"><span class="sbox"><input id="ppq" type="search" placeholder="Пошук людини" value="'+esc(S.pq||'')+'" aria-label="Пошук людини"></span></div>'
+   +'<div class="screen" id="ppscreen"><div class="pad"><div class="card"><div class="list" id="pplist">'+ppRows()+'</div></div></div></div>'
+   +'<div class="lfoot"><button class="btn" data-back style="flex:1">Готово</button></div></div>'}
+function schedSave(){
+  var e=S.sched;if(!e||e.busy||!e.date)return;e.busy=true;render();
+  var roles={};SCHED_ROLES.forEach(function(r){roles[r[0]]=e.roles[r[0]]||[]});
+  var leads=e.leads.filter(function(i){return roles['Вокал'].indexOf(i)>-1});
+  api('/api/schedule',{method:'POST',body:{id:e.id,date:e.date,type:e.type,roles:roles,leads:leads}}).then(function(r){
+    if(r.service){var i=S.services.findIndex(function(u){return u.id===r.service.id});if(i>-1)S.services[i]=r.service;else S.services.push(r.service);S.services.sort(function(a,b){return a.date.localeCompare(b.date)})}
+    S.sched=null;S.stack=S.stack.filter(function(l){return l.type!=='sched'&&l.type!=='ppick'});toast('Збережено');render();
+  }).catch(function(err){e.busy=false;render();toast('Не вдалося зберегти: '+((err.data&&err.data.message)||err.message))})}
+function schedDelete(){
+  var e=S.sched;if(!e||!e.id)return;if(!e.confirmDel){e.confirmDel=true;render();return}
+  e.busy=true;render();
+  api('/api/schedule',{method:'POST',body:{action:'delete',id:e.id}}).then(function(){
+    S.services=S.services.filter(function(u){return u.id!==e.id});S.sched=null;S.stack=S.stack.filter(function(l){return l.type!=='sched'&&l.type!=='ppick'});toast('Служіння видалено');render();
+  }).catch(function(err){e.busy=false;e.confirmDel=false;render();toast('Не вдалося видалити: '+((err.data&&err.data.message)||err.message))})}
 function render(){
   var app=$('#app');
   if(S.err){app.innerHTML=S.err;return}
   if(!S.me){return}
   var keep=0,sc=$('#screen');if(sc)keep=sc.scrollTop;var pk=$('#pscreen'),pkeep=pk?pk.scrollTop:0,sk=$('#sscreen'),skeep=sk?sk.scrollTop:0,prevDepth=S.lastDepth||0;
-  var layers=S.stack.map(function(l){return l.type==='song'?songLayer(l):l.type==='service'?serviceLayer(l):l.type==='live'?liveLayer(l):l.type==='build'?builderLayer():pickerLayer()}).join('');
+  var layers=S.stack.map(function(l){return l.type==='song'?songLayer(l):l.type==='service'?serviceLayer(l):l.type==='live'?liveLayer(l):l.type==='sched'?schedLayer():l.type==='ppick'?ppickLayer():l.type==='build'?builderLayer():pickerLayer()}).join('');
   var tabs=[['sunday','<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>','Неділя'],['rep','<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>','Репертуар'],['cal','<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>','Графік']];if(S.me.isAdmin)tabs.push(['admin','<svg viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>','Адмін']);
   var nav='<nav class="nav" id="nav">'+tabs.map(function(x){return '<button data-tab="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+x[2]+'</button>'}).join('')+'</nav>';
   app.innerHTML='<div class="screen" id="screen">'+(S.tab==='sunday'?viewSunday():S.tab==='rep'?viewRep():S.tab==='admin'&&S.me.isAdmin?viewAdmin():viewCal())+'</div>'+nav+layers+'';
@@ -693,7 +760,7 @@ function goBack(immediate){
   if(!immediate&&el&&!el.classList.contains('sheet')&&S.stack.length&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
     leaving=true;el.classList.add('leaving');setTimeout(function(){leaving=false;popLayer()},150);return}
   popLayer()}
-function popLayer(){var t=S.stack.pop();if(t&&t.type==='live')wakeOff();if(t&&t.type==='pick'){S.q='';S.f='Усі'}if(t&&t.type==='build'){S.edit=null}render()}
+function popLayer(){var t=S.stack.pop();if(t&&t.type==='live')wakeOff();if(t&&t.type==='pick'){S.q='';S.f='Усі'}if(t&&t.type==='build'){S.edit=null}if(t&&t.type==='sched'){S.sched=null}render()}
 function saveSetlist(publish){
   var e=S.edit;S.busy=true;render();
   api('/api/setlist',{method:'POST',body:{serviceId:e.id,items:e.items,publish:publish}}).then(function(r){
@@ -719,6 +786,16 @@ document.addEventListener('click',function(e){
   if(d.svc){S.stack.push({type:'service',id:d.svc});render();return}
   if('back' in d){goBack();return}
   if(d.tab2){top.tab=d.tab2;updateSong(top);return}
+  if(d.act==='schedEdit'){S.schedEdit=!S.schedEdit;render();return}
+  if('snew' in d){S.sched=schedFrom(null);var last=S.services.slice(-1)[0];S.sched.date=nextSunday(last?last.date:'');S.stack.push({type:'sched'});render();return}
+  if(d.sedit){var su=S.services.filter(function(u){return u.id===d.sedit})[0];S.sched=schedFrom(su);S.stack.push({type:'sched'});render();return}
+  if(d.act==='schedCopy'){var cp=S.services.filter(function(u){return u.lineup&&u.date<S.sched.date}).slice(-1)[0];if(cp){var f=schedFrom(cp);S.sched.roles=f.roles;S.sched.leads=f.leads}render();return}
+  if(d.act==='schedSave'){schedSave();return}
+  if(d.act==='schedDelete'){schedDelete();return}
+  if(d.slead){var ls=S.sched.leads,li=ls.indexOf(d.slead);if(li>-1)ls.splice(li,1);else ls.push(d.slead);render();return}
+  if(d.prm){var pr=d.prm.split('|'),arr=S.sched.roles[pr[0]]||[],pi=arr.indexOf(pr[1]);if(pi>-1)arr.splice(pi,1);if(pr[0]==='Вокал'){var lj=S.sched.leads.indexOf(pr[1]);if(lj>-1)S.sched.leads.splice(lj,1)}render();return}
+  if(d.padd){S.pq='';S.stack.push({type:'ppick',role:d.padd});render();return}
+  if(d.pp){var rl=top.role,ra=S.sched.roles[rl]=S.sched.roles[rl]||[],ri=ra.indexOf(d.pp);if(ri>-1){ra.splice(ri,1);if(rl==='Вокал'){var lk=S.sched.leads.indexOf(d.pp);if(lk>-1)S.sched.leads.splice(lk,1)}}else ra.push(d.pp);var pl=document.getElementById('pplist');if(pl){pl.innerHTML=ppRows();loadAvatars()}else render();return}
   if(d.live){openLive(d.live);return}
   if(d.lgo!==undefined&&top&&top.type==='live'){var to=+d.lgo;if(to>=0&&to<liveItems(top).length){top.i=to;updateLive(top,true)}return}
   if(d.lk&&top&&top.type==='live'){var I=liveInfo(top);top.st.k[I.it.id]=(top.st.k[I.it.id]||0)+(+d.lk);liveSave(top);updateLive(top,false);return}
@@ -752,7 +829,8 @@ document.addEventListener('click',function(e){
   if(d.rm!==undefined){S.edit.items.splice(+d.rm,1);render();return}
 });
 document.addEventListener('scroll',function(e){var t=e.target;if(t&&t.id==='sscreen'){var l=t.closest('.layer');if(l)l.classList.toggle('scrolled',t.scrollTop>60)}},true);
-document.addEventListener('change',function(e){var t=e.target;if(t.tagName!=='SELECT')return;
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.dataset.stype!==undefined){if(S.sched)S.sched.type=t.value;return}
+  if(t.tagName!=='SELECT')return;
   if(t.dataset.key!==undefined){S.edit.items[+t.dataset.key].k=t.value;render()}
   else if(t.dataset.psort!==undefined){S.sort=t.value;render()}
   else if(t.dataset.voc!==undefined){S.edit.items[+t.dataset.voc].v=t.value;render()}});
@@ -764,7 +842,9 @@ document.addEventListener('change',function(e){var t=e.target;if(t.tagName!=='SE
   document.addEventListener('pointermove',function(e){if(!drag)return;var t=target(e.clientY);clear();drag.to=t;var r=rows()[t.i];if(r)r.classList.add(t.after?'dropa':'dropb')});
   function end(){if(!drag)return;var d=drag;drag=null;clear();rows().forEach(function(r){r.classList.remove('dragging')});if(!d.to)return;var to=d.to.i+(d.to.after?1:0),a=S.edit.items,it=a.splice(d.i,1)[0];if(to>d.i)to--;a.splice(to,0,it);render()}
   document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end)})();
-document.addEventListener('input',function(e){if(e.target.dataset&&e.target.dataset.txt!==undefined){S.edit.items[+e.target.dataset.txt].x=e.target.value;return}
+document.addEventListener('input',function(e){if(e.target.id==='ppq'){S.pq=e.target.value;var ppl=document.getElementById('pplist');if(ppl){ppl.innerHTML=ppRows();loadAvatars()}return}
+  if(e.target.dataset&&e.target.dataset.sdate!==undefined){if(S.sched)S.sched.date=e.target.value;var sb=document.querySelector('[data-act="schedSave"]');if(sb)sb.disabled=!e.target.value;return}
+ if(e.target.dataset&&e.target.dataset.txt!==undefined){S.edit.items[+e.target.dataset.txt].x=e.target.value;return}
   if(e.target.id==='q'||e.target.id==='pq'){
     S.q=e.target.value;
     var box=e.target.closest('.sbox'),pick=e.target.id==='pq',list=document.getElementById(pick?'picklist':'replist');
@@ -790,14 +870,14 @@ if(tg&&tg.BackButton)tg.BackButton.onClick(function(){goBack()});
 function fail(title,msg){S.err='<div class="center"><div><h1>'+esc(title)+'</h1>'+msg+'</div></div>';render()}
 function applyBoot(r){
   var old={};S.songs.forEach(function(x){old[x.id]=x.n});
-  S.me=r.me;S.songs=r.songs.map(function(x){if(!x.n&&old[x.id])x.n=old[x.id];return x});S.services=r.services;byId={};S.songs.forEach(function(x){byId[x.id]=x})}
+  S.me=r.me;S.songs=r.songs.map(function(x){if(!x.n&&old[x.id])x.n=old[x.id];return x});S.services=r.services;if(r.people)S.people=r.people;byId={};S.songs.forEach(function(x){byId[x.id]=x})}
 var uid=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user?tg.initDataUnsafe.user.id:0,BOOT_KEY='boot1';
 var cachedBoot=uid?lsGet(BOOT_KEY):null;
 if(cachedBoot&&cachedBoot.uid===uid&&Date.now()-cachedBoot.t<7*864e5){applyBoot(cachedBoot.r);S.counts=cachedBoot.counts||{};S.songs.forEach(function(x){if(S.counts[x.id])x.n=S.counts[x.id]});render()}
-function loadCounts(){api('/api/counts').then(function(c){S.counts=c.counts;S.songs.forEach(function(x){x.n=c.counts[x.id]||0});render();if(uid)lsSet(BOOT_KEY,{uid:uid,t:Date.now(),r:{me:S.me,songs:S.songs,services:S.services},counts:c.counts})}).catch(function(){})}
+function loadCounts(){api('/api/counts').then(function(c){S.counts=c.counts;S.songs.forEach(function(x){x.n=c.counts[x.id]||0});render();if(uid)lsSet(BOOT_KEY,{uid:uid,t:Date.now(),r:{me:S.me,songs:S.songs,services:S.services,people:S.people},counts:c.counts})}).catch(function(){})}
 api('/api/bootstrap').then(function(r){
   applyBoot(r);render();
-  if(uid)lsSet(BOOT_KEY,{uid:uid,t:Date.now(),r:{me:S.me,songs:S.songs,services:S.services},counts:S.counts||{}});
+  if(uid)lsSet(BOOT_KEY,{uid:uid,t:Date.now(),r:{me:S.me,songs:S.songs,services:S.services,people:S.people},counts:S.counts||{}});
   loadCounts();
   api('/api/ping',{method:'POST'}).catch(function(){});
 }).catch(function(e){

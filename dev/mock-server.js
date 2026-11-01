@@ -41,6 +41,7 @@ const svc = (id, n, leadName, mine) => ({
   vocalists: ['Наталя', 'Аня', 'Анна', 'Артур'],
   published: [{ t: 'mom', x: 'Біг інтро' }, { t: 'song', id: 'a1', k: 'D', v: 'Аня' }, { t: 'note', x: '(None like you під час привітання)' }, { t: 'song', id: 'a2', k: 'C', v: 'Наталя' }, { t: 'mom', x: 'Молитва' }, { t: 'note', x: '(продовжуємо трішки попередню пісню..)' }, { t: 'song', id: 'a4', k: 'D', v: 'Анна' }],
 });
+const PEOPLE = ['Аня Л.', 'Аня Г.', 'Наталя', 'Ілона', 'Квітка', 'Артур', 'Василь', 'Єгор', 'Андрій', 'Вова', 'Міра', 'Настя', 'Каміла', 'Лі'].map((n, i) => ({ id: 'pp' + i, name: n, active: i !== 13 || true }));
 const state = { services: [svc('s1', 5, 'Наталя', true), svc('s2', 12, null, true), svc('s3', 19, null, false)] };
 function forRole(role) {
   return state.services.map((s, i) => {
@@ -57,7 +58,18 @@ http.createServer((req, res) => {
   if (url.searchParams.get('role')) globalThis.role = url.searchParams.get('role');
   if (url.searchParams.get('admin')) globalThis.admin = url.searchParams.get('admin');
   if (url.pathname === '/api/admin') { if (globalThis.admin !== '1') return send(res, 404, { error: 'not_found' }); if (req.method === 'POST') { globalThis.reqs = []; return send(res, 200, { ok: true }); } const h = (n) => new Date(Date.now() - n * 36e5).toISOString(); const reqs = globalThis.reqs || [{ id: 'a'.repeat(32), name: 'Марічка К.', tgId: '5550123', nick: 'marichka', attempts: 2, last: h(3) }]; return send(res, 200, { now: new Date().toISOString(), requests: reqs, people: [{ id: 'p1', name: 'Аня', active: true, registered: true, lastSeen: h(0.1) }, { id: 'p2', name: 'Наталя', active: true, registered: true, lastSeen: h(5) }, { id: 'p3', name: 'Артур', active: true, registered: true, lastSeen: h(72) }, { id: 'p4', name: 'Єгор', active: true, registered: true, lastSeen: null }], services: state.services.map((x, i) => ({ id: x.id, date: x.date, type: x.type, lead: x.lead, leadIds: x.leadIds || [], missing: i ? ['Бас', 'Клавіші'] : [], setlist: { state: ['published', 'empty', 'draft'][i] || 'empty', songs: i === 0 ? 3 : 0 } })), rep: { days: 90, services: 11, avgSongs: 4.3, top: songs.slice(0, 6).map((x, i) => ({ id: x.id, title: x.title, n: 12 - i * 2, last: '2026-10-04' })), old: songs.slice(5).map((x) => ({ id: x.id, title: x.title, last: '2026-07-20' })), never: [{ id: 'a7', title: 'Here in Your Presence' }] }, team: { days: 90, members: [{ id: 'p1', name: 'Аня', active: true, registered: true, served: 9, led: 3, sang: 14 }, { id: 'p2', name: 'Наталя', active: true, registered: true, served: 7, led: 5, sang: 11 }, { id: 'p3', name: 'Артур', active: true, registered: true, served: 2, led: 0, sang: 1 }, { id: 'p4', name: 'Єгор', active: true, registered: false, served: 0, led: 0, sang: 0 }] }, gaps: [{ key: 'chords', title: 'Без акордів', items: songs.filter((x) => !x.hasChords).map((x) => ({ id: x.id, title: x.title })) }, { key: 'dur', title: 'Без тривалості', items: songs.filter((x) => !x.dur).map((x) => ({ id: x.id, title: x.title })) }, { key: 'chat', title: 'Люди без chat_id', people: true, items: [{ id: 'z', title: 'Василь' }] }] }); }
-  if (url.pathname === '/api/bootstrap') return send(res, 200, { me: { id: 'me', name: 'Тест', isAdmin: globalThis.admin === '1' }, songs: songs.map((x) => ({ ...x, n: 0 })), services: forRole(globalThis.role || 'lead') });
+  if (url.pathname === '/api/schedule' && req.method === 'POST') {
+    let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => {
+      const j = JSON.parse(b), name = (id) => (PEOPLE.find((p) => p.id === id) || {}).name;
+      if (j.action === 'delete') { state.services = state.services.filter((x) => x.id !== j.id); return send(res, 200, { deleted: j.id }); }
+      let sv = state.services.find((x) => x.id === j.id);
+      if (!sv) { sv = svc('n' + Date.now(), 0, null, true); state.services.push(sv); }
+      sv.date = j.date; sv.type = j.type; sv.leadIds = j.leads; sv.lead = j.leads.map(name);
+      sv.lineup = Object.keys(j.roles).filter((r) => j.roles[r].length).map((r) => ({ role: r, names: j.roles[r].map(name), ids: j.roles[r], lead: [] }));
+      state.services.sort((a, c) => a.date.localeCompare(c.date)); send(res, 200, { service: sv });
+    }); return;
+  }
+  if (url.pathname === '/api/bootstrap') return send(res, 200, { me: { id: 'me', name: 'Тест', isAdmin: globalThis.admin === '1', seeAll: true }, songs: songs.map((x) => ({ ...x, n: 0 })), services: forRole(globalThis.role || 'lead'), ...(globalThis.admin === '1' ? { people: PEOPLE } : {}) });
   if (url.pathname === '/api/avatar') { if (url.searchParams.get('id') === 'p3') { res.writeHead(404); return res.end('{}'); } res.writeHead(200, { 'Content-Type': 'image/svg+xml' }); return res.end('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#c26"/><circle cx="48" cy="38" r="18" fill="#fff"/></svg>'); }
   if (url.pathname === '/api/counts') return setTimeout(() => send(res, 200, { counts: Object.fromEntries(songs.map((x) => [x.id, x.n])) }), 300);
   if (url.pathname === '/api/ping') return send(res, 200, { ok: true });
