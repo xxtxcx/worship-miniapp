@@ -70,6 +70,10 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .who{font-weight:600;display:inline-flex;align-items:center;gap:6px}
 .ava-wrap{flex:none;display:grid;place-items:center;width:48px}
 .ava.s{width:22px;height:22px;font-size:9px}
+.ava-pair{flex:none;position:relative;width:48px;height:48px;display:block}
+.ava-pair .pf,.ava-pair .pb{position:absolute;top:4px;display:block;border-radius:50%;line-height:0}
+.ava-pair .pf{left:4px;z-index:2;box-shadow:0 0 0 2px var(--surface)}
+.ava-pair .pb{left:14px;z-index:1}
 .ava.l{width:40px;height:40px;font-size:13px}
 .ava.ring{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent);margin:4px}
 .ava.none{background:transparent;border:1.5px dashed var(--line);color:var(--ink2)}
@@ -482,6 +486,15 @@ function loadHistory(more){
     r.services.forEach(function(u){S.past[u.id]=u});
     H.items=more?H.items.concat(r.services):r.services;H.more=r.hasMore;H.loaded=true;H.busy=false;render()
   }).catch(function(e){H.busy=false;H.loaded=true;toast('Не вдалося завантажити: '+((e.data&&e.data.message)||e.message))})}
+/* Без лід-вокаліста: вокаліст спереду, а ще один учасник (гітарист або будь-хто) виглядає з-за нього */
+function pairAva(u){
+  var ppl=[],seen={};
+  (u.lineup||[]).forEach(function(r){(r.ids||[]).forEach(function(id,i){if(!seen[id]){seen[id]=1;ppl.push({id:id,name:r.names[i],role:r.role})}})});
+  if(!ppl.length)return '<span class="ava-wrap"><span class="ava l none" aria-hidden="true">?</span></span>';
+  var front=ppl.filter(function(x){return x.role==='Вокал'})[0]||ppl[0];
+  var rank=function(x){return /гітар/i.test(x.role)?0:1};
+  var back=ppl.filter(function(x){return x.id!==front.id}).sort(function(a,b){return rank(a)-rank(b)})[0];
+  return '<span class="ava-pair'+(back?' two':'')+'">'+(back?'<span class="pb">'+avatar(back.id,back.name,'l')+'</span>':'')+'<span class="pf">'+avatar(front.id,front.name,'l')+'</span></span>'}
 function viewCal(){
   if(S.calMode==='past')return '<div class="pad">'+calSeg()+viewHist()+'</div>';
   var mine=S.services.filter(function(s){return s.mine}).length;
@@ -490,8 +503,8 @@ function viewCal(){
   var bar=S.me.isAdmin?'<div class="schedbar">'+(ed?'<button class="btn" data-snew>＋ Нове служіння</button><button class="btn ghost" data-act="schedEdit">Готово</button>':'<button class="btn soft" data-act="schedEdit">✎ Редагувати графік</button>')+'</div>':'';
   return '<div class="pad">'+calSeg()+'<div>'+head+'</div>'+bar+(S.services.length?'<div class="card"><h2>Найближчі служіння</h2><div class="list">'+S.services.map(function(u){var vis=u.mine||S.me.seeAll||ed;
    var tag=u.isLead?'<span class="pill lead">ви лід</span>':u.mine?'<span class="pill">ви служите</span>':'<span class="rowsub">не в складі</span>';
-   var la=u.leadIds&&u.leadIds[0]?avatar(u.leadIds[0],u.lead[0],'l ring'):'<span class="ava l none" aria-hidden="true">?</span>';
-   var inner='<span class="ava-wrap">'+la+'</span><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
+   var la=u.leadIds&&u.leadIds[0]?'<span class="ava-wrap">'+avatar(u.leadIds[0],u.lead[0],'l ring')+'</span>':pairAva(u);
+   var inner=la+'<span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+' · лід: '+esc(u.lead.join(', ')||'не призначений')+'</span></span>'+tag+(vis?'<span class="chev">›</span>':'');
    if(ed)return '<button class="row" data-sedit="'+u.id+'">'+inner.replace(/<span class="chev">›<\/span>$/,'')+'<span class="chev">✎</span></button>';
    return vis?'<button class="row" data-svc="'+u.id+'">'+inner+'</button>':'<div class="row">'+inner+'</div>'}).join('')+'</div></div>':'<div class="card"><div class="empty"><b>Служінь поки немає</b>Поки нічого не створено.</div></div>')
    +'<div class="note">Лід-вокал служіння редагує сет-лист, решта складу бачить його для перегляду.</div>'+(tg&&tg.addToHomeScreen&&tg.initData?'<button class="btn soft wide" data-act="home">Додати на головний екран</button>':'')+(tg&&tg.requestFullscreen&&tg.initData&&/ios|android/.test(tg.platform)?'<button class="btn ghost wide" data-act="fs">'+(tg.isFullscreen?'Вийти з повного екрана':'На весь екран')+'</button>':'')+'</div>'}
