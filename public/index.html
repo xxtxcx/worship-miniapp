@@ -341,10 +341,12 @@ function loadAvatars(){
     fetch('/api/avatar?id='+id,{headers:{'X-Init-Data':(tg&&tg.initData)||''}}).then(function(r){if(r.status===404){lsSet('av:'+id,{t:Date.now(),d:''});throw 0}if(!r.ok)throw 0;return r.blob()}).then(function(b){
       var fr=new FileReader();fr.onload=function(){S.ava[id]=fr.result;lsSet('av:'+id,{t:Date.now(),d:fr.result});swapAva(id)};fr.readAsDataURL(b)}).catch(function(){})})}
 function smallCover(u){return String(u||'').replace('/albums/520/','/albums/284/')}
+/* Власні пісні команди (виконавець D.Youth Worship) отримують фірмову обкладинку, решта без обкладинки отримує нейтральну */
+function isOwn(s){return /d\.?\s*youth\s*worship/i.test(s.artist||'')}
 function cover(s,cls){
   var t=String(s.title||'?'),h=0;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))%360;
   var dot=STATUS_DOT[s.status];
-  return '<span class="covw"><span class="cov'+(cls?' '+cls:'')+'" style="--h:'+h+'" aria-hidden="true"><span>'+esc(t.charAt(0).toUpperCase())+'</span>'+(s.cover?'<img src="'+esc(smallCover(s.cover))+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'</span>'+(dot?'<i class="sdot '+dot+(cls?' '+cls:'')+'" title="'+esc(s.status)+'" aria-label="'+esc(s.status)+'" role="img"></i>':'')+'</span>'}
+  return '<span class="covw"><span class="cov'+(cls?' '+cls:'')+'" style="--h:'+h+'" aria-hidden="true"><span>'+esc(t.charAt(0).toUpperCase())+'</span>'+'<img src="'+(s.cover?esc(smallCover(s.cover)):(isOwn(s)?'/dyouth-cover.jpg':'/no-cover.jpg'))+'" alt="" loading="lazy" decoding="async"'+(s.cover?' referrerpolicy="no-referrer"':'')+' onerror="this.remove()">'+'</span>'+(dot?'<i class="sdot '+dot+(cls?' '+cls:'')+'" title="'+esc(s.status)+'" aria-label="'+esc(s.status)+'" role="img"></i>':'')+'</span>'}
 var STATUS_DOT={'Зелені':'ok','Жовті':'warn'};
 var MONTHS=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 function fmtD(n){return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2)}
@@ -476,8 +478,8 @@ function viewHist(){
   H.items.forEach(function(u){
     var key=u.date.slice(0,7);
     if(key!==cur){if(cur)out+='</div></div>';cur=key;out+='<div class="mon">'+MONTHS[+u.date.slice(5,7)-1]+' '+u.date.slice(0,4)+'</div><div class="card"><div class="list">'}
-    var n=(u.published||[]).filter(function(x){return x.t==='song'}).length,la=u.leadIds&&u.leadIds[0]?avatar(u.leadIds[0],u.lead[0],'l ring'):'<span class="ava l none" aria-hidden="true">?</span>';
-    out+='<button class="row" data-svc="'+u.id+'"><span class="ava-wrap">'+la+'</span><span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+(u.lead.length?' · лід: '+esc(u.lead.join(', ')):'')+(n?' · '+n+' '+(n===1?'пісня':n<5?'пісні':'пісень'):'')+'</span></span><span class="chev">›</span></button>'});
+    var n=(u.published||[]).filter(function(x){return x.t==='song'}).length,la=u.leadIds&&u.leadIds[0]?'<span class="ava-wrap">'+avatar(u.leadIds[0],u.lead[0],'l ring')+'</span>':pairAva(u);
+    out+='<button class="row" data-svc="'+u.id+'">'+la+'<span class="rowmain"><span class="rowtitle">'+fmt(u.date).slice(0,5)+' · '+wds(u.date)+'</span><br><span class="rowsub">'+esc(u.type||'Служіння')+(u.lead.length?' · лід: '+esc(u.lead.join(', ')):'')+(n?' · '+n+' '+(n===1?'пісня':n<5?'пісні':'пісень'):'')+'</span></span><span class="chev">›</span></button>'});
   out+='</div></div>';
   return out+(H.more?'<button class="btn soft wide" data-histmore'+(H.busy?' disabled':'')+'>'+(H.busy?'Завантажую…':'Показати ще')+'</button>':'')}
 function loadHistory(more){
