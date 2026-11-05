@@ -14,7 +14,7 @@
 /* Тема береться з Telegram: JS ставить data-theme="light|dark" за Telegram.WebApp.colorScheme.
    Поза Telegram працює prefers-color-scheme. */
 :root{
-  --bg:#E9EDF2; --surface:#FFFFFF; --surface2:#F2F5F9; --ink:#14202E; --ink2:#5A6878; --line:#DCE3EB;
+  --bg:#F2F2F7; --surface:#FFFFFF; --surface2:#F0F0F5; --ink:#111114; --ink2:#6C6C72; --line:#E3E3E8;
   --accent:#0E7C70; --accent-ink:#FFFFFF; --accent-soft:#D6EFEB;
   --lead:#B9650A; --lead-soft:#FBE8CF; --ok:#1F8A4C; --warn:#B9650A; --warn-soft:#FBE8CF; --danger:#C2362B;
   --font-display:'Unbounded','Onest',system-ui,sans-serif;
@@ -23,12 +23,12 @@
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0B1118; --surface:#131C26; --surface2:#1A2531; --ink:#E8EEF5; --ink2:#93A1B2; --line:#26323F;
-  --accent:#3CC6B4; --accent-ink:#06211D; --accent-soft:#12332F;
+  --bg:#000000; --surface:#1C1C1E; --surface2:#2C2C2E; --ink:#F5F5F7; --ink2:#98989F; --line:#38383A;
+  --accent:#5BC9BA; --accent-ink:#05201C; --accent-soft:#16302D;
   --lead:#F0A650; --lead-soft:#3A2A12; --ok:#4CC584; --warn:#F0A650; --warn-soft:#3A2A12; --danger:#FF7B6E; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0B1118; --surface:#131C26; --surface2:#1A2531; --ink:#E8EEF5; --ink2:#93A1B2; --line:#26323F;
-  --accent:#3CC6B4; --accent-ink:#06211D; --accent-soft:#12332F;
+  --bg:#000000; --surface:#1C1C1E; --surface2:#2C2C2E; --ink:#F5F5F7; --ink2:#98989F; --line:#38383A;
+  --accent:#5BC9BA; --accent-ink:#05201C; --accent-soft:#16302D;
   --lead:#F0A650; --lead-soft:#3A2A12; --ok:#4CC584; --warn:#F0A650; --warn-soft:#3A2A12; --danger:#FF7B6E; color-scheme:dark}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -64,6 +64,21 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .card h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);padding:14px 16px 4px}
+.lu{padding:6px 16px 12px}
+.lu .lrow{display:flex;flex-wrap:wrap;gap:8px 12px}
+.lu .lt{display:flex;flex-direction:column;align-items:center;gap:5px;width:62px;text-align:center;font-size:13px;line-height:1.2}
+.lu .lt b{font-weight:600;overflow-wrap:anywhere}
+.lu .lt.lead{color:var(--accent)}
+.ava.xl{width:42px;height:42px;font-size:15px}
+.lu .ava.xl.ring{margin:0}
+.lu .lcols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
+.lu .lcols.sep{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.lu .col{display:flex;flex-direction:column;gap:9px;min-width:0}
+.ava.md{width:30px;height:30px;font-size:11px}
+.lu .lstack{display:flex;flex-direction:column;gap:5px}
+.lu .lm{display:flex;align-items:center;gap:9px;font-size:15px;min-width:0}
+.lu .lm b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lu .rl small{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:4px}
 .lineup{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;padding:8px 16px 14px;font-size:14px;margin:0}
 .lineup dt{color:var(--ink2)}
 .lineup dd{margin:0;display:flex;flex-wrap:wrap;gap:4px 8px}
@@ -170,6 +185,15 @@ button,.row{touch-action:manipulation}
 .sform input,.sform select{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;min-width:0;width:100%}
 .btn.danger{color:var(--danger)}
 .btn[disabled]{opacity:.5}
+.btn,.iconbtn,.row,.chips button,.seg button,.key{transition:transform .12s ease,background-color .15s ease}
+.btn:active{transform:scale(.975)}
+.iconbtn:active{transform:scale(.9)}
+.sk{border-radius:8px;background:linear-gradient(90deg,var(--surface2) 25%,var(--line) 37%,var(--surface2) 63%);background-size:400% 100%;animation:skm 1.4s ease infinite}
+.sk.l{height:14px}.sk.h{height:12px;width:80px;margin-bottom:10px}
+.skwrap{padding:16px;display:flex;flex-direction:column;gap:9px}
+@keyframes skm{0%{background-position:100% 50%}100%{background-position:0 50%}}
+@media (prefers-reduced-motion:reduce){.btn,.iconbtn,.row,.chips button,.seg button,.key{transition:none}.btn:active,.iconbtn:active{transform:none}.sk{animation:none}}
+.link .ico svg{width:20px;height:20px}
 .lfoot{padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px),var(--tg-safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
 .tabs{display:flex;gap:6px;padding:4px 16px 0;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
 .tabs button{border:0;background:transparent;padding:9px 12px;font-weight:600;color:var(--ink2);border-bottom:2px solid transparent}
@@ -317,6 +341,9 @@ function linkify(s){return esc(s).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" 
 function fmt(d){var p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}
 function wds(d){return['нд','пн','вт','ср','чт','пт','сб'][new Date(d+'T12:00:00').getDay()]}
 function wd(d){return new Date(d+'T12:00:00').toLocaleDateString('uk-UA',{weekday:'long'})}
+/* Вібровідгук Telegram: sel — перемикачі, light — дотик, ok/err — результат дії */
+function hap(t){try{var h=tg&&tg.HapticFeedback;if(!h)return;if(t==='ok')h.notificationOccurred('success');else if(t==='err')h.notificationOccurred('error');else if(t==='sel')h.selectionChanged();else h.impactOccurred('light')}catch(e){}}
+function skel(){var w=[92,78,86,60,95,70,84,55];return '<div class="skwrap" aria-busy="true" aria-label="Завантаження"><div class="sk h"></div>'+w.slice(0,4).map(function(x){return '<div class="sk l" style="width:'+x+'%"></div>'}).join('')+'<div class="sk h" style="margin-top:10px"></div>'+w.slice(4).map(function(x){return '<div class="sk l" style="width:'+x+'%"></div>'}).join('')+'</div>'}
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function cachedAva(id){var c=lsGet('av:'+id);if(!c)return undefined;var age=Date.now()-c.t;if(c.d&&age<3*864e5)return c.d;if(!c.d&&age<2*36e5)return 0;return undefined}
@@ -428,7 +455,7 @@ function charW(){if(!CW){var sp=document.createElement('span');sp.style.cssText=
 function colsFor(px){var app=document.getElementById('app'),w=(app?app.clientWidth:window.innerWidth)-32-28-2;return Math.max(8,Math.floor(w/(charW()*px))-1)}
 
 /* ---------- Стан ---------- */
-var S={me:null,songs:[],services:[],people:[],sched:null,schedEdit:false,tab:'sunday',stack:[],sort:'az',f:'Усі',q:'',toast:'',cache:{},ava:{},pubView:{},past:{},hist:{items:[],loaded:false,more:false,busy:false},calMode:'next',edit:null,busy:false,err:null};
+var S={me:null,songs:[],services:[],people:[],sched:null,schedEdit:false,tab:'sunday',stack:[],sort:'full',f:'Усі',q:'',toast:'',cache:{},ava:{},pubView:{},past:{},hist:{items:[],loaded:false,more:false,busy:false},calMode:'next',edit:null,busy:false,err:null};
 var byId={};
 function song(id){return byId[id]||{id:id,title:'Невідома пісня',type:'',orig:'',our:'',n:0}}
 function toast(m){
@@ -449,15 +476,27 @@ function setlistCard(items,svc){
    return '<button class="row" data-song="'+s.id+'" data-key="'+esc(k)+'"><span class="num">'+n+'</span><span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span></span>'+(it.v?'<span class="vline" title="'+esc(it.v)+'">'+avatar(personId(svc,it.v),it.v)+'</span>':'')+(it.link?'<span class="ytmini" data-yt="'+esc(it.link)+'" role="link" aria-label="Відкрити запис">'+YT_SVG+'</span>':'')+'<span class="key hi">'+esc(k||'–')+'</span><span class="chev">›</span></button>'}).join('')+'</div></div>'}
 
 function shownItems(svc){return svc.canEdit?(S.pubView[svc.id]&&svc.hasChanges?(svc.published||[]):(svc.draft||[])):(svc.published||[])}
+/* Склад: вокалісти великими аватарками зверху, а музиканти двома колонками (барабани, клавіші, електро | звук, бас, акустика) */
+var LU_COLS=[['Барабани','Клавіші','Електрогітара'],['Звук','Бас','Акустична гітара']];
+function luTile(r,i){var n=r.names[i],lead=!!(r.lead&&r.lead.indexOf(n)>-1);return '<span class="lt'+(lead?' lead':'')+'">'+avatar(r.ids&&r.ids[i],n,'xl'+(lead?' ring':''))+'<b>'+esc(n)+'</b></span>'}
+function luInline(r,i){var n=r.names[i];return '<span class="lm">'+avatar(r.ids&&r.ids[i],n,'md')+'<b>'+esc(n)+'</b></span>'}
+function lineupBlock(svc){
+  var by={};(svc.lineup||[]).forEach(function(r){by[r.role]=r});
+  var voc=by['Вокал'],out='';
+  if(voc&&voc.names.length)out+='<div class="lrow">'+voc.names.map(function(_,i){return luTile(voc,i)}).join('')+'</div>';
+  var cols=LU_COLS.map(function(c){return c.filter(function(role){return by[role]&&by[role].names.length}).map(function(role){var r=by[role];
+    return '<div class="rl"><small>'+esc(role)+'</small><div class="lstack">'+r.names.map(function(_,i){return luInline(r,i)}).join('')+'</div></div>'}).join('')});
+  if(cols[0]||cols[1])out+='<div class="lcols'+(out?' sep':'')+'"><div class="col">'+cols[0]+'</div><div class="col">'+cols[1]+'</div></div>';
+  return out}
 function lineupHtml(svc){return (svc.lineup||[]).map(function(r){return '<dt>'+esc(r.role)+'</dt><dd>'+r.names.map(function(n,ni){return '<span class="who'+(r.lead&&r.lead.indexOf(n)>-1?' lead':'')+'">'+avatar(r.ids&&r.ids[ni],n,r.lead&&r.lead.indexOf(n)>-1?'ring':'')+esc(n)+'</span>'}).join('')+'</dd>'}).join('')}
 function serviceBody(svc){
   var items=shownItems(svc),showPub=svc.canEdit&&svc.hasChanges&&S.pubView[svc.id];
   if(svc.past)return '<div class="hero"><span class="eyebrow">'+esc(svc.type||'Служіння')+'</span><div class="date">'+fmt(svc.date)+'</div><div class="meta">'+wd(svc.date)+(svc.lead.length?' · лід: '+esc(svc.lead.join(', ')):'')+'</div><div><span class="pill" style="background:var(--surface2);color:var(--ink2)"><span class="dot"></span>Минуле служіння</span></div></div>'
-   +((svc.lineup||[]).length?'<div class="card"><h2>Склад</h2><dl class="lineup">'+lineupHtml(svc)+'</dl></div>':'')+setlistCard(items,svc);
+   +((svc.lineup||[]).length?'<div class="card"><h2>Склад</h2><div class="lu">'+lineupBlock(svc)+'</div></div>':'')+setlistCard(items,svc);
   var status=svc.canEdit?(svc.hasChanges?'<span class="pill warn"><span class="dot"></span>Є неопубліковані зміни</span>':(svc.published&&svc.published.length?'<span class="pill"><span class="dot"></span>Опубліковано для команди</span>':'<span class="pill warn"><span class="dot"></span>Ще не опубліковано</span>')):(svc.published&&svc.published.length?'<span class="pill"><span class="dot"></span>Сет-лист від ліда</span>':'<span class="pill warn"><span class="dot"></span>Сет-лист ще не опубліковано</span>');
-  var lu=lineupHtml(svc);
+  var lu=lineupBlock(svc);
   return '<div class="hero"><span class="eyebrow">'+esc(svc.type||'Служіння')+'</span><div class="date">'+fmt(svc.date)+'</div><div class="meta">'+wd(svc.date)+(svc.lead.length?' · лід: '+esc(svc.lead.join(', ')):' · лід не призначений')+'</div><div>'+status+'</div></div>'
-   +(lu?'<div class="card"><h2>Склад</h2><dl class="lineup">'+lu+'</dl></div>':'')
+   +(lu?'<div class="card"><h2>Склад</h2><div class="lu">'+lu+'</div></div>':'')
    +(svc.canEdit&&svc.hasChanges?'<div class="seg" role="group" aria-label="Що показувати"><button data-pubview="'+svc.id+':0" aria-pressed="'+(!showPub)+'">Моя чернетка</button><button data-pubview="'+svc.id+':1" aria-pressed="'+(!!showPub)+'">Опубліковано</button></div>':'')
    +setlistCard(items,svc)
    +(svc.canEdit?'<button class="btn wide" data-edit="'+svc.id+'">Редагувати сет-лист</button>':'<div class="note">Сет-лист складає лід. Ви бачите його лише для перегляду.</div>')}
@@ -472,7 +511,7 @@ function viewSunday(){
 function calSeg(){return '<div class="seg" role="group" aria-label="Графік"><button data-calmode="next" aria-pressed="'+(S.calMode==='next')+'">Найближчі</button><button data-calmode="past" aria-pressed="'+(S.calMode==='past')+'">Минулі</button></div>'}
 function viewHist(){
   var H=S.hist;
-  if(!H.loaded)return '<div class="center" style="min-height:200px"><div><div class="spin"></div>Завантаження…</div></div>';
+  if(!H.loaded)return skel();
   if(!H.items.length)return '<div class="card"><div class="empty"><b>Минулих служінь ще немає</b>Тут з\'являтимуться служіння разом зі складом і сет-листами.</div></div>';
   var out='',cur='';
   H.items.forEach(function(u){
@@ -516,7 +555,7 @@ function ensureAdmin(){
   if(window.viewAdminReal)return Promise.resolve();
   if(!adminLoad)adminLoad=new Promise(function(res,rej){var sc=document.createElement('script');sc.src='/admin.js';sc.onload=res;sc.onerror=function(){adminLoad=null;rej()};document.head.appendChild(sc)});
   return adminLoad}
-function viewAdmin(){return window.viewAdminReal?window.viewAdminReal():'<div class="center"><div><div class="spin"></div>Завантаження…</div></div>'}
+function viewAdmin(){return window.viewAdminReal?window.viewAdminReal():skel()}
 function openAdmin(){ensureAdmin().then(function(){window.loadAdmin()}).catch(function(){toast('Не вдалося завантажити адмінку')});render()}
 function sortBar(){return '<div class="chips sort" role="group" aria-label="Сортування">'+[['az','А–Я'],['za','Я–А'],['most','Найчастіше'],['least','Найрідше']].map(function(x){return '<button data-sort="'+x[0]+'" aria-pressed="'+(S.sort===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'}
 function chipList(){
@@ -527,10 +566,11 @@ function chipList(){
 function filtered(){
   var q=S.q.toLowerCase(),f=S.f;
   var l=S.songs.filter(function(s){return(f==='Усі'?s.status!=='Архів':(s.type===f||s.status===f))&&(s.title+' '+(s.artist||'')).toLowerCase().indexOf(q)>-1});
-  var cmp={az:function(a,b){return a.title.localeCompare(b.title,'en')},za:function(a,b){return b.title.localeCompare(a.title,'en')},most:function(a,b){return b.n-a.n||a.title.localeCompare(b.title,'en')},least:function(a,b){return a.n-b.n||a.title.localeCompare(b.title,'en')}}[S.sort];
+  function fill(x){return (x.hasChords?3:0)+(x.mt?1:0)+(x.yt?1:0)+(x.reh?1:0)+(x.vit?1:0)+(x.keysBy?1:0)+(x.notes?1:0)+(x.bpm?1:0)+(x.dur?1:0)+(x.meter?1:0)+(x.artist?1:0)+(x.cover?1:0)+(x.our?1:0)+(x.materials?Math.min(x.materials.length,4):0)}
+  var cmp={full:function(a,b){return fill(b)-fill(a)||a.title.localeCompare(b.title,'en')},az:function(a,b){return a.title.localeCompare(b.title,'en')},za:function(a,b){return b.title.localeCompare(a.title,'en')},most:function(a,b){return b.n-a.n||a.title.localeCompare(b.title,'en')},least:function(a,b){return a.n-b.n||a.title.localeCompare(b.title,'en')}}[S.sort];
   return l.sort(cmp)}
 function searchBox(id){return '<span class="sbox"><input id="'+id+'" type="search" placeholder="Пошук пісні або виконавця" value="'+esc(S.q)+'" aria-label="Пошук пісні"'+'>'+(S.q?'<button class="sclear" data-clearq aria-label="Очистити пошук">✕</button>':'')+'</span>'}
-function filterBars(){return '<div class="search">'+searchBox('q')+'</div><div class="chips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'+sortBar()}
+function filterBars(){return '<div class="search">'+searchBox('q')+'</div><div class="chips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'}
 function repRows(){
   var list=filtered();
   return (list.length?list.map(function(s){return '<button class="row" data-song="'+s.id+'">'+cover(s)+'<span class="rowmain"><span class="rowtitle">'+esc(s.title)+'</span><br><span class="rowsub">'+(s.artist?esc(s.artist)+' · ':'')+esc(s.type||'—')+' · '+s.n+'×'+(s.status&&s.status!=='Активна'&&!STATUS_DOT[s.status]?' · '+esc(s.status.toLowerCase()):'')+(s.hasChords?' · є акорди':'')+(s.dur?' · '+fmtD(s.dur):'')+'</span></span><span class="key">'+esc(s.our||'–')+'</span><span class="chev">›</span></button>'}).join(''):'<div class="empty"><b>Нічого не знайдено</b>Спробуйте іншу назву.</div>')}
@@ -538,28 +578,38 @@ function viewRep(){
   return filterBars()+'<div class="pad"><div class="card"><div class="list" id="replist">'+repRows()+'</div></div></div>'}
 var YT_SVG='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="1.5" y="4.5" width="21" height="15" rx="4.5" fill="#FF0000"/><path d="M10 9l5.5 3-5.5 3z" fill="#fff"/></svg>';
 function INS(f){return '<img class="ins" src="/icons/'+f+'.png" alt="" width="28" height="28" loading="lazy">'}
+var ICN={
+ head:'<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>',
+ drum:'<ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v7c0 1.7 3.6 3 8 3s8-1.3 8-3V9M8 5 6 2M16 5l2-3"/>',
+ mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+ sheet:'<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/>',
+ note:'<path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h3"/>',
+ globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+ folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+ link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'};
+function icn(n){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICN[n]+'</svg>'}
 function matIcon(name,url){
   var n=String(name||'').toLowerCase(),u=String(url||'').toLowerCase();
   // спочатку за назвою поля, тому «Електрогітара» з посиланням на YouTube лишається з гітарою
   if(/youtube|ютуб/.test(n))return YT_SVG;
   if(/multitracks|мультитрек/.test(n))return '<span class="mt">MT</span>';
-  if(/rehearsal|репетиц/.test(n))return '🎧';
+  if(/rehearsal|репетиц/.test(n))return icn('head');
   if(/акуст|acoustic/.test(n))return INS('acoustic');
   if(/електро|electric|гітар|guitar/.test(n))return INS('electric');
   if(/клавіш|keys|piano|піаніно|синт|synth/.test(n))return INS('keys');
   if(/бас|bass/.test(n))return INS('bass');
-  if(/барабан|drum|ударн/.test(n))return '🥁';
-  if(/вокал|голос|vocal|бек|хор/.test(n))return '🎤';
-  if(/ноти|chart|sheet|табул|лід-шит/.test(n))return '🎼';
-  if(/текст|lyrics|нотатк|notes?\b/.test(n))return '📝';
-  if(/парті/.test(n))return '🎼';
-  if(/переклад|transl/.test(n))return '🌐';
+  if(/барабан|drum|ударн/.test(n))return icn('drum');
+  if(/вокал|голос|vocal|бек|хор/.test(n))return icn('mic');
+  if(/ноти|chart|sheet|табул|лід-шит/.test(n))return icn('sheet');
+  if(/текст|lyrics|нотатк|notes?\b/.test(n))return icn('note');
+  if(/парті/.test(n))return icn('sheet');
+  if(/переклад|transl/.test(n))return icn('globe');
   if(/youtu\.?be/.test(u))return YT_SVG;
   if(/multitracks\.com/.test(u))return '<span class="mt">MT</span>';
-  if(/worshiponline/.test(u))return '🎧';
-  if(/spotify|apple\.com|music\.|deezer/.test(u))return '🎧';
-  if(/drive\.google|dropbox|notion\./.test(u))return '📁';
-  return '🔗'}
+  if(/worshiponline/.test(u))return icn('head');
+  if(/spotify|apple\.com|music\.|deezer/.test(u))return icn('head');
+  if(/drive\.google|dropbox|notion\./.test(u))return icn('folder');
+  return icn('link')}
 function materialRow(m){
   var ic='<span class="ico">'+matIcon(m.name,m.links&&m.links[0]&&m.links[0].url)+'</span>';
   if(m.links&&m.links.length===1&&!m.text){var l=m.links[0];
@@ -578,7 +628,7 @@ function chordsBody(d,L,n,flat){
 function songBodyHtml(L){
   var s=song(L.id),k=L.key||s.our,t=L.tab||'text',d=S.cache[s.id];
   var body;
-  if(!d&&!L.err)body='<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
+  if(!d&&!L.err)body=skel();
   else if(L.err)body='<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(L.err)+'</div></div></div>';
   else if(t==='text'){
     var secs=d.lyrics;
@@ -632,7 +682,7 @@ function pickRows(){
 function pickerLayer(){
   var list=filtered(),inn={},names=[],n=0;
   S.edit.items.forEach(function(x){if(x.t==='song'){inn[x.id]=1;n++;names.push(song(x.id).title)}});
-  var sorts=[['az','А–Я'],['za','Я–А'],['most','Часті'],['least','Рідкі']];
+  var sorts=[['full','Заповнені'],['az','А–Я'],['za','Я–А'],['most','Часті'],['least','Рідкі']];
   return '<div class="layer sheet" data-layer="pick"><div class="lhead"><button class="iconbtn" data-back aria-label="Закрити">✕</button><div class="t">Додати пісню</div></div>'
   +'<div class="pbar">'+searchBox('pq')+'<select class="psort" data-psort aria-label="Сортування">'+sorts.map(function(x){return '<option value="'+x[0]+'"'+(S.sort===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></div>'
   +'<div class="chips pchips">'+chipList().map(function(f){return '<button data-f="'+f+'" aria-pressed="'+(S.f===f)+'">'+f+'</button>'}).join('')+'</div>'
@@ -659,7 +709,7 @@ function liveInfo(L){
 }
 function liveBody(L,I){
   var d=S.cache[I.s.id];
-  if(!d&&!L.errs[I.s.id])return '<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
+  if(!d&&!L.errs[I.s.id])return skel();
   if(!d)return '<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>Відкрийте пісню окремо й спробуйте ще раз.</div></div></div>';
   if(!d.chords){
     var secs=d.lyrics||[];
@@ -739,8 +789,8 @@ function schedSave(){
   var leads=e.leads.filter(function(i){return roles['Вокал'].indexOf(i)>-1});
   api('/api/schedule',{method:'POST',body:{id:e.id,date:e.date,type:e.type,roles:roles,leads:leads}}).then(function(r){
     if(r.service){var i=S.services.findIndex(function(u){return u.id===r.service.id});if(i>-1)S.services[i]=r.service;else S.services.push(r.service);S.services.sort(function(a,b){return a.date.localeCompare(b.date)})}
-    S.sched=null;S.stack=S.stack.filter(function(l){return l.type!=='sched'&&l.type!=='ppick'});toast('Збережено');render();
-  }).catch(function(err){e.busy=false;render();toast('Не вдалося зберегти: '+((err.data&&err.data.message)||err.message))})}
+    S.sched=null;S.stack=S.stack.filter(function(l){return l.type!=='sched'&&l.type!=='ppick'});hap('ok');toast('Збережено');render();
+  }).catch(function(err){e.busy=false;render();hap('err');toast('Не вдалося зберегти: '+((err.data&&err.data.message)||err.message))})}
 function schedDelete(){
   var e=S.sched;if(!e||!e.id)return;if(!e.confirmDel){e.confirmDel=true;render();return}
   e.busy=true;render();
@@ -781,14 +831,15 @@ function saveSetlist(publish){
   api('/api/setlist',{method:'POST',body:{serviceId:e.id,items:e.items,publish:publish}}).then(function(r){
     var i=S.services.findIndex(function(s){return s.id===e.id});if(i>-1)S.services[i]=r.service;
     S.busy=false;S.stack=S.stack.filter(function(l){return l.type!=='build'&&l.type!=='pick'});S.edit=null;
-    toast(publish?'Сет-лист опубліковано':'Чернетку збережено. Бачите лише ви.');
-  }).catch(function(err){S.busy=false;render();toast('Не вдалося зберегти: '+((err.data&&err.data.message)||err.message))});
+    hap('ok');toast(publish?'Сет-лист опубліковано':'Чернетку збережено. Бачите лише ви.');
+  }).catch(function(err){S.busy=false;render();hap('err');toast('Не вдалося зберегти: '+((err.data&&err.data.message)||err.message))});
 }
 
 document.addEventListener('click',function(e){
   var yt=e.target.closest('[data-yt]');if(yt){e.preventDefault();e.stopPropagation();var u=yt.dataset.yt;if(tg&&tg.openLink)tg.openLink(u);else window.open(u,'_blank','noopener');return}
   var t=e.target.closest('button');if(!t)return;
   var top=S.stack[S.stack.length-1],d=t.dataset;
+  if(!t.disabled){if('lk' in d||'off' in d||'lgo' in d||'chip' in d||'acc' in d||'ntx' in d||'str' in d||'lfs' in d||'f' in d||'sort' in d||'tab' in d||'tab2' in d||'calmode' in d||'pp' in d||'slead' in d||'pubview' in d)hap('sel');else if('act' in d||'song' in d||'svc' in d||'hsvc' in d||'edit' in d||'add' in d||'copy' in d||'share' in d||'live' in d)hap('light')}
   if('clearq' in d){S.q='';render();return}
   if(d.artist){S.tab='rep';S.stack=[];S.q=d.artist;S.f='Усі';render();return}
   if(d.calmode){S.calMode=d.calmode;render();if(d.calmode==='past'&&!S.hist.loaded)loadHistory(false);return}

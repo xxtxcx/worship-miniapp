@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>D.Youth Worship — прототип у стилі Tribute</title>
+<style>
+:root{
+  --bg:#f2f2f7; --card:#ffffff; --card2:#f2f2f7; --ink:#0b0b0d; --ink2:#8e8e93; --line:rgba(60,60,67,.14);
+  --blue:#0a84ff; --glass:rgba(255,255,255,.7); --shadow:0 1px 0 rgba(0,0,0,.02);
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter','Segoe UI',system-ui,sans-serif;
+  --disp:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#000; --card:#1c1c1e; --card2:#2c2c2e; --ink:#fff; --ink2:#8e8e93; --line:rgba(84,84,88,.45);
+  --blue:#0a84ff; --glass:rgba(60,60,62,.6);
+}}
+:root[data-theme="dark"]{--bg:#000;--card:#1c1c1e;--card2:#2c2c2e;--ink:#fff;--ink2:#8e8e93;--line:rgba(84,84,88,.45);--glass:rgba(60,60,62,.6)}
+:root[data-theme="light"]{--bg:#f2f2f7;--card:#fff;--card2:#f2f2f7;--ink:#0b0b0d;--ink2:#8e8e93;--line:rgba(60,60,67,.14);--glass:rgba(255,255,255,.7)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#000}
+body{font-family:var(--font);color:var(--ink);font-size:17px;letter-spacing:-.01em}
+.stage{min-height:100vh;display:grid;place-items:center;background:#000}
+.phone{width:100%;max-width:430px;height:100vh;max-height:920px;background:var(--bg);position:relative;overflow:hidden;display:flex;flex-direction:column;border-radius:0}
+@media(min-width:700px){.phone{border-radius:44px;height:880px;box-shadow:0 0 0 1px #2a2a2c,0 30px 80px rgba(0,0,0,.6)}}
+/* верхня панель */
+.top{flex:none;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding:14px 14px 8px;position:relative;z-index:5}
+.gbtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:var(--ink);display:grid;place-items:center;box-shadow:inset 0 0 0 .5px var(--line)}
+.gbtn svg{width:22px;height:22px}
+.ttl{text-align:center;line-height:1.15}
+.ttl b{font-size:17px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.ttl small{display:block;font-size:13px;color:var(--ink2);margin-top:1px}
+.vf{width:18px;height:18px;color:#3d9bff}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:40px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+/* плитки */
+.tiles{display:flex;gap:10px;overflow-x:auto;padding:10px 16px 14px;scroll-snap-type:x proximity;scroll-padding-left:16px;scrollbar-width:none}
+.tiles::-webkit-scrollbar{display:none}
+.tile{flex:none;width:148px;height:138px;border-radius:24px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;border:0;text-align:left;scroll-snap-align:start;position:relative;box-shadow:0 0 0 1.5px rgba(40,140,255,.9),0 0 0 3px rgba(40,140,255,.25);font:inherit;overflow:hidden}
+.tile::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 20% 0%,rgba(255,255,255,.28),transparent 55%);pointer-events:none}
+.tile .ic{width:52px;height:52px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.25))}
+.tile span{font-size:15px;font-weight:600;line-height:1.15;position:relative;z-index:1}
+.t1{background:linear-gradient(145deg,#b45cf2,#6d5ef0)}
+.t2{background:linear-gradient(145deg,#ff9f5a,#f2456b)}
+.t3{background:linear-gradient(145deg,#8be08e,#2fa86a)}
+.t4{background:linear-gradient(145deg,#4fc3f7,#2f6df0)}
+/* блок цифри */
+.block{margin:0 16px 12px;background:var(--card);border-radius:24px;box-shadow:var(--shadow)}
+.stat{display:flex;align-items:center;justify-content:space-between;padding:16px 18px}
+.stat small{display:block;font-size:17px;color:var(--ink2)}
+.stat b{display:block;font-family:var(--disp);font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1.1;margin-top:2px}
+.pillg{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:99px;background:rgba(48,209,88,.16);color:#30d158;font-weight:600;font-size:17px}
+/* кнопки-пігулки */
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 16px 12px}
+.act{border:0;background:var(--card);color:var(--blue);border-radius:24px;padding:14px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;font:inherit;font-size:15px;font-weight:500}
+.act svg{width:30px;height:30px}
+/* горизонтальні картки */
+.hcards{display:flex;gap:10px;overflow-x:auto;padding:0 16px 14px;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding-left:16px}
+.hcards::-webkit-scrollbar{display:none}
+.hc{flex:none;width:calc(100% - 78px);max-width:290px;height:176px;border-radius:24px;background:var(--card);padding:16px;display:flex;flex-direction:column;justify-content:space-between;position:relative;scroll-snap-align:start;border:0;text-align:left;color:var(--ink);font:inherit}
+.hc .em{width:56px;height:56px}
+.hc b{font-size:19px;font-weight:600;line-height:1.2;display:block}
+.hc small{color:var(--ink2);font-size:15px;display:block;margin-top:4px}
+.hc .go{position:absolute;right:14px;bottom:14px;width:30px;height:30px;border-radius:50%;background:var(--card2);display:grid;place-items:center;color:var(--ink2)}
+.hc .go svg{width:14px;height:14px}
+/* банер */
+.banner{margin:0 16px 14px;border-radius:26px;padding:18px 18px;position:relative;overflow:hidden;background:linear-gradient(120deg,#c6f7c9,#e8fbd0 55%,#fff6b0);color:#0b2b17;min-height:120px;border:0;display:block;width:calc(100% - 32px);text-align:left;font:inherit}
+.banner b{display:block;font-size:20px;font-weight:700;line-height:1.2;max-width:62%}
+.banner em{font-style:normal;display:inline-flex;align-items:center;gap:4px;margin-top:12px;color:#0a84ff;font-weight:600;font-size:17px}
+.banner .big{position:absolute;right:14px;top:6px;font-family:var(--disp);font-weight:800;font-size:84px;color:#2fc95a;letter-spacing:-.05em;line-height:1;text-shadow:0 4px 0 rgba(255,255,255,.7);transform:rotate(-6deg)}
+.banner .conf{position:absolute;right:0;top:0;width:100%;height:100%;pointer-events:none}
+/* списки */
+.sec{margin:0 16px 14px}
+.sec>h3{margin:0 0 7px 16px;font-size:13px;font-weight:400;letter-spacing:.02em;text-transform:uppercase;color:var(--ink2)}
+.list{background:var(--card);border-radius:22px;overflow:hidden}
+.row{display:flex;align-items:center;gap:14px;padding:11px 16px;width:100%;border:0;background:transparent;color:var(--ink);font:inherit;text-align:left;position:relative;min-height:58px}
+.row+.row::before{content:"";position:absolute;left:70px;right:0;top:0;height:.5px;background:var(--line)}
+.row:active{background:var(--card2)}
+.sq{flex:none;width:44px;height:44px;border-radius:13px;display:grid;place-items:center;color:#fff}
+.sq svg{width:24px;height:24px}
+.cv{flex:none;width:44px;height:44px;border-radius:11px;background:#333 center/cover}
+.rm{flex:1;min-width:0}
+.rm b{display:block;font-weight:500;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm small{display:block;color:var(--ink2);font-size:14px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv{color:var(--ink2);font-size:17px}
+.chev{width:9px;height:15px;color:#48484a;flex:none}
+.key{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-weight:700;font-size:14px;min-width:42px;text-align:center;padding:6px 9px;border-radius:10px;background:var(--card2);color:var(--ink)}
+.key.hi{background:var(--blue);color:#fff}
+.num{width:22px;color:var(--ink2);font-size:15px;text-align:center;flex:none}
+.ava{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#ff7aa8,#ff4d7d);flex:none;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.ava.b{background:linear-gradient(135deg,#7cc4ff,#3d8bff)}
+.ava.g{background:linear-gradient(135deg,#8be08e,#2fa86a)}
+.pair{position:relative;width:38px;height:30px;flex:none}
+.pair .ava{position:absolute;top:0}
+.pair .ava:first-child{left:0;z-index:2;box-shadow:0 0 0 2px var(--card)}
+.pair .ava:last-child{left:8px}
+/* дата-квадрат */
+.dt{flex:none;width:44px;height:44px;border-radius:13px;background:var(--card2);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.dt b{font-size:18px;font-weight:700}
+.dt small{font-size:11px;color:#ff453a;text-transform:uppercase;letter-spacing:.04em;margin-top:2px;font-weight:600}
+.pill{display:inline-flex;align-items:center;padding:5px 11px;border-radius:99px;font-size:14px;font-weight:600}
+.pill.g{background:rgba(48,209,88,.16);color:#30d158}
+.pill.o{background:rgba(255,159,10,.18);color:#ff9f0a}
+.pill.n{background:var(--card2);color:var(--ink2);font-weight:500}
+.search{margin:2px 16px 12px;background:var(--card);border-radius:14px;padding:10px 14px;display:flex;gap:8px;align-items:center;color:var(--ink2)}
+.search svg{width:18px;height:18px}
+.seg{margin:0 16px 14px;background:var(--card);border-radius:12px;padding:3px;display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.seg button{border:0;background:transparent;color:var(--ink);padding:8px;border-radius:10px;font:inherit;font-size:15px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--card2)}
+.btnbig{margin:0 16px 12px;width:calc(100% - 32px);border:0;border-radius:16px;background:var(--blue);color:#fff;font:inherit;font-weight:600;padding:15px;font-size:17px}
+.foot{text-align:center;color:var(--ink2);font-size:13px;padding:6px 24px 20px}
+.screen{display:none}.screen.on{display:block}
+.themebtn{position:fixed;right:14px;top:14px;z-index:20;border:0;border-radius:99px;background:rgba(255,255,255,.14);color:#fff;padding:8px 14px;font:inherit;font-size:13px;backdrop-filter:blur(14px)}
+@media(max-width:699px){.themebtn{display:none}}
+</style>
+</head>
+<body>
+<button class="themebtn" id="th">Тема: авто</button>
+<div class="stage"><div class="phone" id="phone">
+
+<div class="top">
+  <button class="gbtn" id="back" aria-label="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <div class="ttl"><b id="tt">D.Youth Worship <svg class="vf" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5l2.4 1.7 2.9-.2 1.1 2.7 2.5 1.6-.6 2.8 1.2 2.6-1.8 2.3-.1 2.9-2.8.9-1.8 2.3-2.7-1.1-2.7 1.1-1.8-2.3-2.8-.9-.1-2.9L2.7 13.1l1.2-2.6-.6-2.8 2.5-1.6 1.1-2.7 2.9.2z"/><path d="M8.2 12.2l2.5 2.5 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></b><small id="st">mini app</small></div>
+  <button class="gbtn" aria-label="Більше"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+</div>
+
+<div class="scroll" id="sc">
+
+<!-- ГОЛОВНА -->
+<section class="screen on" id="s-home">
+  <div class="tiles">
+    <button class="tile t1" data-go="set"><svg class="ic" viewBox="0 0 64 64"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d9d4ff"/></linearGradient></defs><rect x="10" y="8" width="44" height="48" rx="10" fill="url(#g1)"/><path d="M20 22h24M20 32h24M20 42h14" stroke="#7a5cf0" stroke-width="4" stroke-linecap="round"/></svg><span>Сет-лист<br>на неділю</span></button>
+    <button class="tile t2" data-go="live"><svg class="ic" viewBox="0 0 64 64"><rect x="6" y="12" width="52" height="34" rx="8" fill="#fff"/><path d="M27 22v14l12-7z" fill="#f2456b"/><path d="M22 54h20M32 46v8" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg><span>Режим служіння</span></button>
+    <button class="tile t3" data-go="rep"><svg class="ic" viewBox="0 0 64 64"><path d="M26 46V16l26-6v30" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19" cy="46" r="8" fill="#fff"/><circle cx="45" cy="40" r="8" fill="#fff"/></svg><span>Репертуар</span></button>
+    <button class="tile t4" data-go="sch"><svg class="ic" viewBox="0 0 64 64"><rect x="8" y="12" width="48" height="44" rx="10" fill="#fff"/><path d="M8 26h48" stroke="#2f6df0" stroke-width="5"/><path d="M20 6v12M44 6v12" stroke="#fff" stroke-width="6" stroke-linecap="round"/><circle cx="22" cy="38" r="4" fill="#2f6df0"/><circle cx="34" cy="38" r="4" fill="#2f6df0"/><circle cx="46" cy="38" r="4" fill="#9ec0ff"/></svg><span>Графік<br>служінь</span></button>
+  </div>
+
+  <div class="block"><div class="stat"><div><small>Ви служите в листопаді</small><b>3</b></div><span class="pillg">● 8.11</span></div></div>
+
+  <div class="acts">
+    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M10 8.5v4l3.5-2z"/><path d="M8 21h8M12 17v4"/></svg>Служіння</button>
+    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>Копіювати</button>
+    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3 11 14"/><path d="M22 3 15 22l-4-8-8-4z"/></svg>Поділитись</button>
+  </div>
+
+  <div class="hcards">
+    <button class="hc"><svg class="em" viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="14" fill="#3ddc84"/><path d="M20 34l9 9 16-18" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Сет-лист опубліковано</b><small>Лід Андрій · 5 пісень</small></span><i class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></i></button>
+    <button class="hc"><svg class="em" viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="14" fill="#0a84ff"/><path d="M32 18v22M22 30l10-12 10 12" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 46h24" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/></svg><span><b>Додайте застосунок на головний екран</b></span><i class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></i></button>
+    <button class="hc"><svg class="em" viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="14" fill="#ff9f0a"/><path d="M22 26V22h4M42 26V22h-4M22 38v4h4M42 38v4h-4" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>На весь екран</b><small>Більше місця для акордів</small></span><i class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></i></button>
+  </div>
+
+  <div class="sec"><h3>Неділя · 01.11 · сет-лист</h3>
+    <div class="list">
+      <button class="row"><span class="cv" style="background-image:url(https://multitracks.blob.core.windows.net/public/images/albums/284/14458.jpg)"></span><span class="rm"><b>Washed</b><small>Elevation Rhythm</small></span><span class="pair"><i class="ava g">А</i><i class="ava b">К</i></span><span class="key hi">Db</span><svg class="chev" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M1.5 1.5L7.5 7.5l-6 6"/></svg></button>
+      <button class="row"><span class="cv" style="background-image:url(https://multitracks.blob.core.windows.net/public/images/albums/284/1304.jpg)"></span><span class="rm"><b>Drawing Closer</b><small>Planetshakers</small></span><i class="ava g">А</i><span class="key hi">D</span><svg class="chev" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M1.5 1.5L7.5 7.5l-6 6"/></svg></button>
+      <button class="row"><span class="cv" style="background-image:url(https://multitracks.blob.core.windows.net/public/images/albums/284/210.jpg)"></span><span class="rm"><b>Great Are You Lord</b><small>All Sons &amp; Daughters</small></span><i class="ava g">А</i><span class="key hi">D</span><svg class="chev" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M1.5 1.5L7.5 7.5l-6 6"/></svg></button>
+      <button class="row"><span class="cv" style="background-image:url(https://multitracks.blob.core.windows.net/public/images/albums/284/9087.jpg)"></span><span class="rm"><b>Give Me Jesus</b><small>Bethel Music</small></span><i class="ava g">А</i><span class="key hi">G</span><svg class="chev" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M1.5 1.5L7.5 7.5l-6 6"/></svg></button>
+    </div>
+  </div>
+
+  <button class="banner"><svg class="conf" viewBox="0 0 400 130" fill="none"><path d="M300 20l12 8M330 90l10-6M360 40l8 10M380 100l-8-8" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/><circle cx="345" cy="22" r="4" fill="#ffd60a"/><circle cx="372" cy="70" r="3.5" fill="#4dabf7"/></svg><b>Заплануйте служіння на місяць уперед</b><em>Відкрити графік ›</em><i class="big">+4</i></button>
+
+  <div class="sec"><div class="list">
+    <button class="row" data-go="rep"><span class="sq" style="background:#ff453a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></span><span class="rm"><b>Репертуар</b></span><span class="rv">84</span><svg class="chev" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M1.5 1.5L7.5 7.5l-6 6"/></svg></button>
+    <button class="row" data-go="sch"><span class="sq" style="background:#0a84ff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg></span><span class="rm"><b>Графік служінь</b></span><span class="rv">5</span><svg class="chev" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M1.5 1.5L7.5 7.5l-6 6"/></svg></button>
+    <button class="row"><span class="sq" style="background:#bf5af2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg></span><span class="rm"><b>Історія служінь</b></span><svg class="chev" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M1.5 1.5L7.5 7.5l-6 6"/></svg></button>
+    <button class="row"><span class="sq" style="background:#30d158"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span><span class="rm"><b>Адмін</b></span><span class="rv">2 запити</span><svg class="chev" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M1.5 1.5L7.5 7.5l-6 6"/></svg></button>
+  </div></div>
+  <div class="foot">D.Youth Worship · прототип у стилі Tribute<br>Дані умовні, нічого не збережено</div>
+</section>
+
+<!-- РЕПЕРТУАР -->
+<section class="screen" id="s-rep">
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Пошук пісні або виконавця</div>
+  <div class="seg"><button aria-pressed="true">А–Я</button><button aria-pressed="false">Найчастіше</button></div>
+  <div class="sec"><h3>84 пісні</h3><div class="list">
+    <button class="row"><span class="cv" style="background-image:url(https://multitracks.blob.core.windows.net/public/images/albums/284/1304.jpg)"></span><span class="rm"><b>Alive Again</b><small>Прославлення · 6× · 4:30</small></span><span class="key">Db</span></button>
+    <button class="row"><span class="cv" style="background-image:url(/dyouth-cover.jpg)"></span><span class="rm"><b>Ти наш Бог</b><small>D.Youth Worship · 3× · 5:12</small></span><span class="key">E</span></button>
+    <button class="row"><span class="cv" style="background-image:url(https://multitracks.blob.core.windows.net/public/images/albums/284/14458.jpg)"></span><span class="rm"><b>Washed</b><small>Elevation Rhythm · 14× · 3:44</small></span><span class="key">Db</span></button>
+    <button class="row"><span class="cv" style="background-image:url(https://multitracks.blob.core.windows.net/public/images/albums/284/9087.jpg)"></span><span class="rm"><b>Give Me Jesus</b><small>Bethel Music · 11× · 11:43</small></span><span class="key">G</span></button>
+    <button class="row"><span class="cv" style="background-image:url(https://multitracks.blob.core.windows.net/public/images/albums/284/210.jpg)"></span><span class="rm"><b>Great Are You Lord</b><small>All Sons &amp; Daughters · 9× · 4:55</small></span><span class="key">D</span></button>
+    <button class="row"><span class="cv" style="background-image:url(https://multitracks.blob.core.windows.net/public/images/albums/284/1304.jpg)"></span><span class="rm"><b>Drawing Closer</b><small>Planetshakers · 7× · 4:32</small></span><span class="key">D</span></button>
+  </div></div>
+</section>
+
+<!-- ГРАФІК -->
+<section class="screen" id="s-sch">
+  <div class="seg"><button aria-pressed="true">Найближчі</button><button aria-pressed="false">Минулі</button></div>
+  <div class="acts" style="grid-template-columns:1fr 1fr"><button class="act" style="flex-direction:row;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Нове</button><button class="act" style="flex-direction:row;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Редагувати</button></div>
+  <div class="sec"><h3>Листопад 2026</h3><div class="list">
+    <button class="row"><span class="dt"><b>8</b><small>нд</small></span><span class="rm"><b>Молодіжка</b><small>лід: Ілона</small></span><span class="pill g">ви служите</span></button>
+    <button class="row"><span class="dt"><b>15</b><small>нд</small></span><span class="rm"><b>Молодіжка</b><small>лід: Наталя</small></span><span class="pill g">ви служите</span></button>
+    <button class="row"><span class="dt"><b>22</b><small>нд</small></span><span class="rm"><b>Молодіжка</b><small>лід: Аня Г.</small></span><span class="pill o">ви лід</span></button>
+    <button class="row"><span class="dt"><b>29</b><small>нд</small></span><span class="rm"><b>Молодіжка</b><small>лід: Квітка</small></span><span class="pill n">не в складі</span></button>
+  </div></div>
+  <div class="sec"><h3>Підліткове</h3><div class="list">
+    <button class="row"><span class="dt"><b>15</b><small>нд</small></span><span class="rm"><b>Підліткове</b><small>вокаліст і гітарист</small></span><span class="pair"><i class="ava b">К</i><i class="ava g">А</i></span></button>
+  </div></div>
+</section>
+
+<!-- СЕТ-ЛИСТ / РЕЖИМ -->
+<section class="screen" id="s-set">
+  <div class="sec" style="margin-top:6px"><h3>Склад · 01.11</h3><div class="list">
+    <div class="row"><span class="sq" style="background:#ff375f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="rm"><b>Вокал</b><small>Квітка, Наталя · лід Андрій</small></span></div>
+    <div class="row"><span class="sq" style="background:#ff9f0a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg></span><span class="rm"><b>Барабани</b><small>Єгор</small></span></div>
+    <div class="row"><span class="sq" style="background:#5e5ce6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 8h16M4 12h16M4 16h16"/></svg></span><span class="rm"><b>Клавіші</b><small>Міра</small></span></div>
+  </div></div>
+  <div class="sec"><h3>Сет-лист</h3><div class="list">
+    <div class="row"><span class="num">1</span><span class="rm"><b>Washed</b></span><i class="ava g">А</i><span class="key hi">Db</span></div>
+    <div class="row"><span class="num">2</span><span class="rm"><b>Drawing Closer</b></span><i class="ava g">А</i><span class="key hi">D</span></div>
+    <div class="row"><span class="num">3</span><span class="rm"><b>Great Are You Lord</b></span><i class="ava g">А</i><span class="key hi">D</span></div>
+  </div></div>
+</section>
+
+</div>
+</div></div>
+<script>
+var titles={home:['D.Youth Worship','mini app'],rep:['Репертуар','84 пісні'],sch:['Графік','Листопад 2026'],set:['Сет-лист','01.11.2026'],live:['Режим служіння','']};
+var cur='home',hist=[];
+function go(n){if(n==='live')n='set';hist.push(cur);cur=n;show()}
+function show(){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.toggle('on',s.id==='s-'+cur)});
+  var t=titles[cur]||titles.home;document.getElementById('st').textContent=t[1];
+  var b=document.getElementById('tt');b.firstChild.nodeValue=t[0]+' ';
+  document.getElementById('sc').scrollTop=0}
+document.addEventListener('click',function(e){var g=e.target.closest('[data-go]');if(g){go(g.dataset.go);return}
+  if(e.target.closest('#back')&&hist.length){cur=hist.pop();show()}});
+var th=document.getElementById('th'),modes=[null,'dark','light'],mi=0;
+th.onclick=function(){mi=(mi+1)%3;var m=modes[mi];if(m)document.documentElement.setAttribute('data-theme',m);else document.documentElement.removeAttribute('data-theme');th.textContent='Тема: '+(m==='dark'?'темна':m==='light'?'світла':'авто')};
+</script>
+</body>
+</html>

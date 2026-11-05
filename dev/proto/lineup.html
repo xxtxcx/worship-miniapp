@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Варіанти блоку «Склад»</title>
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--card2:#f2f2f7;--ink:#0b0b0d;--ink2:#8e8e93;--line:rgba(60,60,67,.14);--gold:#ff9f0a;--font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--card2:#2c2c2e;--ink:#fff;--ink2:#8e8e93;--line:rgba(84,84,88,.45)}}
+:root[data-theme="dark"]{--bg:#000;--card:#1c1c1e;--card2:#2c2c2e;--ink:#fff;--ink2:#8e8e93;--line:rgba(84,84,88,.45)}
+:root[data-theme="light"]{--bg:#f2f2f7;--card:#fff;--card2:#f2f2f7;--ink:#0b0b0d;--ink2:#8e8e93;--line:rgba(60,60,67,.14)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;letter-spacing:-.01em}
+.wrap{max-width:430px;margin:0 auto;padding:16px 12px 60px}
+h2{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin:22px 0 6px 14px}
+h2 span{color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600;font-size:14px;margin-left:6px}
+.card{background:var(--card);border-radius:20px;padding:6px 0;overflow:hidden}
+.ava{width:30px;height:30px;border-radius:50%;flex:none;display:inline-grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:#888}
+.a1{background:linear-gradient(135deg,#ff8fb1,#f0457b)}.a2{background:linear-gradient(135deg,#7cc4ff,#3d8bff)}.a3{background:linear-gradient(135deg,#8be08e,#2fa86a)}.a4{background:linear-gradient(135deg,#ffc66b,#ff8a1f)}.a5{background:linear-gradient(135deg,#c79bff,#8a55f0)}.a6{background:linear-gradient(135deg,#6fe0d0,#1fa7a0)}
+.ring{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--gold)}
+.p{display:inline-flex;align-items:center;gap:7px;font-weight:600;white-space:nowrap}
+.p.lead{color:var(--gold)}
+.lbl{color:var(--ink2)}
+/* A: таблиця як зараз, чистіша */
+.A .r{display:grid;grid-template-columns:128px 1fr;align-items:center;gap:6px 10px;padding:9px 16px;position:relative}
+.A .r+.r::before{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--line)}
+.A .w{display:flex;flex-wrap:wrap;gap:6px 14px}
+/* B: роль зверху */
+.B .r{padding:9px 16px 10px;position:relative}
+.B .r+.r::before{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--line)}
+.B .lbl{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:6px}
+.B .w{display:flex;flex-wrap:wrap;gap:6px 14px}
+/* C: сітка аватарів */
+.C .g{padding:10px 14px 4px}
+.C .g+.g{padding-top:4px}
+.C .lbl{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;margin:0 2px 8px;display:block}
+.C .w{display:flex;flex-wrap:wrap;gap:12px 6px}
+.C .t{width:66px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12.5px;font-weight:600;text-align:center}
+.C .t .ava{width:48px;height:48px;font-size:15px}
+.C .t.lead{color:var(--gold)}
+.C .hr{height:.5px;background:var(--line);margin:8px 14px 6px}
+/* D: вокал окремо + ритм-секція */
+.D .voc{display:flex;gap:16px;padding:14px 16px 10px;flex-wrap:wrap}
+.D .voc .t{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:13px;font-weight:600;width:70px;text-align:center}
+.D .voc .ava{width:52px;height:52px;font-size:17px}
+.D .voc .t.lead{color:var(--gold)}
+.D .sub{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);padding:0 16px}
+.D .rhythm{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:6px 8px 10px}
+.D .rhythm .c{padding:6px 8px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.D .rhythm .c small{font-size:11px;color:var(--ink2);letter-spacing:.04em;text-transform:uppercase}
+.D .rhythm .c .p{font-size:15px}
+.D .rhythm .c .ava{width:24px;height:24px;font-size:9.5px}
+.D .hr{height:.5px;background:var(--line);margin:0 16px}
+/* E: iOS-налаштування: назва ліворуч, люди праворуч */
+.E .r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 16px;position:relative;min-height:50px}
+.E .r+.r::before{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--line)}
+.E .w{display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:flex-end;min-width:0}
+.E .p{font-weight:500;font-size:15px}
+.E .ava{width:26px;height:26px;font-size:10px}
+.tb{position:fixed;right:12px;top:12px;border:0;border-radius:99px;background:rgba(120,120,128,.3);color:var(--ink);padding:7px 13px;font:inherit;font-size:13px;backdrop-filter:blur(10px)}
+.note{color:var(--ink2);font-size:13px;margin:6px 14px 0}
+</style></head><body>
+<button class="tb" id="th">Тема</button>
+<div class="wrap">
+<div class="note">Склад 08.11 у п'яти варіантах. Без іконок біля назв ролей. Лід-вокал позначений золотим кільцем і кольором.</div>
+
+<h2>A <span>Таблиця (як зараз, чистіша)</span></h2>
+<div class="card A">
+ <div class="r"><span class="lbl">Вокал</span><div class="w"><span class="p lead"><i class="ava a4 ring">І</i>Ілона</span><span class="p"><i class="ava a1">А</i>Аня Г.</span><span class="p"><i class="ava a3">К</i>Квітка</span></div></div>
+ <div class="r"><span class="lbl">Барабани</span><div class="w"><span class="p"><i class="ava a2">Є</i>Єгор</span></div></div>
+ <div class="r"><span class="lbl">Бас</span><div class="w"><span class="p"><i class="ava a5">А</i>Андрій</span></div></div>
+ <div class="r"><span class="lbl">Електрогітара</span><div class="w"><span class="p"><i class="ava a6">В</i>Вова</span></div></div>
+ <div class="r"><span class="lbl">Акустична гітара</span><div class="w"><span class="p"><i class="ava a2">В</i>Василь</span></div></div>
+ <div class="r"><span class="lbl">Клавіші</span><div class="w"><span class="p"><i class="ava a1">М</i>Міра</span></div></div>
+ <div class="r"><span class="lbl">Звук</span><div class="w"><span class="p"><i class="ava a4">Л</i>Лі</span></div></div>
+</div>
+
+<h2>B <span>Роль зверху, люди під нею</span></h2>
+<div class="card B">
+ <div class="r"><span class="lbl">Вокал</span><div class="w"><span class="p lead"><i class="ava a4 ring">І</i>Ілона</span><span class="p"><i class="ava a1">А</i>Аня Г.</span><span class="p"><i class="ava a3">К</i>Квітка</span></div></div>
+ <div class="r"><span class="lbl">Барабани</span><div class="w"><span class="p"><i class="ava a2">Є</i>Єгор</span></div></div>
+ <div class="r"><span class="lbl">Бас</span><div class="w"><span class="p"><i class="ava a5">А</i>Андрій</span></div></div>
+ <div class="r"><span class="lbl">Електрогітара · Акустична гітара</span><div class="w"><span class="p"><i class="ava a6">В</i>Вова</span><span class="p"><i class="ava a2">В</i>Василь</span></div></div>
+ <div class="r"><span class="lbl">Клавіші · Звук</span><div class="w"><span class="p"><i class="ava a1">М</i>Міра</span><span class="p"><i class="ava a4">Л</i>Лі</span></div></div>
+</div>
+
+<h2>C <span>Сітка аватарів (великі фото)</span></h2>
+<div class="card C">
+ <div class="g"><span class="lbl">Вокал</span><div class="w"><span class="t lead"><i class="ava a4 ring">І</i>Ілона</span><span class="t"><i class="ava a1">А</i>Аня Г.</span><span class="t"><i class="ava a3">К</i>Квітка</span></div></div>
+ <div class="hr"></div>
+ <div class="g"><span class="lbl">Музиканти</span><div class="w"><span class="t"><i class="ava a2">Є</i>Єгор<small style="color:var(--ink2);font-weight:400">барабани</small></span><span class="t"><i class="ava a5">А</i>Андрій<small style="color:var(--ink2);font-weight:400">бас</small></span><span class="t"><i class="ava a6">В</i>Вова<small style="color:var(--ink2);font-weight:400">електро</small></span><span class="t"><i class="ava a2">В</i>Василь<small style="color:var(--ink2);font-weight:400">акустика</small></span><span class="t"><i class="ava a1">М</i>Міра<small style="color:var(--ink2);font-weight:400">клавіші</small></span></div></div>
+ <div class="hr"></div>
+ <div class="g"><span class="lbl">Звук</span><div class="w"><span class="t"><i class="ava a4">Л</i>Лі</span></div></div>
+</div>
+
+<h2>D <span>Вокал окремо, ритм-секція двома колонками</span></h2>
+<div class="card D">
+ <div class="voc"><span class="t lead"><i class="ava a4 ring">І</i>Ілона</span><span class="t"><i class="ava a1">А</i>Аня Г.</span><span class="t"><i class="ava a3">К</i>Квітка</span></div>
+ <div class="hr"></div>
+ <div class="rhythm">
+  <div class="c"><small>Барабани</small><span class="p"><i class="ava a2">Є</i>Єгор</span></div>
+  <div class="c"><small>Бас</small><span class="p"><i class="ava a5">А</i>Андрій</span></div>
+  <div class="c"><small>Електрогітара</small><span class="p"><i class="ava a6">В</i>Вова</span></div>
+  <div class="c"><small>Акустична гітара</small><span class="p"><i class="ava a2">В</i>Василь</span></div>
+  <div class="c"><small>Клавіші</small><span class="p"><i class="ava a1">М</i>Міра</span></div>
+  <div class="c"><small>Звук</small><span class="p"><i class="ava a4">Л</i>Лі</span></div>
+ </div>
+</div>
+
+<h2>E <span>Як налаштування iOS: роль ліворуч, люди праворуч</span></h2>
+<div class="card E">
+ <div class="r"><span class="lbl">Вокал</span><div class="w"><span class="p lead"><i class="ava a4 ring">І</i>Ілона</span><span class="p"><i class="ava a1">А</i>Аня Г.</span><span class="p"><i class="ava a3">К</i>Квітка</span></div></div>
+ <div class="r"><span class="lbl">Барабани</span><div class="w"><span class="p"><i class="ava a2">Є</i>Єгор</span></div></div>
+ <div class="r"><span class="lbl">Бас</span><div class="w"><span class="p"><i class="ava a5">А</i>Андрій</span></div></div>
+ <div class="r"><span class="lbl">Електрогітара</span><div class="w"><span class="p"><i class="ava a6">В</i>Вова</span></div></div>
+ <div class="r"><span class="lbl">Акустична гітара</span><div class="w"><span class="p"><i class="ava a2">В</i>Василь</span></div></div>
+ <div class="r"><span class="lbl">Клавіші</span><div class="w"><span class="p"><i class="ava a1">М</i>Міра</span></div></div>
+ <div class="r"><span class="lbl">Звук</span><div class="w"><span class="p"><i class="ava a4">Л</i>Лі</span></div></div>
+</div>
+</div>
+<script>var m=[null,'dark','light'],i=0;document.getElementById('th').onclick=function(){i=(i+1)%3;if(m[i])document.documentElement.setAttribute('data-theme',m[i]);else document.documentElement.removeAttribute('data-theme')}</script>
+</body></html>

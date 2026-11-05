@@ -1,0 +1,430 @@
+{
+  "exported_at": "2026-10-31",
+  "source": "Notion (D.YOUTH WORSHIP)",
+  "service": {
+    "id": "3f20dd1d9292809088cfd44a8aff713e",
+    "name": "Молодіжка 01.11.2026",
+    "date": "2026-11-01",
+    "weekday": "неділя",
+    "type": "Молодіжка",
+    "lead_vocal": "Андрій",
+    "lineup": {
+      "Вокал": [
+        "Квітка",
+        "Наталя"
+      ],
+      "Лід-вокал": [
+        "Андрій"
+      ],
+      "Барабани": [
+        "Єгор"
+      ],
+      "Бас": [
+        "Андрій Г."
+      ],
+      "Електрогітара": [
+        "Андрій"
+      ],
+      "Акустична гітара": [
+        "Артур"
+      ],
+      "Клавіші": [
+        "Міра"
+      ],
+      "Звук": [
+        "Лі"
+      ]
+    },
+    "lineup_notes": "",
+    "setlist_published": [
+      {
+        "type": "moment",
+        "text": "Біг інтро"
+      },
+      {
+        "type": "song",
+        "song": "Washed",
+        "key": "Db",
+        "vocalist": "Андрій"
+      },
+      {
+        "type": "song",
+        "song": "Drawing Closer",
+        "key": "D",
+        "vocalist": "Андрій"
+      },
+      {
+        "type": "song",
+        "song": "Great Are You Lord",
+        "key": "D",
+        "vocalist": "Андрій"
+      },
+      {
+        "type": "moment",
+        "text": "Молитва"
+      },
+      {
+        "type": "song",
+        "song": "Give Me Jesus",
+        "key": "G",
+        "vocalist": "Андрій"
+      },
+      {
+        "type": "moment",
+        "text": "Проповідь"
+      },
+      {
+        "type": "song",
+        "song": "Jesus You're Incredible",
+        "key": "C",
+        "vocalist": "Наталя"
+      },
+      {
+        "type": "note",
+        "text": "(під час спомину)"
+      }
+    ],
+    "draft_equals_published": true
+  },
+  "songs": [
+    {
+      "id": "3f10dd1d929281e4b358edfc4b6477dc",
+      "title": "Washed",
+      "artist": "Elevation Rhythm",
+      "type": "Прославлення",
+      "status": "Зелені",
+      "original_key": "Db",
+      "our_key": "",
+      "key_in_set": "Db",
+      "set_vocalist": "Андрій",
+      "bpm": 139,
+      "time_signature": "4/4",
+      "duration": "3:44",
+      "cover": "https://multitracks.blob.core.windows.net/public/images/albums/520/14458.jpg",
+      "links": {
+        "multitracks": "https://www.multitracks.com/songs/ELEVATION-RHYTHM/WASHED/WASHED/",
+        "youtube": "https://www.youtube.com/watch?v=JjgkhHlTROQ"
+      },
+      "structure": "I V1 V2 C V3 V4 C*2 Vp B1*2 B2 B1 Rf1 Rf2 Rf3 C E",
+      "chords": null,
+      "lyrics": [
+        {
+          "heading": "Куплет 1",
+          "text": "Мене омив,\nВсі гріхи простив,\nВід сорому звільнив,\nТи на Голгофі це звершив.\nО, Алілуя!"
+        },
+        {
+          "heading": "Куплет 2",
+          "text": "Омив.\nЯк Ти це зробив?\nСплатив і відкупив,\nПереміг всіх ворогів.\nО, Алілуя!"
+        },
+        {
+          "heading": "Приспів",
+          "text": "У воді Ти омив нас\nІ у крові,\nДав життя нове.\nО, Алілуя!\nУ воді Ти омив нас\nІ у крові,\nНам віддав Себе.\nО, Алілуя!"
+        },
+        {
+          "heading": "Куплет 3",
+          "text": "Омив.\nТак, Ти це зробив.\nЗа мене кров пролив,\nТи на хресті за все сплатив.\nО, Алілуя!"
+        },
+        {
+          "heading": "Куплет 4",
+          "text": "Омив.\nЛюбов Свою явив\nІ милість проявив.\nТанцюю і радію я.\nО, Алілуя!"
+        },
+        {
+          "heading": "Бридж",
+          "text": "Всі гріхи і сором мій\nНа хресті Ти розіп'яв,\nДав життя душі моїй.\nТож Тебе прославлю я."
+        }
+      ],
+      "other_links": "",
+      "notes": "",
+      "instrument_parts": {
+        "acoustic": "",
+        "bass": "",
+        "electric_guitar": "",
+        "keys": ""
+      },
+      "previous_services_count": null
+    },
+    {
+      "id": "3f10dd1d929281b282d7cf1b6ead0790",
+      "title": "Drawing Closer",
+      "artist": "Planetshakers",
+      "type": "Прославлення",
+      "status": "Зелені",
+      "original_key": "D",
+      "our_key": "",
+      "key_in_set": "D",
+      "set_vocalist": "Андрій",
+      "bpm": 127,
+      "time_signature": "4/4",
+      "duration": "4:32",
+      "cover": "https://multitracks.blob.core.windows.net/public/images/albums/520/1304.jpg",
+      "links": {
+        "multitracks": "https://www.multitracks.com/songs/Planetshakers/Legacy/Drawing-Closer/",
+        "youtube": "https://www.youtube.com/watch?v=BU_Bfejz5Ic"
+      },
+      "structure": "I Is*2 V1 Pc C Rf Is V2 Pc C Rf Is B C Bd Is O*2 E",
+      "chords": null,
+      "lyrics": [
+        {
+          "heading": "Куплет 1",
+          "text": "Помилки позаду залишив\nВсі гріхи мої ти вже простив"
+        },
+        {
+          "heading": "Перед приспів",
+          "text": "Рухаюсь сьогодні вперед\nБлагодать Твоя веде\nБільше не блукаю в пітьмі\nШлях освітлюєш мені"
+        },
+        {
+          "heading": "Приспів",
+          "text": "Ось я, прагну до Тебе\nОсь я, прагну до Тебе\nЛиш у Тобі мир я знайду\nПрагну я до тебе знов\nОсь я, прагну до Тебе\nПрагну до тебе я знов"
+        },
+        {
+          "heading": "Куплет 2",
+          "text": "І тоді як в сумнівах тону\nДо небес я руки підійму"
+        },
+        {
+          "heading": "Бридж",
+          "text": "До тебе я крок зроблю\nНазустріч йдеш мені\nІ я більше не боюсь\nСвобода є в тобі"
+        },
+        {
+          "heading": "Аутро",
+          "text": "До Тебе знов\nНеважливо що навколо\nДо Тебе знов\nУ Тобі є вся свобода\nДо Тебе знов"
+        }
+      ],
+      "other_links": "",
+      "notes": "",
+      "instrument_parts": {
+        "acoustic": "",
+        "bass": "",
+        "electric_guitar": "",
+        "keys": ""
+      },
+      "previous_services_count": null
+    },
+    {
+      "id": "3f10dd1d92928105a89dc17a51a038e3",
+      "title": "Great Are You Lord",
+      "artist": "All Sons & Daughters",
+      "type": "Поклоніння",
+      "status": "Жовті",
+      "original_key": "A",
+      "our_key": "Eb",
+      "key_in_set": "D",
+      "set_vocalist": "Андрій",
+      "bpm": 72,
+      "time_signature": "6/8",
+      "duration": "4:55",
+      "cover": "https://multitracks.blob.core.windows.net/public/images/albums/520/210.jpg",
+      "links": {
+        "multitracks": "https://www.multitracks.com/songs/All-Sons-And-Daughters/All-Sons-And-Daughters-Live/Great-Are-You-Lord/",
+        "youtube": "https://www.youtube.com/watch?v=uHz0w-HG4iU"
+      },
+      "structure": "I V1 Pc C It V2 Pc C*2 Bd B*3 C*2 O*2 E",
+      "chords": "#Куплет\n[Ab]Дарував Ти життя[Cm],\nСвітлом [Bb]темінь долаєш,\nТи - Надія[Ab] й Любов[Cm],\nРани в[Bb] серці зціляєш\n[Ab] [Cm]Величний[Bb] Ти!\n#Приспів:\nДихай в нас[Ab], Дух Святий[Cm]\nБоже, [Bb]слава Тобі, вся слава Тобі\nДихай в нас[Ab], Дух Святий[Cm]\nНехай [Bb]буде Тобі вся слава\n#Брідж:\n\n[Eb]Славить Бога вся земля\n[Eb]Хвалу співають всі серця\n[Ab]Величний Ти![Eb]",
+      "chords_written_in_key": "Eb (наша тональність)",
+      "lyrics": [
+        {
+          "heading": "Куплет",
+          "text": "Дарував Ти життя,\nСвітлом темінь долаєш,\nТи - Надія й Любов,\nРани в серці зціляєш\nВеличний Ти!"
+        },
+        {
+          "heading": "Приспів",
+          "text": "Дихай в нас, Дух Святий\nБоже, слава Тобі, вся слава Тобі\nДихай в нас, Дух Святий\nНехай буде Тобі вся слава"
+        },
+        {
+          "heading": "Брідж",
+          "text": "Славить Бога вся земля\nХвалу співають всі серця\nВеличний Ти!"
+        }
+      ],
+      "other_links": "",
+      "notes": "",
+      "instrument_parts": {
+        "acoustic": "",
+        "bass": "",
+        "electric_guitar": "",
+        "keys": ""
+      },
+      "previous_services_count": null
+    },
+    {
+      "id": "3f10dd1d9292811d8e0cc23f2cd6415b",
+      "title": "Give Me Jesus",
+      "artist": "Bethel Music",
+      "type": "Поклоніння",
+      "status": "Зелені",
+      "original_key": "G",
+      "our_key": "G",
+      "key_in_set": "G",
+      "set_vocalist": "Андрій",
+      "bpm": 71,
+      "time_signature": "4/4",
+      "duration": "11:43",
+      "cover": "https://multitracks.blob.core.windows.net/public/images/albums/520/9087.jpg",
+      "links": {
+        "multitracks": "https://www.multitracks.com/songs/Bethel-Music/Moments-Wait/Give-Me-Jesus/",
+        "youtube": "https://www.youtube.com/watch?v=o1d9WzwdJZo"
+      },
+      "structure": "I V1 V2 C V3 C It B1 Rf C B1 Rf It Rf B2 O E",
+      "chords": null,
+      "lyrics": [
+        {
+          "heading": "Куплет 1",
+          "text": "Тільки Тебе лиш прагну я.\nМрія найбільша Ти моя.\nПонад усі бажання хочу\nЗнати я Тебе, Ісус."
+        },
+        {
+          "heading": "Куплет 2",
+          "text": "Будемо разом ми навік,\nБо Твоя любов живе в мені.\nЦе - насолода вічна,\nЩо знаходжу я в очах Твоїх."
+        },
+        {
+          "heading": "Приспів",
+          "text": "Мій Ісусе,\nМій Ісусе,\nКращий Ти за весь світ,\nКращий Ти за весь світ."
+        },
+        {
+          "heading": "Куплет 3",
+          "text": "Більше за всі скарби земні,\nБоже, потрібний Ти мені.\nЯ, доброту Твою пізнавши,\nХочу бути там, де Ти."
+        },
+        {
+          "heading": "Бридж",
+          "text": "Більш ніхто, тільки лиш Ти,\nІ ніщо, тільки лиш Ти.\nТи лиш, Ісусе,\nТи лиш, Ісусе."
+        }
+      ],
+      "other_links": "",
+      "notes": "",
+      "instrument_parts": {
+        "acoustic": "",
+        "bass": "",
+        "electric_guitar": "",
+        "keys": ""
+      },
+      "previous_services_count": null
+    },
+    {
+      "id": "3f10dd1d929281b090d6f148770e712c",
+      "title": "Jesus You're Incredible",
+      "artist": "",
+      "type": "Поклоніння",
+      "status": "Зелені",
+      "original_key": "",
+      "our_key": "C",
+      "key_in_set": "C",
+      "set_vocalist": "Наталя",
+      "bpm": null,
+      "time_signature": "",
+      "duration": "7:09",
+      "cover": "",
+      "vocalists_keys": "C",
+      "links": {
+        "multitracks": "",
+        "youtube": "https://youtu.be/JN_FM0TrnJw?t=23601"
+      },
+      "structure": "",
+      "chords": null,
+      "lyrics": [
+        {
+          "heading": "Куплет 1",
+          "text": "Поглянь\nНа диво на хресті\nГріховність всіх людей\nЗабрав Божий Син"
+        },
+        {
+          "heading": "",
+          "text": "Яке це диво бачити"
+        },
+        {
+          "heading": "",
+          "text": "Це тіло і цю кров\nБезмежну ту любов\nЯку Він простягнув"
+        },
+        {
+          "heading": "Приспів",
+          "text": ""
+        },
+        {
+          "heading": "",
+          "text": "Невже не Дивовижний Він?\nНевже не Гідний Він хвали?"
+        },
+        {
+          "heading": "Куплет 2",
+          "text": "Поглянь\nНа добро в Його очах\nНа рани  і вінець\nЩо оживили нас"
+        },
+        {
+          "heading": "",
+          "text": "Яке  це диво бачити"
+        },
+        {
+          "heading": "",
+          "text": "Ягня між злодіїв\nХотів Він одного\nПрощення для всіх нас"
+        },
+        {
+          "heading": "Куплет 3",
+          "text": "Поглянь\nМогила та пуста\nІ кожну сльозу\nЗмінив Він на хвалу"
+        },
+        {
+          "heading": "",
+          "text": "Він помер та вже живий"
+        },
+        {
+          "heading": "",
+          "text": "Перемоги більшої\nВже не побачим ми\nВін наш Воскреслий Цар"
+        },
+        {
+          "heading": "Бридж",
+          "text": "Вся сила, багатства\nІ мудрість, і міць\nВсі благословіння і честь -Йому!\nВклоняємось ми і співаєм :\n«Нема подібних»"
+        },
+        {
+          "heading": "Приспів 2",
+          "text": "Ісусе, Дивовижний Ти!\nГідний слави і хвали!"
+        },
+        {
+          "heading": "Бридж 2",
+          "text": "Славимо Того, Хто переміг\nБо Він є початок і кінець\nСлавимо Того Хто був і  є\nДивовижний Бог"
+        }
+      ],
+      "other_links": "",
+      "notes": "Назва в застосунку «Jesus You're Incredible»; пісню створено 28.10, раніше її рядок у сет-листі називався «Isn't He Incredible».",
+      "instrument_parts": {
+        "acoustic": "",
+        "bass": "",
+        "electric_guitar": "",
+        "keys": ""
+      },
+      "previous_services_count": null
+    }
+  ],
+  "setlist_rows_in_notion": [
+    {
+      "song": "Washed",
+      "key": "Db",
+      "lead": "Андрій",
+      "notes": null,
+      "link": null
+    },
+    {
+      "song": "Drawing Closer",
+      "key": "D",
+      "lead": "Андрій",
+      "notes": null,
+      "link": null
+    },
+    {
+      "song": "Great Are You Lord",
+      "key": "D",
+      "lead": "Андрій",
+      "notes": null,
+      "link": null
+    },
+    {
+      "song": "Give Me Jesus",
+      "key": "G",
+      "lead": "Андрій",
+      "notes": null,
+      "link": null
+    },
+    {
+      "song": "Jesus You're Incredible",
+      "key": "C",
+      "lead": "Наталя",
+      "notes": null,
+      "link": null
+    }
+  ],
+  "remarks": [
+    "Поле «Сет-лист» у службі містить 25 звʼязаних рядків, з яких лише 5 належать цьому служінню за назвою (решта — тестові рядки), тому в експорт увійшли лише 5.",
+    "Структура — кодами MultiTracks: I інтро, V куплет, Pc перед приспівом, C приспів, Rf рефрен, B бридж, Is інструментал, It програш, O аутро, E фінал, Vp вамп, Po після приспіву, Ta перехід, Tg тег, Bd брейкдаун; *N — N однакових підряд."
+  ]
+}

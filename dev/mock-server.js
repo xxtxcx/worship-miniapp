@@ -70,6 +70,11 @@ http.createServer((req, res) => {
     }); return;
   }
   if (url.pathname === '/api/bootstrap') return send(res, 200, { me: { id: 'me', name: 'Тест', isAdmin: globalThis.admin === '1', seeAll: true }, songs: songs.map((x) => ({ ...x, n: 0 })), services: forRole(globalThis.role || 'lead'), ...(globalThis.admin === '1' ? { people: PEOPLE } : {}) });
+  if (url.pathname === '/api/avatar' && process.env.MOCK_PHOTOS) {
+    const n = (parseInt(String(url.searchParams.get('id')).replace(/\D/g, ''), 10) || 1) * 7 % 70 + 1;
+    fetch(`https://i.pravatar.cc/96?img=${n}`).then((r) => r.arrayBuffer()).then((b) => { res.writeHead(200, { 'Content-Type': 'image/jpeg' }); res.end(Buffer.from(b)); }).catch(() => { res.writeHead(404); res.end('{}'); });
+    return;
+  }
   if (url.pathname === '/api/avatar') { if (url.searchParams.get('id') === 'p3') { res.writeHead(404); return res.end('{}'); } res.writeHead(200, { 'Content-Type': 'image/svg+xml' }); return res.end('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#c26"/><circle cx="48" cy="38" r="18" fill="#fff"/></svg>'); }
   if (url.pathname === '/api/counts') return setTimeout(() => send(res, 200, { counts: Object.fromEntries(songs.map((x) => [x.id, x.n])) }), 300);
   if (url.pathname === '/api/ping') return send(res, 200, { ok: true });
@@ -87,6 +92,9 @@ http.createServer((req, res) => {
       const o = forRole('lead').find((x) => x.id === serviceId); send(res, 200, { service: o });
     }); return;
   }
+  if (url.pathname === '/lineup') { try { const h = fs.readFileSync(path.join(__dirname, 'proto', 'lineup.html')); res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(h); } catch (e) { res.writeHead(404); return res.end('404'); } }
+  if (url.pathname === '/proto1') { try { const h = fs.readFileSync(path.join(__dirname, 'proto', 'tribute-v1.html')); res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(h); } catch (e) { res.writeHead(404); return res.end('404'); } }
+  if (url.pathname === '/proto') { try { const h = fs.readFileSync(path.join(__dirname, 'proto', 'tribute.html')); res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(h); } catch (e) { res.writeHead(404); return res.end('404'); } }
   const file = path.join(__dirname, '..', 'public', url.pathname === '/' ? 'index.html' : url.pathname);
   fs.readFile(file, (err, data) => { if (err) { res.writeHead(404); return res.end('404'); } res.writeHead(200, { 'Content-Type': file.endsWith('.js') ? 'text/javascript; charset=utf-8' : file.endsWith('.svg') ? 'image/svg+xml' : 'text/html; charset=utf-8' }); res.end(data); });
 }).listen(PORT, () => console.log(`http://localhost:${PORT}  (?role=lead|member|none)`));
