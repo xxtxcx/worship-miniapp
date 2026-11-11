@@ -217,5 +217,9 @@ assert.strictEqual(L.photoOf({ files: [] }), ''); assert.strictEqual(L.photoOf(u
   const v2 = [{ t: 'song', id: 'b', k: 'A' }, { t: 'song', id: 'c', k: 'E' }, { t: 'song', id: 'a', k: 'D', v: 'Аня Г.' }];
   const upd = B.publishMessage(svc, v1, v2, t, now);
   assert(upd.includes('Апдейт в сетлисті') && upd.includes('➕ Omnipotent (E)') && upd.includes('Pursue: тональність G → A') && upd.includes('Holy Spirit: вокаліст Оля → Аня Г.') && upd.includes('порядок'));
-  assert(B.publishMessage(svc, v1, [...v1, { t: 'note', x: 'Тихо' }], t, now).includes('примітки'));
+  assert(B.publishMessage(svc, null, [{ t: 'song', id: 'a', k: '?' }], t, now).includes('1. Holy Spirit (ще обираємо)'));
+  assert(B.publishMessage(svc, v1, [{ ...v1[0], k: '?' }, v1[1]], t, now).includes('тональність D → ще обираємо'));
+  assert(B.publishMessage(svc, v1, [...v1, { t: 'note', x: 'Тихо' }], t, now).includes('➕ 💬 Тихо'));
+  const withNotes = B.publishMessage(svc, null, [{ t: 'mom', x: 'Інтро' }, { t: 'song', id: 'a', k: 'B' }, { t: 'note', x: 'без extended' }, { t: 'mom', x: 'Модератор' }], t, now);
+  assert(withNotes.includes('◦ Інтро\n1. Holy Spirit (B)\n   💬 без extended\n◦ Модератор'), withNotes);
 }

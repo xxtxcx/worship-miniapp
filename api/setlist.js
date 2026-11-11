@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
           'Назва': { title: [{ type: 'text', text: { content: `${svc.name} — ${byId.get(it.id).title}`.slice(0, 200) } }] },
           'Служіння': { relation: [{ id: sid }] },
           'Пісня': { relation: [{ id: it.id }] },
-          'Тональність': { rich_text: it.k ? [{ type: 'text', text: { content: it.k } }] : [] },
+          'Тональність': { rich_text: it.k && it.k !== '?' ? [{ type: 'text', text: { content: it.k } }] : [] },
           'Лід-вокал': { relation: (idByName.has(it.v) ? [idByName.get(it.v)] : svc.leadIds).map((id) => ({ id })) },
           ...(linkBySong.get(it.id) ? { 'Посилання': { url: linkBySong.get(it.id) } } : {}),
         },

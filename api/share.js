@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
     const text = items.map((it) => {
       if (it.t !== 'song') return escHtml(it.x);
       n++;
-      const s = byId.get(it.id), k = it.k || s.our;
+      const s = byId.get(it.id), k = it.k === '?' ? '?' : it.k || s.our;
       const title = s.yt ? `<a href="${escHtml(L.ytUrl(s.yt))}">${escHtml(s.title)}</a>` : escHtml(s.title);
       return `${n}. ${title}${k ? ` ${escHtml(k)}` : ''}${it.v ? ` - ${escHtml(it.v)}` : ''}`;
     }).join('\n');

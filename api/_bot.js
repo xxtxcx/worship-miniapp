@@ -46,24 +46,28 @@ function remindersFor(services, people, today) {
   return { out, missing };
 }
 
+const kt = (k) => (k === '?' ? 'ще обираємо' : k);
 // Що змінилося між двома версіями сет-листа (масиви елементів після cleanItems)
 function diffSetlist(prev, next, titleOf) {
   const songs = (a) => a.filter((x) => x.t === 'song');
   const p = songs(prev), n = songs(next);
   const pm = new Map(p.map((x) => [x.id, x])), nm = new Map(n.map((x) => [x.id, x]));
   const lines = [];
-  for (const x of n) if (!pm.has(x.id)) lines.push(`➕ ${titleOf(x.id)}${x.k ? ` (${x.k})` : ''}`);
+  for (const x of n) if (!pm.has(x.id)) lines.push(`➕ ${titleOf(x.id)}${x.k ? ` (${kt(x.k)})` : ''}`);
   for (const x of p) if (!nm.has(x.id)) lines.push(`➖ ${titleOf(x.id)}`);
   for (const x of n) {
     const o = pm.get(x.id);
     if (!o) continue;
-    if ((o.k || '') !== (x.k || '')) lines.push(`🎼 ${titleOf(x.id)}: тональність ${o.k || '—'} → ${x.k || '—'}`);
+    if ((o.k || '') !== (x.k || '')) lines.push(`🎼 ${titleOf(x.id)}: тональність ${kt(o.k) || '—'} → ${kt(x.k) || '—'}`);
     if ((o.v || '') !== (x.v || '')) lines.push(`🎤 ${titleOf(x.id)}: вокаліст ${o.v || '—'} → ${x.v || '—'}`);
   }
   const common = (a, m) => a.filter((x) => m.has(x.id)).map((x) => x.id).join();
   if (common(p, nm) !== common(n, pm)) lines.push('↕️ Змінився порядок пісень');
-  const notes = (a) => a.filter((x) => x.t !== 'song').map((x) => `${x.t}:${x.x}`).join('|');
-  if (notes(prev) !== notes(next)) lines.push('📝 Змінилися примітки');
+  const extra = (a) => a.filter((x) => x.t !== 'song').map((x) => `${x.t === 'mom' ? '◦' : '💬'} ${x.x}`);
+  const pe = extra(prev), ne = extra(next);
+  for (const x of ne) if (!pe.includes(x)) lines.push(`➕ ${x}`);
+  for (const x of pe) if (!ne.includes(x)) lines.push(`➖ ${x}`);
+  if (!lines.length && pe.join('|') !== ne.join('|')) lines.push('↕️ Змінився порядок пунктів');
   return lines;
 }
 
@@ -75,7 +79,8 @@ function publishMessage(svc, prev, next, titleOf, now = new Date()) {
   const when = `${svc.date ? fmtDate(svc.date) : ''}${svc.type || svc.name ? ` — ${svc.type || svc.name}` : ''}`.trim();
   const songs = next.filter((x) => x.t === 'song');
   if (!prev) {
-    const list = songs.map((x, i) => `${i + 1}. ${titleOf(x.id)}${x.k ? ` (${x.k})` : ''}${x.v ? ` — ${x.v}` : ''}`).join('\n');
+    let n = 0;
+    const list = next.map((x) => (x.t === 'mom' ? `◦ ${x.x}` : x.t === 'note' ? `   💬 ${x.x}` : `${++n}. ${titleOf(x.id)}${x.k ? ` (${kt(x.k)})` : ''}${x.v ? ` — ${x.v}` : ''}`)).join('\n');
     return `🎶 Опубліковано сет-лист\n📅 ${when}\n\n${list || 'Без пісень'}`;
   }
   const d = diffSetlist(prev, next, titleOf);
