@@ -202,3 +202,20 @@ assert.strictEqual(L.photoOf({ files: [] }), ''); assert.strictEqual(L.photoOf(u
   const v = L.toClient(svc, { me: people.get('p3'), people, isAdmin: false, seeAll: true }, new Map());
   assert(!v.mine && v.lineup && v.published[0].id === 'y' && !v.canEdit && !v.draft, 'seeAll sees but cannot edit');
 }
+
+// Публікація сет-листа: перше повідомлення, апдейт з переліком змін, тиша без змін
+{
+  const B = require('../api/_bot');
+  const t = (id) => ({ a: 'Holy Spirit', b: 'Pursue', c: 'Omnipotent' }[id]);
+  const svc = { date: '2026-11-15', type: 'Недільне', name: 'N' };
+  const now = new Date('2026-11-11T10:00:00Z');
+  const v1 = [{ t: 'song', id: 'a', k: 'D', v: 'Оля' }, { t: 'song', id: 'b', k: 'G' }];
+  const first = B.publishMessage(svc, null, v1, t, now);
+  assert(first.includes('Опубліковано') && first.includes('1. Holy Spirit (D) — Оля') && first.includes('2. Pursue (G)'));
+  assert.strictEqual(B.publishMessage(svc, v1, v1, t, now), null, 'no change, no message');
+  assert.strictEqual(B.publishMessage({ ...svc, date: '2026-11-01' }, null, v1, t, now), null, 'past service');
+  const v2 = [{ t: 'song', id: 'b', k: 'A' }, { t: 'song', id: 'c', k: 'E' }, { t: 'song', id: 'a', k: 'D', v: 'Аня Г.' }];
+  const upd = B.publishMessage(svc, v1, v2, t, now);
+  assert(upd.includes('Апдейт в сетлисті') && upd.includes('➕ Omnipotent (E)') && upd.includes('Pursue: тональність G → A') && upd.includes('Holy Spirit: вокаліст Оля → Аня Г.') && upd.includes('порядок'));
+  assert(B.publishMessage(svc, v1, [...v1, { t: 'note', x: 'Тихо' }], t, now).includes('примітки'));
+}

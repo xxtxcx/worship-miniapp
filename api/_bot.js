@@ -46,8 +46,61 @@ function remindersFor(services, people, today) {
   return { out, missing };
 }
 
+// Що змінилося між двома версіями сет-листа (масиви елементів після cleanItems)
+function diffSetlist(prev, next, titleOf) {
+  const songs = (a) => a.filter((x) => x.t === 'song');
+  const p = songs(prev), n = songs(next);
+  const pm = new Map(p.map((x) => [x.id, x])), nm = new Map(n.map((x) => [x.id, x]));
+  const lines = [];
+  for (const x of n) if (!pm.has(x.id)) lines.push(`➕ ${titleOf(x.id)}${x.k ? ` (${x.k})` : ''}`);
+  for (const x of p) if (!nm.has(x.id)) lines.push(`➖ ${titleOf(x.id)}`);
+  for (const x of n) {
+    const o = pm.get(x.id);
+    if (!o) continue;
+    if ((o.k || '') !== (x.k || '')) lines.push(`🎼 ${titleOf(x.id)}: тональність ${o.k || '—'} → ${x.k || '—'}`);
+    if ((o.v || '') !== (x.v || '')) lines.push(`🎤 ${titleOf(x.id)}: вокаліст ${o.v || '—'} → ${x.v || '—'}`);
+  }
+  const common = (a, m) => a.filter((x) => m.has(x.id)).map((x) => x.id).join();
+  if (common(p, nm) !== common(n, pm)) lines.push('↕️ Змінився порядок пісень');
+  const notes = (a) => a.filter((x) => x.t !== 'song').map((x) => `${x.t}:${x.x}`).join('|');
+  if (notes(prev) !== notes(next)) lines.push('📝 Змінилися примітки');
+  return lines;
+}
+
+// Повідомлення учасникам про публікацію сет-листа. prev = попередній опублікований (або null)
+function publishMessage(svc, prev, next, titleOf, now = new Date()) {
+  const nextJson = JSON.stringify(next);
+  if (prev && JSON.stringify(prev) === nextJson) return null;
+  if (svc.date && svc.date < todayKyiv(now)) return null;
+  const when = `${svc.date ? fmtDate(svc.date) : ''}${svc.type || svc.name ? ` — ${svc.type || svc.name}` : ''}`.trim();
+  const songs = next.filter((x) => x.t === 'song');
+  if (!prev) {
+    const list = songs.map((x, i) => `${i + 1}. ${titleOf(x.id)}${x.k ? ` (${x.k})` : ''}${x.v ? ` — ${x.v}` : ''}`).join('\n');
+    return `🎶 Опубліковано сет-лист\n📅 ${when}\n\n${list || 'Без пісень'}`;
+  }
+  const d = diffSetlist(prev, next, titleOf);
+  return `🔄 Апдейт в сетлисті\n📅 ${when}\n\n${d.join('\n') || 'Дрібні зміни'}`;
+}
+
+// Розсилка всім залученим до служіння; про невдалі відправлення (і відсутній chat_id) — адмінам
+async function notifyPublished(svc, people, text) {
+  const ids = memberIds(svc).filter((id) => people.get(id) && people.get(id).name && people.get(id).active !== false);
+  const failed = [];
+  await Promise.all(ids.map(async (id) => {
+    const me = people.get(id);
+    if (!me.chatId) { failed.push(`${me.name} (немає chat_id)`); return; }
+    const r = await send(me.chatId, text, webButton('Переглянути'));
+    if (!r.ok) failed.push(`${me.name} (${r.description || 'помилка'})`);
+  }));
+  if (failed.length) {
+    const msg = `⚠️ Сет-лист ${svc.date ? fmtDate(svc.date) : ''}: не вдалося сповістити: ${failed.join(', ')}`;
+    for (const a of L.adminIds()) await send(a, msg);
+  }
+  return { sent: ids.length - failed.length, failed };
+}
+
 const nextService = (services, today) => services.filter((s) => s.date && s.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
 
-const webButton = () => (process.env.MINIAPP_LINK ? { reply_markup: { inline_keyboard: [[{ text: process.env.MINIAPP_BUTTON || 'Відкрити застосунок', url: process.env.MINIAPP_LINK }]] } } : {});
+const webButton = (label) => (process.env.MINIAPP_LINK ? { reply_markup: { inline_keyboard: [[{ text: label || process.env.MINIAPP_BUTTON || 'Відкрити застосунок', url: process.env.MINIAPP_LINK }]] } } : {});
 
-module.exports = { tg, send, todayKyiv, daysBetween, fmtDate, daysWord, memberIds, rolesOf, remindersFor, nextService, webButton, REMINDER_DAYS };
+module.exports = { tg, send, todayKyiv, daysBetween, fmtDate, daysWord, memberIds, rolesOf, remindersFor, diffSetlist, publishMessage, notifyPublished, nextService, webButton, REMINDER_DAYS };

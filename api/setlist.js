@@ -1,5 +1,6 @@
 'use strict';
 const L = require('./_lib');
+const B = require('./_bot');
 
 async function inBatches(items, size, fn) {
   for (let i = 0; i < items.length; i += size) await Promise.all(items.slice(i, i + size).map(fn));
@@ -27,6 +28,7 @@ module.exports = async (req, res) => {
     if (publish) props['Сет-лист (опублікований)'] = { rich_text: L.richText(json) };
     await L.notion('PATCH', `/pages/${sid}`, { properties: props });
 
+    const prevPub = svc.published ? L.cleanItems(svc.published, known) : null;
     if (publish) {
       // Синхронізуємо рядки бази «Сет-лист», щоб історія й лічильники лишались актуальними
       const rows = await L.loadSetRowsFor([sid]);
@@ -50,6 +52,11 @@ module.exports = async (req, res) => {
         },
       }));
       L.invalidate('rows');
+      try {
+        const titleOf = (id) => (byId.get(id) || {}).title || '?';
+        const text = B.publishMessage(svc, prevPub, clean, titleOf);
+        if (text) await B.notifyPublished(svc, ctx.people, text);
+      } catch (e) { console.error('notify', e); }
     }
     L.invalidate('window');
     const fresh = (await L.loadWindow()).find((s) => s.id === sid);
