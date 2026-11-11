@@ -40,7 +40,7 @@ function remindersFor(services, people, today) {
       const roles = rolesOf(svc, id);
       const text = `👋 ${me.name}, нагадування!\n\n📅 Через ${diff} ${daysWord(diff)} (${fmtDate(svc.date)}) — ${svc.type || svc.name || 'Служіння'}`
         + (roles.length ? `\n🎸 Твоя роль: ${roles.join(', ')}` : '') + (others.length ? `\n👥 Разом: ${others.join(', ')}` : '');
-      out.push({ chatId: me.chatId, text, diff, svc });
+      out.push({ chatId: me.chatId, name: me.name, text, diff, svc });
     }
   }
   return { out, missing };
@@ -87,21 +87,29 @@ function publishMessage(svc, prev, next, titleOf, now = new Date()) {
   return `🔄 Апдейт в сетлисті\n📅 ${when}\n\n${d.join('\n') || 'Дрібні зміни'}`;
 }
 
-// Розсилка всім залученим до служіння; про невдалі відправлення (і відсутній chat_id) — адмінам
-async function notifyPublished(svc, people, text) {
+// Розсилка всім залученим до служіння; кожен результат пишемо в журнал, про невдалі (і відсутній chat_id) — адмінам
+async function notifyPublished(svc, people, text, kind = 'Публікація') {
   const ids = memberIds(svc).filter((id) => people.get(id) && people.get(id).name && people.get(id).active !== false);
-  const failed = [];
+  const entries = [];
   await Promise.all(ids.map(async (id) => {
     const me = people.get(id);
-    if (!me.chatId) { failed.push(`${me.name} (немає chat_id)`); return; }
-    const r = await send(me.chatId, text, webButton('Переглянути'));
-    if (!r.ok) failed.push(`${me.name} (${r.description || 'помилка'})`);
+    const e = { name: me.name, kind, svc: svc.name || svc.type || '', date: svc.date || '', result: 'Надіслано', error: '' };
+    if (!me.chatId) { e.result = 'Немає chat_id'; }
+    else {
+      try {
+        const r = await send(me.chatId, text, webButton('Переглянути'));
+        if (!r.ok) { e.result = 'Помилка'; e.error = r.description || 'помилка Telegram'; }
+      } catch (err) { e.result = 'Помилка'; e.error = String(err.message || err).slice(0, 200); }
+    }
+    entries.push(e);
   }));
+  const failed = entries.filter((e) => e.result !== 'Надіслано').map((e) => `${e.name} (${e.error || 'немає chat_id'})`);
   if (failed.length) {
     const msg = `⚠️ Сет-лист ${svc.date ? fmtDate(svc.date) : ''}: не вдалося сповістити: ${failed.join(', ')}`;
     for (const a of L.adminIds()) await send(a, msg);
   }
-  return { sent: ids.length - failed.length, failed };
+  await L.logDelivery(entries);
+  return { sent: entries.length - failed.length, failed };
 }
 
 const nextService = (services, today) => services.filter((s) => s.date && s.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] || null;

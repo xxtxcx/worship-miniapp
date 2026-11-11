@@ -10,10 +10,17 @@ module.exports = async (req, res) => {
     const [services, people] = await Promise.all([L.loadWindow(), L.loadPeople()]);
     const { out, missing } = B.remindersFor(services, people, B.todayKyiv());
     let sent = 0;
+    const entries = [];
     for (const m of out) {
-      const r = await B.send(m.chatId, m.text, B.webButton());
-      if (r.ok) sent++;
+      const e = { name: m.name, kind: 'Нагадування', svc: m.svc.name || m.svc.type || '', date: m.svc.date, result: 'Надіслано', error: '' };
+      try {
+        const r = await B.send(m.chatId, m.text, B.webButton());
+        if (r.ok) sent++; else { e.result = 'Помилка'; e.error = r.description || 'помилка Telegram'; }
+      } catch (err) { e.result = 'Помилка'; e.error = String(err.message || err).slice(0, 200); }
+      entries.push(e);
     }
+    for (const x of missing) entries.push({ name: x.name, kind: 'Нагадування', svc: x.svc.name || x.svc.type || '', date: x.svc.date, result: 'Немає chat_id', error: '' });
+    await L.logDelivery(entries);
     const admin = L.adminIds()[0];
     if (admin && missing.length) {
       const list = missing.map((x) => `${x.name} (${B.fmtDate(x.svc.date)})`).join(', ');

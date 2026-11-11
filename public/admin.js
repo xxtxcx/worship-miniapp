@@ -41,15 +41,31 @@ function adminTeam(A){
   var m=A.team.members,max=m.reduce(function(n,p){return Math.max(n,p.served)},1);
   return '<div class="card"><h2>За '+A.team.days+' днів</h2><div class="list">'+m.map(function(p){
     return '<div class="row" style="'+(p.active?'':'opacity:.55')+'"><span class="ava-wrap">'+avatar(p.id,p.name,'l')+'</span><span class="rowmain"><span class="rowtitle">'+esc(p.name)+'</span><br><span class="bar"><i style="width:'+Math.round(p.served/max*100)+'%"></i></span><span class="rowsub">служив(ла) '+p.served+' · вів '+p.led+' · співав(ла) '+p.sang+' '+(p.sang===1?'пісню':'пісень')+'</span></span></div>'}).join('')+'</div></div><div class="note">Служив(ла) — був(ла) у складі на служінні. Вів — лід. Співав(ла) — вокаліст пісні в сет-листі. Старі сет-лісти не містять вокалістів окремих пісень, тому там рахується лід служіння.</div>'}
+function adminLog(A){
+  var D=A.deliveries;
+  if(!D)return '<div class="card"><div class="empty"><b>Журнал недоступний</b>Перевірте, що інтеграція Notion має доступ до бази «Журнал розсилки».</div></div>';
+  if(!D.length)return '<div class="card"><div class="empty"><b>Розсилок ще не було</b>Тут з\'являтимуться повідомлення про публікацію сет-листа, апдейти й нагадування.</div></div>';
+  var kc={'Публікація':'🎶','Апдейт':'🔄','Нагадування':'🔔'},G=[];
+  D.forEach(function(x){var g=G[G.length-1];
+    if(g&&g.kind===x.kind&&g.date===x.date&&Math.abs(Date.parse(g.at)-Date.parse(x.at))<12e4)g.items.push(x);
+    else G.push({kind:x.kind,date:x.date,at:x.at,items:[x]})});
+  var bad=G.filter(function(g){return g.items.some(function(x){return x.result!=='Надіслано'})}).length;
+  return '<div><span class="pill'+(bad?' warn':'')+'"><span class="dot"></span>Останні розсилки: '+G.length+(bad?' · з проблемами '+bad:' · усі дійшли')+'</span></div><div class="card"><h2>Розсилки</h2><div class="list">'+G.map(function(g){
+    var when=new Date(g.at).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    var ok=g.items.filter(function(x){return x.result==='Надіслано'}),no=g.items.filter(function(x){return x.result!=='Надіслано'});
+    return '<div class="row" style="align-items:flex-start"><span class="rowmain"><span class="rowtitle">'+(kc[g.kind]||'')+' '+esc(g.kind)+(g.date?' · служіння '+fmt(g.date).slice(0,5):'')+'</span><br><span class="rowsub">'+when+'</span>'
+     +(ok.length?'<span class="rowsub" style="display:block;margin-top:6px"><b style="color:var(--ok)">✓ Отримали ('+ok.length+'):</b> '+ok.map(function(x){return esc(x.name)}).join(', ')+'</span>':'')
+     +(no.length?'<span class="rowsub" style="display:block;margin-top:6px"><b style="color:var(--warn)">✕ Не отримали ('+no.length+'):</b> '+no.map(function(x){return esc(x.name)+' <i>('+esc(x.error||x.result)+')</i>'}).join(', ')+'</span>':'')
+     +'</span></div>'}).join('')+'</div></div><div class="note">Показано останні 100 повідомлень, згрупованих у розсилки. Повний журнал: база «Журнал розсилки» в Notion.</div>'}
 function viewAdminReal(){
   var A=S.admin;
   if(!A)return '<div class="center"><div><div class="spin"></div>Завантаження…</div></div>';
   if(A.err)return '<div class="pad"><div class="card"><div class="empty"><b>Не вдалося завантажити</b>'+esc(A.err)+'</div></div></div>';
   var now=Date.parse(A.now),wk=A.people.filter(function(p){return p.lastSeen&&now-Date.parse(p.lastSeen)<7*864e5}).length;
   var t=S.adminTab||'svc',bad=A.services.filter(function(u){return!u.lead.length||u.setlist.state!=='published'}).length;
-  var tabs=[['svc','Служіння',bad],['req','Доступ',A.requests.length],['gap','Дані',A.gaps.reduce(function(n,g){return n+g.items.length},0)],['songs','Репертуар',0],['team','Команда',0],['act','Активність',0]];
+  var tabs=[['svc','Служіння',bad],['req','Доступ',A.requests.length],['gap','Дані',A.gaps.reduce(function(n,g){return n+g.items.length},0)],['songs','Репертуар',0],['team','Команда',0],['act','Активність',0],['log','Розсилки',0]];
   return '<div class="chips" role="tablist">'+tabs.map(function(x){return '<button data-atab="'+x[0]+'" aria-pressed="'+(t===x[0])+'">'+x[1]+(x[2]?' · '+x[2]:'')+'</button>'}).join('')+'</div><div class="pad">'
-   +(t==='svc'?adminSvc(A):t==='req'?adminReq(A):t==='gap'?adminGaps(A):t==='songs'?adminSongs(A):t==='team'?adminTeam(A):'<div><span class="pill"><span class="dot"></span>За 7 днів заходили: '+wk+' з '+A.people.length+'</span></div>'+adminAct(A))+'</div>'}
+   +(t==='svc'?adminSvc(A):t==='req'?adminReq(A):t==='gap'?adminGaps(A):t==='songs'?adminSongs(A):t==='team'?adminTeam(A):t==='log'?adminLog(A):'<div><span class="pill"><span class="dot"></span>За 7 днів заходили: '+wk+' з '+A.people.length+'</span></div>'+adminAct(A))+'</div>'}
 function loadAdmin(keep){if(!keep)S.admin=null;api('/api/admin').then(function(r){S.admin=r;render()}).catch(function(e){S.admin={err:(e.data&&e.data.message)||'Спробуйте ще раз'};render()})}
 document.addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b)return;var d=b.dataset;

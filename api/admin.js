@@ -55,7 +55,8 @@ module.exports = async (req, res) => {
       .sort((a, b) => (b.lastSeen || '').localeCompare(a.lastSeen || '') || a.name.localeCompare(b.name, 'uk'));
 
     const stats = L.computeStats({ rows, services: servicesAll, songs, people: peopleMap });
-    res.status(200).json({ now: new Date().toISOString(), services, requests, gaps, people: activity, ...stats });
+    const deliveries = await L.loadDeliveries().catch((e) => { console.error('deliveries', e); return null; });
+    res.status(200).json({ now: new Date().toISOString(), services, requests, gaps, deliveries, people: activity, ...stats });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'server', message: String(e.message || e).slice(0, 300) });

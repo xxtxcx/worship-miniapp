@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
       try {
         const titleOf = (id) => (byId.get(id) || {}).title || '?';
         const text = B.publishMessage(svc, prevPub, clean, titleOf);
-        if (text) await B.notifyPublished(svc, ctx.people, text);
+        if (text) await B.notifyPublished(svc, ctx.people, text, prevPub ? 'Апдейт' : 'Публікація');
       } catch (e) { console.error('notify', e); }
     }
     L.invalidate('window');

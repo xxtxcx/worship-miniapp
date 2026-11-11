@@ -8,6 +8,7 @@ const DB = {
   services: '2b4d670f72f0491abc75b5a53da048ed',
   sets: 'e7f712cfe6d5430bbcf3d9cd90168942',
   requests: 'd408d04660744e3c991d4bae6b2eca92',
+  log: '7cac6c189b694912a96644e6c89563c0',
 };
 const ROLES = ['Барабани', 'Бас', 'Клавіші', 'Електрогітара', 'Акустична гітара', 'Вокал', 'Звук'];
 const WINDOW_DAYS = 90;
@@ -259,6 +260,37 @@ const mapSetRow = (pg) => {
     link: (p['Посилання'] && p['Посилання'].url) || '',
   };
 };
+
+/* ---------- Журнал розсилки ---------- */
+// entries: [{ name, kind: Публікація|Апдейт|Нагадування, svc, date, result: Надіслано|Помилка|Немає chat_id, error }]. Збій журналу ніколи не ламає розсилку.
+async function logDelivery(entries) {
+  const rt = (t) => ({ rich_text: t ? [{ type: 'text', text: { content: String(t).slice(0, 1900) } }] : [] });
+  try {
+    for (let i = 0; i < entries.length; i += 3) {
+      await Promise.all(entries.slice(i, i + 3).map((e) => notion('POST', '/pages', {
+        parent: { database_id: DB.log },
+        properties: {
+          'Одержувач': { title: [{ type: 'text', text: { content: String(e.name || '—').slice(0, 200) } }] },
+          'Подія': { select: { name: e.kind } },
+          'Служіння': rt(e.svc), 'Дата служіння': rt(e.date),
+          'Результат': { select: { name: e.result } }, 'Помилка': rt(e.error),
+        },
+      })));
+    }
+  } catch (e) { console.error('log delivery', e); }
+}
+
+async function loadDeliveries(limit = 100) {
+  const r = await notion('POST', `/databases/${DB.log}/query`, { page_size: limit, sorts: [{ timestamp: 'created_time', direction: 'descending' }] });
+  return (r.results || []).map((pg) => {
+    const p = pg.properties;
+    return {
+      at: pg.created_time, name: text(p['Одержувач']), kind: p['Подія'].select ? p['Подія'].select.name : '',
+      svc: text(p['Служіння']), date: text(p['Дата служіння']),
+      result: p['Результат'].select ? p['Результат'].select.name : '', error: text(p['Помилка']),
+    };
+  });
+}
 
 function loadSetRows() {
   return cached('rows', 10 * 60e3, async () => (await queryAll(DB.sets)).map(mapSetRow));
@@ -516,6 +548,6 @@ const groupBy = (arr, f) => {
 
 module.exports = {
   DB, ROLES, notion, queryAll, text, rel, nid, richText, parseJson, cached, invalidate,
-  verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadSetRowsFor, loadSetRowsOfSong, loadWindow, loadServicesLite,
+  logDelivery, loadDeliveries, verifyInitData, authUser, adminIds, loadPeople, loadSongs, loadSetRows, loadSetRowsFor, loadSetRowsOfSong, loadWindow, loadServicesLite,
   currentPerson, toClient, groupBy, noteKey, parseDur, materialsOf, cleanItems, ytUrl, photoOf, touchVisit, loadAllServices, toHistory, loadRequests, resolveRequest, setlistState, computeStats,
 };
